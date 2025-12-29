@@ -1,0 +1,11 @@
+<tipo>: <resumen corto en presente>
+
+# --- PLANTILLA DE COMMIT ---
+# tipos:
+#   feat:     Nueva funcionalidad
+#   fix:      Corrección de un error
+#   docs:     Cambios en documentación o comentarios
+#   style:    Cambios de formato
+#   refactor: Mejora de código que no añade función ni arregla bug
+#   test:     Añadir o corregir tests
+#   chore:    Tareas de mantenimiento
