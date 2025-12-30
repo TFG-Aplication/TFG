@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "756327291572",
+    "project_id": "trabajo-fin-de-grado-40a05",
+    "storage_bucket": "trabajo-fin-de-grado-40a05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:756327291572:android:8a6ccc0e61bd8bdc7915e1",
+        "android_client_info": {
+          "package_name": "com.asistente.planificador"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdtteXH9fPRuUkef6nnoegunZ7KN9T3Fw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

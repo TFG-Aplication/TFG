@@ -7,13 +7,18 @@ plugins {
 
     // El plugin de Sonar
     alias(libs.plugins.sonarcloud)
+    // El plugin de firebase
+    id("com.google.gms.google-services") version "4.4.4" apply false
 }
+
+apply(plugin = "org.sonarqube")
 
 sonar {
     properties {
         property("sonar.projectKey", "TFG-Aplication_TFG")
         property("sonar.organization", "tfg-aplication")
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.modules", "app,core,data")
 
         property("sonar.gradle.skipCompile", "true")
 

@@ -22,4 +22,3 @@ dependencyResolutionManagement {
 rootProject.name = "Trabajo Fin de Grado"
 include(":app")
 include(":core")
-include(":data")
