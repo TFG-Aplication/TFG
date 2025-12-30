@@ -1,4 +1,4 @@
-name: Android CI/CD - Firebase App Distribution
+name: Firebase App Distribution
 
 on:
   push:
@@ -26,6 +26,9 @@ jobs:
       - name: Upload to Firebase App Distribution
         uses: w9jds/firebase-action@master
         with:
-          args: appdistribution:distribute app/build/outputs/apk/debug/app-debug.apk --app ${{ secrets.FIREBASE_APP_ID }} --groups "testers"
+          args: >-
+            appdistribution:distribute app/build/outputs/apk/debug/app-debug.apk
+            --app "${{ secrets.FIREBASE_APP_ID }}"
+            --groups "testers"
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
