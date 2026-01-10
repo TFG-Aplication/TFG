@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 import androidx.room.ForeignKey
-import androidx.room.Index
+import java.util.UUID
 
 
 @Entity(
@@ -20,8 +20,7 @@ import androidx.room.Index
     ]
 )
 data class Task(
-    @PrimaryKey override val id: String = "",
-
+    @PrimaryKey override val id: String = UUID.randomUUID().toString(),
     override val owners: List<String> = listOf("local_user"),
     override val syncStatus: Int = 0,
 

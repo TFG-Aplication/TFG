@@ -1,9 +1,10 @@
 package com.asistente.core.models
 import androidx.room.PrimaryKey
 import com.google.firebase.firestore.Exclude
+import java.util.UUID
 
 open class BaseEntity(
-    open val id: String = "",
+    open val id: String =  UUID.randomUUID().toString(),
     open val owners: List<String> = listOf("local_user"),
     open val place: String ="",
     open val notes: String="",
