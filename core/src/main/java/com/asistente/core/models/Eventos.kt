@@ -10,6 +10,9 @@ open class BaseEntity(
     open val notes: String="",
     open val parentCalendarId: String = "",
 
+    open val color: String = "",
+
+
     open val category: Categoria = Categoria.Evento,
     open val name: String = "",
 

@@ -33,6 +33,8 @@ data class Task(
 
     override val parentCalendarId: String = "",
 
+    override val color: String = "",
+
     //atrib expecificos
     @set:ServerTimestamp
     var init_date: Date? = null,
@@ -41,4 +43,4 @@ data class Task(
     var finish_date: Date? = null,
 
 
-    ) : BaseEntity(id, owners, place, notes, parentCalendarId, category, name, syncStatus)
+    ) : BaseEntity(id, owners, place, notes, parentCalendarId, color, category, name, syncStatus)
