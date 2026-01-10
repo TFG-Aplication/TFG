@@ -4,11 +4,12 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
-
+    alias(libs.plugins.google.ksp) apply false
     // El plugin de Sonar
     alias(libs.plugins.sonarcloud)
     // El plugin de firebase
     id("com.google.gms.google-services") version "4.4.4" apply false
+    alias(libs.plugins.android.library) apply false
 }
 
 apply(plugin = "org.sonarqube")
