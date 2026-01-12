@@ -1,5 +1,4 @@
-package com.asistente.core.models
-import androidx.room.PrimaryKey
+package com.asistente.core.domain.models
 import com.google.firebase.firestore.Exclude
 import java.util.UUID
 

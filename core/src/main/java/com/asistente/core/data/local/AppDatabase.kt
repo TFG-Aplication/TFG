@@ -3,10 +3,12 @@ package com.asistente.core.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.asistente.core.local.daos.CalendarDao
-import com.asistente.core.local.daos.TaskDao
-import com.asistente.core.local.daos.UserDao
-import com.asistente.core.models.*
+import com.asistente.core.data.local.daos.CalendarDao
+import com.asistente.core.data.local.daos.TaskDao
+import com.asistente.core.data.local.daos.UserDao
+import com.asistente.core.domain.models.Calendar
+import com.asistente.core.domain.models.Task
+import com.asistente.core.domain.models.User
 
 // 1. Registramos todas las entidades que creamos
 @Database(

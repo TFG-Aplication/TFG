@@ -1,16 +1,21 @@
-package com.asistente.core.models
+package com.asistente.core.domain.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.firebase.firestore.Exclude
+import androidx.room.Index
 
-@Entity(tableName = "users")
+@Entity(tableName = "users",
+        indices = [Index(value = ["code"], unique = true), Index(value = ["email"], unique = true)]
+)
 data class User(
     @PrimaryKey
     val userId: String = "",
 
-    val use_name: String = "",
+    val useName: String = "",
     val email: String = "",
+    val code: String = "",
+
     val createdAt: Long = 0L,
 
 

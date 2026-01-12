@@ -1,4 +1,4 @@
-package com.asistente.core.models
+package com.asistente.core.domain.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -9,7 +9,7 @@ data class Calendar(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
-    val owners: List<String> = listOf("local_user"),
-
+    val owners: List<String> = emptyList(),
+    val isShared: Boolean = false,
     val syncStatus: Int = 0
 )

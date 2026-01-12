@@ -1,4 +1,4 @@
-package com.asistente.core.models
+package com.asistente.core.domain.models
 
 enum class Prioridad {
     Crítica,

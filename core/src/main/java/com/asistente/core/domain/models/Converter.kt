@@ -1,5 +1,5 @@
 import androidx.room.TypeConverter
-import com.asistente.core.models.Categoria
+import com.asistente.core.domain.models.Categoria
 import java.util.Date
 
 class Converters {
