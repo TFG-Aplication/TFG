@@ -20,7 +20,7 @@ interface CalendarDao {
     fun getCalendarById(id: String): Calendar?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCalendar(calendar: Calendar?)
+    suspend fun insertCalendar(calendar: Calendar)
 
     @Query("DELETE FROM calendars WHERE id = :id")
     suspend fun deleteCalendarById(id: String)

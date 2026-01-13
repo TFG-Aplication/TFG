@@ -20,7 +20,8 @@ class TaskRepository(
         var task = localTask.getTaskById(id)
         if (task == null)
             task = remoteTask.getTaskByIdRemote(id)
-        localTask.insertTask(task)
+            if (task != null)
+                localTask.insertTask(task)
 
         return task
     }

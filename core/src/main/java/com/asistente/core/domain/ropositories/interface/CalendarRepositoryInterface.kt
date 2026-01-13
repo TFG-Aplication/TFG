@@ -6,11 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface CalendarRepositoryInterface {
     suspend fun getCalendarById(id: String): Calendar?
-
-    suspend fun saveCalendar(Calendar: Calendar)
-
-    fun getAllCalendarByUserId(email: String): Flow<List<Calendar>>?
-
+    suspend fun saveCalendar(calendar: Calendar)
+    fun getAllCalendarByUserId(id: String): Flow<List<Calendar>>?
     suspend fun deleteCalendar(id: String, isShared: Boolean)
-
 }

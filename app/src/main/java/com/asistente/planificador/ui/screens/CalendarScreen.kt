@@ -17,7 +17,6 @@ import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -306,7 +305,6 @@ fun WheelPicker(
 ) {
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
 
-    // Detectar cuál está en el centro al dejar de mover
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress) {
             val centerIndex = listState.firstVisibleItemIndex
@@ -318,7 +316,6 @@ fun WheelPicker(
         modifier = Modifier.height(150.dp).width(120.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Líneas horizontales decorativas del centro
         HorizontalDivider(modifier = Modifier.offset(y = (-25).dp), thickness = 1.dp, color = Color.LightGray)
         HorizontalDivider(modifier = Modifier.offset(y = (25).dp), thickness = 1.dp, color = Color.LightGray)
 

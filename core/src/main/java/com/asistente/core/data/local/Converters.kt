@@ -1,3 +1,5 @@
+package com.asistente.core.data.local
+
 import androidx.room.TypeConverter
 import com.asistente.core.domain.models.Categoria
 import java.util.Date
@@ -28,12 +30,12 @@ class Converters {
 
 //list en room (usuarios)
     @TypeConverter
-    fun fromStringList(value: List<String>): String {
-        return value.joinToString(",")
+    fun fromStringList(value: List<String>?): String {
+        return value?.joinToString(",") ?: ""
     }
 
     @TypeConverter
-    fun toStringList(value: String): List<String> {
-        return value.split(",").filter { it.isNotEmpty() }
+    fun toStringList(value: String?): List<String> {
+        return value?.split(",")?.filter { it.isNotEmpty() } ?: emptyList()
     }
 }

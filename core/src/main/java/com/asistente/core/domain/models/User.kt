@@ -6,7 +6,7 @@ import com.google.firebase.firestore.Exclude
 import androidx.room.Index
 
 @Entity(tableName = "users",
-        indices = [Index(value = ["code"], unique = true), Index(value = ["email"], unique = true)]
+    indices = [Index(value = ["code"], unique = true), Index(value = ["email"], unique = true)]
 )
 data class User(
     @PrimaryKey

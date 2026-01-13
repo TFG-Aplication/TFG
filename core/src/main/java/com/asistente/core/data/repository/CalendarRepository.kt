@@ -19,7 +19,8 @@ class CalendarRepository(
         var calendar = localCalendar.getCalendarById(id)
         if (calendar == null)
             calendar = remoteCalendar.getCalendarByIdRemote(id)
-            localCalendar.insertCalendar(calendar)
+            if (calendar != null)
+                localCalendar.insertCalendar(calendar)
 
         return calendar
     }
@@ -36,7 +37,7 @@ class CalendarRepository(
                         localCalendar.deleteCalendarById(local.id)
                     }
                 }
-                // si otrapersona ha creado nuevos calendarios compartidos actualiza el room
+                // si otra persona ha creado nuevos calendarios compartidos actualiza el room
                 remoteCalendars.forEach { localCalendar.insertCalendar(it) }
 
             } catch (e: Exception) { }
