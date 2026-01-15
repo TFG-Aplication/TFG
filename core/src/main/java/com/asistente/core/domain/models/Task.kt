@@ -21,19 +21,14 @@ import java.util.UUID
 )
 data class Task(
     @PrimaryKey override val id: String = UUID.randomUUID().toString(),
-    override val owners: List<String> = listOf("local_user"),
+    override val owners: List<String> = emptyList(),
     override val syncStatus: Int = 0,
 
     override val place: String ="",
     override val notes: String="",
-
-    override val category: Categoria = Categoria.Evento,
-
     override val name: String = "",
 
     override val parentCalendarId: String = "",
-
-    override val color: String = "",
 
     //atrib expecificos
     @set:ServerTimestamp
@@ -43,4 +38,4 @@ data class Task(
     var finish_date: Date? = null,
 
 
-    ) : BaseEntity(id, owners, place, notes, parentCalendarId, color, category, name, syncStatus)
+    ) : BaseEntity(id, owners, place, notes, parentCalendarId, name, syncStatus)

@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.asistente.core.domain.models.Calendar
+import com.asistente.core.domain.models.User
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -24,4 +25,7 @@ interface CalendarDao {
 
     @Query("DELETE FROM calendars WHERE id = :id")
     suspend fun deleteCalendarById(id: String)
+
+    @Query("SELECT * FROM calendars where code = :code")
+    fun getUsersByCodeQR(code: String): Calendar?
 }

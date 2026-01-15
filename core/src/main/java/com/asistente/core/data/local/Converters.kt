@@ -1,7 +1,6 @@
 package com.asistente.core.data.local
 
 import androidx.room.TypeConverter
-import com.asistente.core.domain.models.Categoria
 import java.util.Date
 
 class Converters {

@@ -9,6 +9,7 @@ data class Calendar(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
+    val code: String = "",
     val owners: List<String> = emptyList(),
     val isShared: Boolean = false,
     val syncStatus: Int = 0

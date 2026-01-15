@@ -14,9 +14,6 @@ interface UserDao {
     @Query("SELECT * FROM users where email = :email LIMIT 1")
     fun getUsersByEmail(email: String): User?
 
-    @Query("SELECT * FROM users where code = :code")
-    fun getUsersByCodeQR(code: String): User?
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: User)
 

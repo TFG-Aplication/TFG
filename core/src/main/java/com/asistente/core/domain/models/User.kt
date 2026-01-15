@@ -14,7 +14,6 @@ data class User(
 
     val useName: String = "",
     val email: String = "",
-    val code: String = "",
 
     val createdAt: Long = 0L,
 
