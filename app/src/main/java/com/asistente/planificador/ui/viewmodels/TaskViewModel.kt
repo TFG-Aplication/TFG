@@ -18,10 +18,8 @@ data class TaskFormState(
     val name: String = "",
     val notes: String = "",
     val place: String = "",
-    val color: String = "#99CCFF",
     val initDate: Date = Date(),
     val finishDate: Date = Date().apply { time += 3600000 },
-    val category: Categoria? = Categoria.Evento,
     val calendar: Calendar? = null,
     val owners: List<String> = listOf("local_user"),
     val syncStatus: Int = 0,
@@ -63,8 +61,6 @@ class TaskViewModel (
                 val actualCalenda = actual.calendar
                     ?: throw Exception("Error al vincular con el calendario")
 
-                val selectedCategory = actual.category
-                    ?: Categoria.Evento
 
                 // LLAMADA A TU USE CASE (Invoke)
                 createTaskUseCase(
@@ -72,8 +68,6 @@ class TaskViewModel (
                     name = actual.name,
                     notes = actual.notes,
                     place = actual.place,
-                    category = selectedCategory,
-                    color = actual.color,
                     init_date = actual.initDate,
                     finich_date = actual.finishDate,
                     calendar = actualCalenda,

@@ -5,17 +5,6 @@ import java.util.Date
 
 class Converters {
 
-//categorias enum en room
-    @TypeConverter
-    fun fromPriority(categoria: Categoria): String {
-        return categoria.name
-    }
-
-    @TypeConverter
-    fun toPriority(categoria: String): Categoria {
-        return Categoria.valueOf(categoria)
-    }
-
 //fechas en room
     @TypeConverter
     fun fromTimestamp(value: Long?): Date? {
