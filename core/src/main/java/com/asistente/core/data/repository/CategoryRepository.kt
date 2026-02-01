@@ -37,11 +37,17 @@ class CategoryRepository @Inject constructor(
 
                 val remoteIds = remoteCategorys.map { it.id }
                 localCategorys.forEach { local ->
-                    if (!remoteIds.contains(local.id)) {
+                    if (local.syncStatus == 1 && !remoteIds.contains(local.id)) {
                         localCategory.deleteCategoryById(local.id)
                     }
+                    if (local.syncStatus == 0 && !remoteIds.contains(local.id)) {
+                        remoteCategory.saveCategoryRemote(local)
+                        local.syncStatus = 1
+                    }
                 }
-                remoteCategorys.forEach { localCategory.insertCategory(it) }
+                remoteCategorys.forEach { remote ->
+                    localCategory.insertCategory(remote.copy(syncStatus = 1))
+                }
             } catch (e: Exception) {
             }
         }
@@ -52,7 +58,13 @@ class CategoryRepository @Inject constructor(
         // Guarda en Room -> Sube a FireBase
         localCategory.insertCategory(Category)
         externalScope.launch {
-            remoteCategory.saveCategoryRemote(Category)
+            val success = remoteCategory.saveCategoryRemote(Category)
+            if (success) {
+                // SOLO si Firebase confirma, actualizamos local a status 1
+                localCategory.insertCategory(Category.copy(syncStatus = 1))
+
+            }
+
         }
     }
 
