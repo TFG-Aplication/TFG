@@ -18,5 +18,5 @@ data class Calendar(
     val code: String = "",
     val owners: List<String> = emptyList(),
     val isShared: Boolean = false,
-    val syncStatus: Int = 0
+    var syncStatus: Int = 0
 )

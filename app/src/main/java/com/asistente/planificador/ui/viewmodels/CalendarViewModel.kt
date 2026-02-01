@@ -3,14 +3,17 @@ package com.asistente.core.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asistente.core.domain.models.Calendar
-import com.asistente.core.domain.ropositories.`interface`.CalendarRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterface
 import com.asistente.core.domain.usecase.calendar.CreateCalendar
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class CalendarViewModel(
+@HiltViewModel
+class CalendarViewModel @Inject constructor(
     private val createCalendarUseCase: CreateCalendar,
-    private val repository: CalendarRepositoryInterface
+    private val repository: CalendarRepositoryInterface,
 ) : ViewModel() {
 
     // El ID que usaremos mientras no haya login
@@ -30,10 +33,8 @@ class CalendarViewModel(
 
     private fun ensureFirstCalendarExists() {
         viewModelScope.launch {
-            // Obtenemos la lista actual (esperamos al primer valor de Room)
-            val currentList = calendars.value.ifEmpty {
-                repository.getAllCalendarByUserId(userId)?.firstOrNull() ?: emptyList()
-            }
+            val currentList = repository.getAllCalendarByUserId(userId)?.firstOrNull() ?: emptyList()
+
 
             if (currentList.isEmpty()) {
                 createCalendarUseCase(name = "Mi primer calendario")
@@ -41,10 +42,5 @@ class CalendarViewModel(
         }
     }
 
-    // crear nuevos calendarios manualmente
-    fun createNewCalendar(name: String) {
-        viewModelScope.launch {
-            createCalendarUseCase(name = name)
-        }
-    }
+
 }

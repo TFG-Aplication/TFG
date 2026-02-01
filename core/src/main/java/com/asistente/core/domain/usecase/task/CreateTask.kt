@@ -1,12 +1,14 @@
 package com.asistente.core.domain.usecase.task
 
 import com.asistente.core.domain.models.Calendar
+import com.asistente.core.domain.models.Category
 import com.asistente.core.domain.models.Task
-import com.asistente.core.domain.ropositories.`interface`.TaskRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
 import java.util.Date
 import java.util.UUID
+import javax.inject.Inject
 
-class CreateTask (
+class CreateTask @Inject constructor(
     private val repository: TaskRepositoryInterface
 ) {
     /**
@@ -14,19 +16,18 @@ class CreateTask (
      * Si no se pasa un ID, genera uno nuevo (Creación).
      */
 
-
-    // crear restriccion de no dos task en el mismo horario en la misma fecha
-    // crear restrciion de no id duplicado
     suspend operator fun invoke(
         id: String = UUID.randomUUID().toString(),
         name: String,
         owners: List<String> = listOf("local_user"),
-        place: String,
-        notes: String,
+        place: String?,
+        notes: String?,
         init_date: Date,
         finich_date: Date,
         syncStatus: Int = 0,
-        calendar: Calendar
+        calendar: Calendar,
+        category: Category?,
+        alerts: List<Long>?
         ) {
 
         val task = Task(
@@ -38,7 +39,9 @@ class CreateTask (
             init_date = init_date,
             finish_date = finich_date,
             parentCalendarId = calendar.id,
-            syncStatus = syncStatus
+            syncStatus = syncStatus,
+            categoryId = if(category != null) category.id else null,
+            alerts = alerts
             )
 
         repository.saveTask(task, calendar.isShared)

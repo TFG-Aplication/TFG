@@ -9,11 +9,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,10 +26,11 @@ import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.components.CalendarView
 import com.asistente.planificador.ui.components.FootPage
 import com.asistente.planificador.ui.components.HeaderPage
+import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import java.time.YearMonth
 
 @Composable
-fun MainCalendar(viewModel: CalendarViewModel) {
+fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel, onNavigateToTask: () -> Unit) {
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
     var currentTab by remember { mutableStateOf("calendar") }
@@ -37,6 +38,7 @@ fun MainCalendar(viewModel: CalendarViewModel) {
     var monthToJump by remember { mutableStateOf<YearMonth?>(null) }
 
     var expandedMenu by remember { mutableStateOf(false) }
+    var showCategoryShow by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -67,11 +69,11 @@ fun MainCalendar(viewModel: CalendarViewModel) {
                 // Solo mostramos los botones pequeños si el menú está abierto
                 if (expandedMenu) {
 
-                    FabMenuItem(label = "Trabajo", icon = Icons.Default.Work) { /* Acción */ }
+                    FabMenuItem(label = "Personalizar Categorías", icon = Icons.Default.Bookmarks) { showCategoryShow = true }
                     FabMenuItem(label = "Recordatorio", icon = Icons.Default.Lightbulb) { /* Acción */ }
                     FabMenuItem(label = "Cumpleaños", icon = Icons.Default.Cake) { /* Acción */ }
                     FabMenuItem(label = "Actividad", icon = Icons.Default.Assignment) { /* Acción */ }
-                    FabMenuItem(label = "Tarea", icon = Icons.Default.CheckCircle) { /* Acción */ }
+                    FabMenuItem(label = "Tarea", icon = Icons.Default.CheckCircle) { onNavigateToTask() }
                 }
 
                 // Botón Principal (El que tiene la X o el +)
@@ -123,6 +125,12 @@ fun MainCalendar(viewModel: CalendarViewModel) {
                     ) {
                         expandedMenu = false
                     }
+            )
+        }
+        if (showCategoryShow) {
+            CategoryShow(
+                viewModel = categoriesViewModel,
+                onBack = { showCategoryShow = false }
             )
         }
     }
