@@ -1,9 +1,9 @@
-package com.asistente.core.domain.ropositories.`interface`
+package com.asistente.core.domain.ropositories.interfaz
 
 import com.asistente.core.domain.models.Calendar
-import com.asistente.core.domain.models.User
 import kotlinx.coroutines.flow.Flow
 
+//necesaria pa reducir desacomplamiento
 interface CalendarRepositoryInterface {
     suspend fun getCalendarById(id: String): Calendar?
     suspend fun saveCalendar(calendar: Calendar)
