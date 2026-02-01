@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -24,7 +25,7 @@ import java.time.temporal.TemporalAdjusters
 
 @Composable
 fun SemanalScreen(
-    viewModel: CalendarViewModel,
+    viewModel: CalendarViewModel = hiltViewModel(),
     onMonthChanged: (YearMonth) -> Unit,
     jumpToMonth: YearMonth? = null,
     onJumpFinished: () -> Unit = {}

@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -30,8 +31,8 @@ val ColorGrisFondo = Color(0xFFEFEFEF)
 val ColorGrisOscuro = Color(0xFF555555)
 
 @Composable
-fun CalendarScreen(
-    viewModel: CalendarViewModel,
+fun CalendarScreen (
+    viewModel: CalendarViewModel = hiltViewModel(),
     onMonthChanged: (YearMonth) -> Unit,
     jumpToMonth: YearMonth? = null,
     onJumpFinished: () -> Unit = {}
