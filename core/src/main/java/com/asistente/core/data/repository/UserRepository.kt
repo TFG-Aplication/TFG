@@ -3,9 +3,10 @@ package com.asistente.core.data.repository
 import com.asistente.core.data.local.daos.UserDao
 import com.asistente.core.data.remote.UserRemoteService
 import com.asistente.core.domain.models.User
-import com.asistente.core.domain.ropositories.`interface`.UserRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.UserRepositoryInterface
+import javax.inject.Inject
 
-class UserRepository (
+class UserRepository @Inject constructor(
 
     private val localUser: UserDao,
     private val remoteUser: UserRemoteService
