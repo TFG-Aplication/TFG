@@ -3,13 +3,14 @@ package com.asistente.core.data.repository
 import com.asistente.core.data.local.daos.RecordatoryDao
 import com.asistente.core.data.remote.RecordatoryRemoteServices
 import com.asistente.core.domain.models.Recordatory
-import com.asistente.core.domain.ropositories.`interface`.RecodatoryRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.RecodatoryRepositoryInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RecordatoryRepository (
+class RecordatoryRepository @Inject constructor(
     private val localRecordatory: RecordatoryDao,
 
     private val remoteRecordatory: RecordatoryRemoteServices,

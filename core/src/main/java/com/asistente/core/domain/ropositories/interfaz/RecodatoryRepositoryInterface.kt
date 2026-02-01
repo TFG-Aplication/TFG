@@ -1,4 +1,4 @@
-package com.asistente.core.domain.ropositories.`interface`
+package com.asistente.core.domain.ropositories.interfaz
 
 import com.asistente.core.domain.models.Recordatory
 import kotlinx.coroutines.flow.Flow

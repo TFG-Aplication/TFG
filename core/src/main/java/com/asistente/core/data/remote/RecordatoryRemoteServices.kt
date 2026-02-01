@@ -3,8 +3,9 @@ package com.asistente.core.data.remote
 import com.asistente.core.domain.models.Recordatory
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class RecordatoryRemoteServices (
+class RecordatoryRemoteServices @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
     private val collection = firestore.collection("Recordatorys")
