@@ -3,15 +3,15 @@ package com.asistente.core.data.repository
 import com.asistente.core.data.local.daos.CategoryDao
 import com.asistente.core.data.remote.CategoryRemoteServices
 import com.asistente.core.domain.models.Category
-import com.asistente.core.domain.ropositories.`interface`.CategoryRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.CategoryRepositoryInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class CategoryRepository (
+class CategoryRepository @Inject constructor(
     private val localCategory: CategoryDao,
-
     private val remoteCategory: CategoryRemoteServices,
     private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -21,31 +21,11 @@ class CategoryRepository (
         var Category = localCategory.getCategoryById(id)
         if (Category == null)
             Category = remoteCategory.getCategoryByIdRemote(id)
-        if (Category != null)
-            localCategory.insertCategory(Category)
+            if (Category != null) {
+                localCategory.insertCategory(Category)
+            }
 
         return Category
-    }
-
-    override fun getAllCategoryByUserId(id: String): Flow<List<Category>> {
-        externalScope.launch {
-            try {
-                val remoteCategorys = remoteCategory.getAllCategorysByUserIdRemote(id)
-                val localCategorys = localCategory.getAllCategoryListByUserId(id)
-                val remoteIds = remoteCategorys.map { it.id }
-                localCategorys.forEach { local ->
-                    if (!remoteIds.contains(local.id)) {
-                        localCategory.deleteCategoryById(local.id)
-                    }
-                }
-                remoteCategorys.forEach { remote ->
-                    localCategory.insertCategory(remote)
-                }
-
-            } catch (e: Exception) {
-            }
-        }
-        return localCategory.getAllCategorysByUserId(id)
     }
 
     override fun getAllCategoryByCalendarId(calendarId: String): Flow<List<Category>> {
@@ -68,20 +48,11 @@ class CategoryRepository (
         return localCategory.getAllCategorysByCalendarId(calendarId)
     }
 
-    override suspend fun saveCategory(Category: Category, isSharedCalendar: Boolean) {
-        if (isSharedCalendar) {
-            val success = remoteCategory.saveCategoryRemote(Category)
-            if (success) {
-                localCategory.insertCategory(Category)
-            } else {
-                throw Exception("Conexión necesaria para modificar calendarios compartidos")
-            }
-        } else {
-            // si calendario es normal
-            localCategory.insertCategory(Category)
-            externalScope.launch {
-                remoteCategory.saveCategoryRemote(Category)
-            }
+    override suspend fun saveCategory(Category: Category) {
+        // Guarda en Room -> Sube a FireBase
+        localCategory.insertCategory(Category)
+        externalScope.launch {
+            remoteCategory.saveCategoryRemote(Category)
         }
     }
 

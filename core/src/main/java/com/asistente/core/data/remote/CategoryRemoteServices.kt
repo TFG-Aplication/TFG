@@ -3,8 +3,9 @@ package com.asistente.core.data.remote
 import com.asistente.core.domain.models.Category
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class CategoryRemoteServices  ( 
+class CategoryRemoteServices  @Inject constructor(
 private val firestore: FirebaseFirestore
 ) {
     private val collection = firestore.collection("Categorys")
@@ -15,18 +16,6 @@ private val firestore: FirebaseFirestore
             document.toObject(Category::class.java)
         } catch (e: Exception) {
             null
-        }
-    }
-
-    suspend fun getAllCategorysByUserIdRemote(userid: String): List<Category> {
-        return try {
-            val data = collection
-                .whereArrayContains("owners", userid)
-                .get()
-                .await()
-            data.toObjects(Category::class.java)
-        } catch (e: Exception) {
-            emptyList()
         }
     }
 

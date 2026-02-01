@@ -9,12 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoryDao {
-    
-        @Query("SELECT * FROM categories where owners LIKE '%' || :id || '%'")
-        fun getAllCategorysByUserId(id: String): Flow<List<Category>>
-
-        @Query("SELECT * FROM categories where owners LIKE '%' || :id || '%'")
-        fun getAllCategoryListByUserId(id: String): List<Category>
 
         @Query("SELECT * FROM categories where parentCalendarId LIKE :id")
         fun getAllCategorysByCalendarId(id: String): Flow<List<Category>>
