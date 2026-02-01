@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 import java.util.UUID
+import javax.annotation.Nonnull
 
 @Entity(
     tableName = "recordatories",
@@ -23,9 +24,12 @@ data class Recordatory(
     var owners: List<String> = emptyList(),
     var syncStatus: Int = 0,
     var description: String="",
+    @Nonnull
     var name: String = "",
+    @Nonnull
     var parentCalendarId: String = "",
     var color: String = "",
+    @Nonnull
     @set:ServerTimestamp
     var date: Date? = null,
 

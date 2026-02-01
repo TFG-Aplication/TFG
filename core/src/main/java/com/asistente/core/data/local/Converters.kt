@@ -26,4 +26,17 @@ class Converters {
     fun toStringList(value: String?): List<String> {
         return value?.split(",")?.filter { it.isNotEmpty() } ?: emptyList()
     }
+
+
+
+//list en room (alert)
+@TypeConverter
+fun fromLongList(value: List<Long>?): String? {
+    return value?.joinToString(separator = ",")
+}
+
+@TypeConverter
+fun toLongList(value: String?): List<Long>? {
+    return value?.split(",")?.map { it.toLong() }
+}
 }

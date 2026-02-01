@@ -15,7 +15,7 @@ import com.asistente.core.domain.models.Category
 import com.asistente.core.domain.models.Task
 
 
-@Database(
+@Database (
     entities = [
         User::class,
         Calendar::class,
@@ -23,7 +23,7 @@ import com.asistente.core.domain.models.Task
         Category::class,
         Recordatory::class
     ],
-    version = 2,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
