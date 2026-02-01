@@ -3,10 +3,11 @@ package com.asistente.core.data.remote
 import com.asistente.core.domain.models.Task
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 import kotlin.text.get
 import kotlin.text.set
 
-class TaskRemoteServices(
+class TaskRemoteServices @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
     private val collection = firestore.collection("tasks")

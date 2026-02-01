@@ -3,14 +3,15 @@ package com.asistente.core.data.repository
 import com.asistente.core.data.local.daos.TaskDao
 import com.asistente.core.data.remote.TaskRemoteServices
 import com.asistente.core.domain.models.Task
-import com.asistente.core.domain.ropositories.`interface`.TaskRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
-class TaskRepository(
+class TaskRepository @Inject constructor(
     private val localTask: TaskDao,
     private val remoteTask: TaskRemoteServices,
     private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
