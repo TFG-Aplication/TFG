@@ -1,6 +1,9 @@
 package com.asistente.planificador.ui.screens
 
 import SelectionDate
+import android.graphics.Color.parseColor
+import androidx.core.graphics.ColorUtils
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -295,37 +298,59 @@ fun TaskForm(
             HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp), thickness = 0.5.dp)
 
             //  SELECTOR DE CATEGORÍAS
-            ExposedDropdownMenuBox(
-                expanded = expandedCategorySelector,
-                onExpandedChange = { expandedCategorySelector = !expandedCategorySelector }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 10.dp)
+                    .clickable { expandedCategorySelector = true },
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = uiState.category?.name ?: "Seleccionar Categoría",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Categoría") },
-                    leadingIcon = { Icon(Icons.Default.Category, null) }, // Cambié el icono a uno de categoría
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategorySelector) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                Icon(
+                    imageVector = Icons.Default.Folder, // Icono de carpeta como en tu imagen
+                    contentDescription = null,
+                    tint = Primario,
+                    modifier = Modifier.size(32.dp)
                 )
-                ExposedDropdownMenu(
-                    expanded = expandedCategorySelector,
-                    onDismissRequest = { expandedCategorySelector = false }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    text = "Establecer categoría",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                    color = Color.Black
+                )
+
+                // El "Botón" de la categoría seleccionada
+                Surface(
+                    color = uiState.category?.let { Color(parseColor(it.color)) } ?: Color.White,
+                    shape = RoundedCornerShape(8.dp),
+                    border = if (uiState.category == null) BorderStroke(1.dp, Terciario) else null,
+                    modifier = Modifier.wrapContentSize()
                 ) {
-                    if (category.isEmpty()) {
-                        DropdownMenuItem(text = { Text("Cargando categorías...") }, onClick = { }, enabled = false)
-                    } else {
-                        category.forEach { cat ->
-                            DropdownMenuItem(
-                                text = { Text(cat.name) },
-                                onClick = {
-                                    viewModel.onCategoryChanged(cat)
-                                    expandedCategorySelector = false
-                                }
-                            )
-                        }
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = uiState.category?.name?.uppercase() ?: "Seleccionar Categoría",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = uiState.category?.let {
+                                darkenColor(Color(parseColor(it.color)))
+                            } ?: Terciario
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = uiState.category?.let {
+                                darkenColor(Color(parseColor(it.color)))
+                            } ?: Terciario
+                        )
                     }
                 }
             }
@@ -333,6 +358,53 @@ fun TaskForm(
             if (uiState.error != null) {
                 Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
+        }
+
+
+        //dialogo de la categoria
+        if (expandedCategorySelector) {
+            AlertDialog(
+                onDismissRequest = { expandedCategorySelector = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+                modifier = Modifier.fillMaxWidth(0.85f).fillMaxHeight(0.6f),
+                containerColor = Color.White,
+                shape = RoundedCornerShape(20.dp),
+                title = { Text("Seleccionar Categoría", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                text = {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(category) { cat ->
+                            val catColor = Color(parseColor(cat.color))
+                            Surface(
+                                color = catColor,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        viewModel.onCategoryChanged(cat)
+                                        expandedCategorySelector = false
+                                    }
+                            ) {
+                                Text(
+                                    text = cat.name.uppercase(),
+                                    modifier = Modifier.padding(vertical = 12.dp),
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = darkenColor(catColor) // Texto más oscuro que el fondo
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { expandedCategorySelector = false }) {
+                        Text("CANCELAR", color = Primario)
+                    }
+                }
+            )
         }
 
         // dialogo del calendario
@@ -471,4 +543,29 @@ fun formatTime(date: java.util.Date): String {
 fun formatDate(date: java.util.Date): String {
     val sdf = java.text.SimpleDateFormat("EEE, d MMM yyyy", java.util.Locale("es", "ES"))
     return sdf.format(date).replaceFirstChar { it.uppercase() }
+}
+
+fun darkenColor(color: Color): Color {
+    val hsl = FloatArray(3)
+    // Convertimos el color de Compose a Color de Android (Int)
+    val colorInt = android.graphics.Color.argb(
+        (color.alpha * 255).toInt(),
+        (color.red * 255).toInt(),
+        (color.green * 255).toInt(),
+        (color.blue * 255).toInt()
+    )
+
+    // Pasamos a HSL
+    ColorUtils.RGBToHSL(
+        (color.red * 255).toInt(),
+        (color.green * 255).toInt(),
+        (color.blue * 255).toInt(),
+        hsl
+    )
+
+    // Bajamos la luminosidad (el índice 2 del array HSL)
+    // 0.4f es un buen valor para que se vea bastante más oscuro que el fondo
+    hsl[2] = (hsl[2] * 0.4f).coerceIn(0f, 1f)
+
+    return Color(ColorUtils.HSLToColor(hsl))
 }
