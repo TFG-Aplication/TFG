@@ -2,7 +2,9 @@ package com.asistente.planificador.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asistente.core.domain.models.Calendar
+import com.asistente.core.domain.models.Calendar as CalendarModel
+import com.asistente.core.domain.models.Category
+import com.asistente.core.domain.usecase.Category.GetListCategory
 import com.asistente.core.domain.usecase.calendar.GetListCalendars
 import com.asistente.core.domain.usecase.task.CreateTask
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,10 +12,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -26,34 +32,46 @@ data class TaskFormState  (
     //val place: String = "",
     val initDate: Date = Date(),
     val finishDate: Date = Date().apply { time += 3600000 },
-    val calendar: Calendar? = null,
+    val calendar: CalendarModel? = null,
     val owners: List<String> = listOf("local_user"),
     //val syncStatus: Int = 0,
     val error: String? = null,
     //val alerts: List<Long> = listOf(15),
-    //val category: Category = Category(),
+    val category: Category? = null,
     //val isAllDay: Boolean = false
 )
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val createTaskUseCase: CreateTask,
-    private val getCalendarsUseCase: GetListCalendars // Cambié el nombre a uno más claro
+    private val getCalendarsUseCase: GetListCalendars,
+    private val getCategoryUseCase: GetListCategory
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TaskFormState())
     val uiState: StateFlow<TaskFormState> = _uiState.asStateFlow()
     private val userId = "local_user"
 
-    // lista calendarios
-    val calendarsList: StateFlow<List<Calendar>> = (getCalendarsUseCase(userId) ?: flowOf(emptyList()))
+    // Lista de Calendarios del usuario
+    val calendarsList: StateFlow<List<CalendarModel>> = (getCalendarsUseCase(userId) ?: flowOf(emptyList()))
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
 
+    // Lista de Categorías reactiva al calendario seleccionado
+    val categoryList: StateFlow<List<Category>> = _uiState
+        .map { it.calendar?.id } // Observamos solo el ID del calendario actual
+        .distinctUntilChanged()
+        .flatMapLatest { calendarId ->
+            if (calendarId == null) flowOf(emptyList())
+            else getCategoryUseCase(calendarId) ?: flowOf(emptyList())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
+        // Autoselección inicial
         viewModelScope.launch {
             calendarsList.collect { list ->
                 if (list.isNotEmpty() && _uiState.value.calendar == null) {
@@ -61,55 +79,101 @@ class TaskViewModel @Inject constructor(
                 }
             }
         }
+
+        // Autoselección de categoría al cambiar de calendario
+        viewModelScope.launch {
+            categoryList.collect { list ->
+                // Si cambias de calendario y la categoría actual no pertenece al nuevo,
+                // seleccionamos la primera por defecto o null
+                if (list.isNotEmpty()) {
+                    onCategoryChanged(list.first())
+                } else {
+                    _uiState.update { it.copy(category = null) }
+                }
+            }
+        }
     }
 
-
-
-    fun onCalendarChanged(newCalendar: Calendar) {
+    fun onCalendarChanged(newCalendar: CalendarModel) {
         _uiState.update { it.copy(calendar = newCalendar) }
     }
 
-    // cambio nombre tarea
+    fun onCategoryChanged(newCategory: Category?) {
+        _uiState.update { it.copy(category = newCategory) }
+    }
+
     fun onNameChanged(newName: String) {
         _uiState.update { it.copy(name = newName) }
     }
 
+    // ACTUALIZACIÓN DE FECHA (Día/Mes/Año)
+    fun onDateChanged(millis: Long, isStart: Boolean) {
+        val calendarHelper = Calendar.getInstance()
+        val currentSelectedDate = if (isStart) _uiState.value.initDate else _uiState.value.finishDate
 
-    // cambio hora
-    fun onTimeChanged(hour: Int, minute: Int, isInit: Boolean) {
-        _uiState.update { state ->
-            val calendar = java.util.Calendar.getInstance()
-            calendar.time = if (isInit) state.initDate else state.finishDate
-            calendar.set(java.util.Calendar.HOUR_OF_DAY, hour)
-            calendar.set(java.util.Calendar.MINUTE, minute)
+        // Tomamos la hora actual que ya estaba puesta
+        calendarHelper.time = currentSelectedDate
+        val hour = calendarHelper.get(Calendar.HOUR_OF_DAY)
+        val minute = calendarHelper.get(Calendar.MINUTE)
 
-            if (isInit) state.copy(initDate = calendar.time)
-            else state.copy(finishDate = calendar.time)
+        // Aplicamos el nuevo día desde los millis
+        calendarHelper.timeInMillis = millis
+        calendarHelper.set(Calendar.HOUR_OF_DAY, hour)
+        calendarHelper.set(Calendar.MINUTE, minute)
+
+        updateAndValidateDates(calendarHelper.time, isStart)
+    }
+
+    // ACTUALIZACIÓN DE HORA (Hora/Minuto)
+    fun onTimeChanged(hour: Int, minute: Int, isStart: Boolean) {
+        val calendarHelper = Calendar.getInstance()
+        calendarHelper.time = if (isStart) _uiState.value.initDate else _uiState.value.finishDate
+
+        calendarHelper.set(Calendar.HOUR_OF_DAY, hour)
+        calendarHelper.set(Calendar.MINUTE, minute)
+
+        updateAndValidateDates(calendarHelper.time, isStart)
+    }
+
+    private fun updateAndValidateDates(newDate: Date, isStart: Boolean) {
+        _uiState.update { currentState ->
+            val updatedInit = if (isStart) newDate else currentState.initDate
+            val updatedFinish = if (!isStart) newDate else currentState.finishDate
+
+            //  de lógica temporal
+            val error = when {
+                updatedFinish.before(updatedInit) -> {
+                    "La fecha/hora de fin no puede ser anterior a la de inicio"
+                }
+
+                updatedFinish.time == updatedInit.time -> {
+                    "La tarea debe durar al menos un minuto"
+                }
+
+                // 3. Todo correcto
+                else -> null
+            }
+
+            currentState.copy(
+                initDate = updatedInit,
+                finishDate = updatedFinish,
+                error = error
+            )
         }
     }
 
-    //guardar
+
     fun saveTask() {
         val actual = _uiState.value
-        android.util.Log.d("TaskViewModel", "Guardando tarea: $actual")
-
-
         if (actual.name.isBlank()) {
             _uiState.update { it.copy(error = "El nombre es obligatorio") }
             return
         }
 
-        //lanzamos corrutina para el proceso suspendido
         viewModelScope.launch {
-            _uiState.update { it.copy(error = null) }
-
             try {
+                val actualCalenda = actual.calendar ?: throw Exception("Error al vincular con el calendario")
 
-                val actualCalenda = actual.calendar
-                    ?: throw Exception("Error al vincular con el calendario")
-
-
-                // LLAMADA A TU USE CASE (Invoke)
                 createTaskUseCase(
                     id = actual.id,
                     name = actual.name,
@@ -119,10 +183,9 @@ class TaskViewModel @Inject constructor(
                     finich_date = actual.finishDate,
                     calendar = actualCalenda,
                     owners = actual.owners,
-                    category = null,
+                    category = actual.category,
                     alerts = null
                 )
-
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error al guardar: ${e.message}") }
             }
