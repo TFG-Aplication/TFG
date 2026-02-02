@@ -193,7 +193,7 @@ fun TaskForm(
                     Text(
                         text = "Calendario",
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         color = Color.Black,
                         lineHeight = 10.sp
                     )
@@ -214,7 +214,7 @@ fun TaskForm(
 
             HorizontalDivider(modifier = Modifier.padding(top = 0.dp, bottom = 2.dp), thickness = 0.5.dp)
 
-            // Horas
+            // Horas y fechas
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -244,7 +244,7 @@ fun TaskForm(
                         modifier = Modifier
                             .weight(1f)
                             .clickable { showStartDatePicker = true }, // SOLO CALENDARIO
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         color = Color.Black
                     )
 
@@ -252,7 +252,7 @@ fun TaskForm(
                     Text(
                         text = formatTime(uiState.initDate),
                         modifier = Modifier.clickable { showStartTimePicker = true }, // SOLO RELOJ
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
@@ -277,7 +277,7 @@ fun TaskForm(
                         modifier = Modifier
                             .weight(1f)
                             .clickable { showEndDatePicker = true }, // SOLO CALENDARIO
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         color = Color.Black
                     )
 
@@ -285,7 +285,7 @@ fun TaskForm(
                     Text(
                         text = formatTime(uiState.finishDate),
                         modifier = Modifier.clickable { showEndTimePicker = true }, // SOLO RELOJ
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )

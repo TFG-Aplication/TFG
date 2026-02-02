@@ -24,7 +24,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.graphics.ColorUtils
 import com.asistente.core.domain.models.Category
 
-
 @Composable
 fun CategoryField(
     selectedCategory: Category?,
@@ -55,13 +54,15 @@ fun CategoryField(
             color = Color.Black
         )
 
-        val backgroundColor = selectedCategory?.let { Color(parseColor(it.color)) } ?: Color.White
+        // estado "Ninguna" (null) (lo permite la bd)
+        val backgroundColor = selectedCategory?.let { Color(parseColor(it.color)) } ?: Color.Transparent
         val contentColor = selectedCategory?.let { darkenColor(backgroundColor) } ?: Terciario
+        val border = if (selectedCategory == null) BorderStroke(1.dp, Terciario.copy(alpha = 0.5f)) else null
 
         Surface(
             color = backgroundColor,
             shape = RoundedCornerShape(8.dp),
-            border = if (selectedCategory == null) BorderStroke(1.dp, Terciario) else null,
+            border = border,
             modifier = Modifier.wrapContentSize()
         ) {
             Row(
@@ -69,8 +70,8 @@ fun CategoryField(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = selectedCategory?.name?.uppercase() ?: "SELECCIONAR",
-                    fontSize = 13.sp,
+                    text = selectedCategory?.name?.uppercase() ?: "NINGUNA",
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = contentColor
                 )
@@ -78,17 +79,18 @@ fun CategoryField(
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(16.dp),
                     tint = contentColor
                 )
             }
         }
     }
 }
+
 @Composable
 fun CategorySelector(
     categories: List<Category>,
-    onCategorySelected: (Category) -> Unit,
+    onCategorySelected: (Category?) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -103,6 +105,31 @@ fun CategorySelector(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
+                // OPCIÓN POR DEFECTO: NINGUNA
+                item {
+                    Surface(
+                        color = Color.Transparent,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Terciario.copy(alpha = 0.5f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onCategorySelected(null)
+                                onDismiss()
+                            }
+                    ) {
+                        Text(
+                            text = "NINGUNA",
+                            modifier = Modifier.padding(vertical = 12.dp),
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Terciario
+                        )
+                    }
+                }
+
+                // LISTA DE CATEGORÍAS
                 items(categories) { cat ->
                     val catColor = Color(parseColor(cat.color))
                     Surface(
@@ -135,18 +162,8 @@ fun CategorySelector(
     )
 }
 
-// para text mas oscuro
 fun darkenColor(color: Color): Color {
     val hsl = FloatArray(3)
-    // Convertimos el color de Compose a Color de Android (Int)
-    val colorInt = android.graphics.Color.argb(
-        (color.alpha * 255).toInt(),
-        (color.red * 255).toInt(),
-        (color.green * 255).toInt(),
-        (color.blue * 255).toInt()
-    )
-
-    // Pasamos a HSL
     ColorUtils.RGBToHSL(
         (color.red * 255).toInt(),
         (color.green * 255).toInt(),
@@ -154,6 +171,5 @@ fun darkenColor(color: Color): Color {
         hsl
     )
     hsl[2] = (hsl[2] * 0.4f).coerceIn(0f, 1f)
-
     return Color(ColorUtils.HSLToColor(hsl))
 }

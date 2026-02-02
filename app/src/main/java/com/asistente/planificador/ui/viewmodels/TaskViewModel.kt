@@ -79,15 +79,11 @@ class TaskViewModel @Inject constructor(
                 }
             }
         }
-
-        // Autoselección de categoría al cambiar de calendario
         viewModelScope.launch {
             categoryList.collect { list ->
-                // Si cambias de calendario y la categoría actual no pertenece al nuevo,
-                // seleccionamos la primera por defecto o null
-                if (list.isNotEmpty()) {
-                    onCategoryChanged(list.first())
-                } else {
+                //pa cuando cambia de calendario, si la categoria seleccionada no existe en sicho calendario
+                val currentCategory = _uiState.value.category
+                if (currentCategory != null && !list.contains(currentCategory)) {
                     _uiState.update { it.copy(category = null) }
                 }
             }
@@ -111,12 +107,12 @@ class TaskViewModel @Inject constructor(
         val calendarHelper = Calendar.getInstance()
         val currentSelectedDate = if (isStart) _uiState.value.initDate else _uiState.value.finishDate
 
-        // Tomamos la hora actual que ya estaba puesta
+        // Tomamos la hora actual
         calendarHelper.time = currentSelectedDate
         val hour = calendarHelper.get(Calendar.HOUR_OF_DAY)
         val minute = calendarHelper.get(Calendar.MINUTE)
 
-        // Aplicamos el nuevo día desde los millis
+        // Aplicamos el nuevo día (millis)
         calendarHelper.timeInMillis = millis
         calendarHelper.set(Calendar.HOUR_OF_DAY, hour)
         calendarHelper.set(Calendar.MINUTE, minute)
@@ -150,7 +146,6 @@ class TaskViewModel @Inject constructor(
                     "La tarea debe durar al menos un minuto"
                 }
 
-                // 3. Todo correcto
                 else -> null
             }
 
