@@ -23,7 +23,7 @@ import javax.annotation.Nonnull
 data class Task(
     @PrimaryKey override val id: String = UUID.randomUUID().toString(),
     override val owners: List<String> = emptyList(),
-    override val syncStatus: Int = 0,
+    override var syncStatus: Int = 0,
     override val categoryId: String? = null,
     override val place: String? = null,
     override val notes: String? = null,

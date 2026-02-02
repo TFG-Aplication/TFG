@@ -17,13 +17,15 @@ class TaskRepository @Inject constructor(
     private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) : TaskRepositoryInterface {
 
+
+
     override suspend fun getTaskById(id: String): Task? {
         var task = localTask.getTaskById(id)
         if (task == null)
             task = remoteTask.getTaskByIdRemote(id)
             if (task != null)
                 localTask.insertTask(task)
-
+// deberia a lo mejor poner q si esta en local pero no en remoto subirla ???
         return task
     }
 
@@ -34,8 +36,12 @@ class TaskRepository @Inject constructor(
                 val localTasks = localTask.getAllTaskListByUserId(id)
                 val remoteIds = remoteTasks.map { it.id }
                 localTasks.forEach { local ->
-                    if (!remoteIds.contains(local.id)) {
+                    if (local.syncStatus == 1 && !remoteIds.contains(local.id)) {
                         localTask.deleteTaskById(local.id)
+                    }
+                    if (local.syncStatus == 0 && !remoteIds.contains(local.id)) {
+                        remoteTask.saveTaskRemote(local)
+                        local.syncStatus = 1
                     }
                 }
                 remoteTasks.forEach { remote ->
@@ -59,8 +65,12 @@ class TaskRepository @Inject constructor(
 
                 val remoteIds = remoteTasks.map { it.id }
                 localTasks.forEach { local ->
-                    if (!remoteIds.contains(local.id)) {
+                    if (local.syncStatus == 1 && !remoteIds.contains(local.id)) {
                         localTask.deleteTaskById(local.id)
+                    }
+                    if (local.syncStatus == 0 && !remoteIds.contains(local.id)) {
+                        remoteTask.saveTaskRemote(local)
+                        local.syncStatus = 1
                     }
                 }
                 remoteTasks.forEach { localTask.insertTask(it) }
