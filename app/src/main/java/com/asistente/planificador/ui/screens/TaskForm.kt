@@ -21,7 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asistente.planificador.ui.screens.tools.CalendarField
+import com.asistente.planificador.ui.screens.tools.CalendarSelector
+import com.asistente.planificador.ui.screens.tools.CategoryField
+import com.asistente.planificador.ui.screens.tools.CategorySelector
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
+import formatDate
+import formatTime
 
 val Primario = Color(0xFFAC5343)
 val Secundario = Color(0xFFEFEFEF)
@@ -344,17 +350,5 @@ fun TaskForm(
     }
 }
 
-fun formatTime(date: java.util.Date): String {
-    val cal = java.util.Calendar.getInstance().apply { time = date }
-    val hours = cal.get(java.util.Calendar.HOUR_OF_DAY)
-    val minutes = cal.get(java.util.Calendar.MINUTE)
-    // Formatea a HH:mm (por ejemplo: 09:05)
-    return String.format("%02d:%02d", hours, minutes)
-}
-
-fun formatDate(date: java.util.Date): String {
-    val sdf = java.text.SimpleDateFormat("EEE, d MMM yyyy", java.util.Locale("es", "ES"))
-    return sdf.format(date).replaceFirstChar { it.uppercase() }
-}
 
 

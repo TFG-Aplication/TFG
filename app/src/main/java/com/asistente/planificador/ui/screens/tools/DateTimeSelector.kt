@@ -1,4 +1,3 @@
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.DialogProperties
 import com.asistente.planificador.ui.screens.Primario
 import com.asistente.planificador.ui.screens.Secundario
-import com.asistente.planificador.ui.screens.Terciario
 
 class SelectionDate {
 
@@ -167,4 +165,18 @@ class SelectionDate {
             }
         }
     }
+}
+
+
+fun formatTime(date: java.util.Date): String {
+    val cal = java.util.Calendar.getInstance().apply { time = date }
+    val hours = cal.get(java.util.Calendar.HOUR_OF_DAY)
+    val minutes = cal.get(java.util.Calendar.MINUTE)
+    // Formatea a HH:mm (por ejemplo: 09:05)
+    return String.format("%02d:%02d", hours, minutes)
+}
+
+fun formatDate(date: java.util.Date): String {
+    val sdf = java.text.SimpleDateFormat("EEE, d MMM yyyy", java.util.Locale("es", "ES"))
+    return sdf.format(date).replaceFirstChar { it.uppercase() }
 }
