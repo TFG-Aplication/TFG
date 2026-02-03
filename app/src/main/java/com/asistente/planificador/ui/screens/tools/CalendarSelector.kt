@@ -156,7 +156,7 @@ fun CalendarSelector (
             }
         },
         confirmButton = {
-            TextButton(onClick = { onDismiss }) {
+            TextButton(onClick = { onDismiss() }) {
                 Text("CERRAR", color = Primario, fontWeight = FontWeight.Bold)
             }
         }

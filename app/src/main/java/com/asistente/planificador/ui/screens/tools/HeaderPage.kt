@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material3.Icon
@@ -26,13 +27,16 @@ import androidx.compose.material.icons.filled.ViewModule
 import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.screens.ColorPrimario
+import com.asistente.planificador.ui.screens.Primario
+import com.asistente.planificador.ui.screens.tools.CalendarSelector
 
-val ColorPrimarioHeader = Color(0xFFAC5343)
 
 // Definimos un enum para gestionar las vistas
 enum class CalendarView(val label: String, val icon: ImageVector) {
@@ -48,9 +52,17 @@ fun HeaderPage(
     onViewChange: (CalendarView) -> Unit,
     onMonthSelected: (YearMonth) -> Unit
 ) {
-    var expandedMenu by remember { mutableStateOf(false) }
+    var expandedViewMenu by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
+    // Estado para controlar el diálogo de calendarios
+    var showCalendarSelector by remember { mutableStateOf(false) }
+
+    // Recolectamos datos del ViewModel
+    val calendars by viewModel.calendarsList.collectAsStateWithLifecycle()
+    val selectedCalendar by viewModel.selectedCalendar.collectAsStateWithLifecycle()
+
+    // Diálogo de Mes/Año
     if (showDatePicker) {
         MonthYearPickerDialog(
             initialMonth = yearMonth,
@@ -62,6 +74,15 @@ fun HeaderPage(
         )
     }
 
+    if (showCalendarSelector) {
+        CalendarSelector(
+            calendars = calendars,
+            selectedCalendar = selectedCalendar,
+            onCalendarChanged = { viewModel.onCalendarChanged(it) },
+            onDismiss = { showCalendarSelector = false }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -69,46 +90,66 @@ fun HeaderPage(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.SpaceBetween, // Reparte a los extremos
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            // Selector de Calendario
+            Row(
+                modifier = Modifier
+                    .clickable { showCalendarSelector = true }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = selectedCalendar?.name ?: "Calendario",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Color.Black,
+                    modifier = Modifier.size(20.dp).padding(start = 2.dp)
+                )
+            }
 
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 Box {
                     Icon(
                         imageVector = currentView.icon,
                         contentDescription = "Cambiar Vista",
-                        tint = ColorPrimarioHeader,
-                        modifier = Modifier.size(24.dp).clickable { expandedMenu = true }
+                        tint = Primario,
+                        modifier = Modifier.size(24.dp).clickable { expandedViewMenu = true }
                     )
                     DropdownMenu(
-                        expanded = expandedMenu,
-                        onDismissRequest = { expandedMenu = false }
+                        expanded = expandedViewMenu,
+                        onDismissRequest = { expandedViewMenu = false }
                     ) {
                         CalendarView.values().forEach { view ->
                             DropdownMenuItem(
                                 text = { Text(view.label) },
                                 onClick = {
                                     onViewChange(view)
-                                    expandedMenu = false
+                                    expandedViewMenu = false
                                 },
                                 leadingIcon = { Icon(view.icon, contentDescription = null) }
                             )
                         }
                     }
                 }
-                Icon(Icons.Default.Search, null, tint = ColorPrimarioHeader, modifier = Modifier.size(24.dp))
-                Icon(Icons.Outlined.ChatBubbleOutline, null, tint = ColorPrimarioHeader, modifier = Modifier.size(24.dp))
+                Icon(Icons.Default.Search, null, tint = Primario, modifier = Modifier.size(24.dp))
+                Icon(Icons.Outlined.ChatBubbleOutline, null, tint = Primario, modifier = Modifier.size(24.dp))
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // --- Fila de Mes y Año (Al pulsar abre el Picker) ---
+        // --- FILA DE MES Y AÑO ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { showDatePicker = true }, // ACTIVAMOS EL DIÁLOGO
+                .clickable { showDatePicker = true },
             verticalAlignment = Alignment.Bottom
         ) {
             Text(
