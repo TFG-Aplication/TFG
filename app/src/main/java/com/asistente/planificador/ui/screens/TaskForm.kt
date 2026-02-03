@@ -3,8 +3,6 @@ package com.asistente.planificador.ui.screens
 import SelectionDate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,19 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
 
-
-/**
- * CAMBIAR -> FECHAS Y HORAS / ESTADO INDEPENDIENTE PA HECHA Y HORA -> ESTADO FECHA PA VARIABLE
- * TODO EL DIA. SOLO CON ESO DEBERIA DE PODER CREARSE UNA ACT
-* */
 val Primario = Color(0xFFAC5343)
 val Secundario = Color(0xFFEFEFEF)
 val Terciario = Color(0xFFA6A6A6)
@@ -44,10 +35,12 @@ fun TaskForm(
     val uiState by viewModel.uiState.collectAsState()
     val calendars by viewModel.calendarsList.collectAsStateWithLifecycle()
     val category by viewModel.categoryList.collectAsStateWithLifecycle()
-    var showCalendarDialog by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
+
     var expandedCategorySelector by remember { mutableStateOf(false) }
+    var expandedCalendarSelector by remember { mutableStateOf(false) }
+
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
@@ -168,53 +161,15 @@ fun TaskForm(
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp), thickness = 0.5.dp)
 
-            // cambiar calendario
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(47.dp) // Altura similar a un TextField
-                    .padding(horizontal = 10.dp) // Alinea el inicio con el TextField de arriba
-                    .clickable { showCalendarDialog = true },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CalendarMonth,
-                    contentDescription = null,
-                    tint = Primario,
-                    modifier = Modifier.size(30.dp)
-                )
-
-                Spacer(modifier = Modifier.width(16.dp)) // Espacio estándar entre icono y texto
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Calendario",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
-                        lineHeight = 10.sp
-                    )
-                    Text(
-                        text = uiState.calendar?.name ?: "Seleccionar calendario",
-                        fontSize = 16.sp,
-                        color = Terciario
-                    )
-                }
-
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    tint = Terciario,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            // SELECTOR DE CALENDARIOS
+            CalendarField(
+                selectedCalendar = uiState.calendar,
+                onClick = { expandedCalendarSelector = true }
+            )
 
             HorizontalDivider(modifier = Modifier.padding(top = 0.dp, bottom = 2.dp), thickness = 0.5.dp)
 
-            // Horas y fechas
+            // seleccion de fecha y hora
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -258,7 +213,7 @@ fun TaskForm(
                     )
                 }
 
-            // --- FILA DE FIN ---
+                // --- FILA DE FIN ---
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -316,65 +271,12 @@ fun TaskForm(
         }
 
         // dialogo del calendario
-
-        if (showCalendarDialog) {
-            AlertDialog(
-                onDismissRequest = { showCalendarDialog = false },
-                properties = DialogProperties(usePlatformDefaultWidth = false), // Para que pueda ser casi pantalla completa
-                modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.7f), // Tamaño superpuesto
-                containerColor = Color.White,
-                shape = RoundedCornerShape(28.dp),
-                title = {
-                    Text(
-                        "Mis Calendarios",
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                },
-                text = {
-                    Column {
-                        HorizontalDivider(thickness = 0.5.dp, color = Terciario.copy(alpha = 0.3f))
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(vertical = 12.dp)
-                        ) {
-                            if (calendars.isEmpty()) {
-                                item {
-                                    Text("No hay calendarios disponibles",
-                                        modifier = Modifier.padding(16.dp), color = Terciario)
-                                }
-                            } else {
-                                items(calendars) { cal ->
-                                    ListItem(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                viewModel.onCalendarChanged(cal)
-                                                showCalendarDialog = false
-                                            },
-                                        headlineContent = { Text(cal.name, fontWeight = FontWeight.Medium) },
-                                        leadingContent = {
-                                            Icon(Icons.Default.Circle, null,
-                                                tint = Primario, modifier = Modifier.size(12.dp))
-                                        },
-                                        trailingContent = {
-                                            if (uiState.calendar?.id == cal.id) {
-                                                Icon(Icons.Default.Check, null, tint = Primario)
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showCalendarDialog = false }) {
-                        Text("CERRAR", color = Primario, fontWeight = FontWeight.Bold)
-                    }
-                }
+        if (expandedCalendarSelector) {
+            CalendarSelector(
+                calendars = calendars,
+                onCalendarChanged = { viewModel.onCalendarChanged(it) },
+                onDismiss = { expandedCalendarSelector = false },
+                selectedCalendar = uiState.calendar
             )
         }
 
@@ -437,6 +339,8 @@ fun TaskForm(
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall
         )
+
+
     }
 }
 
@@ -452,3 +356,5 @@ fun formatDate(date: java.util.Date): String {
     val sdf = java.text.SimpleDateFormat("EEE, d MMM yyyy", java.util.Locale("es", "ES"))
     return sdf.format(date).replaceFirstChar { it.uppercase() }
 }
+
+
