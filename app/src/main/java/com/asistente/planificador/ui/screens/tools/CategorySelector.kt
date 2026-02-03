@@ -1,4 +1,4 @@
-package com.asistente.planificador.ui.screens
+package com.asistente.planificador.ui.screens.tools
 
 
 import android.graphics.Color.parseColor
@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.graphics.ColorUtils
 import com.asistente.core.domain.models.Category
+import com.asistente.planificador.ui.screens.Primario
+import com.asistente.planificador.ui.screens.Terciario
 
 @Composable
 fun CategoryField(

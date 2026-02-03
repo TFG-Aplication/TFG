@@ -28,6 +28,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.screens.ColorPrimario
 
 val ColorPrimarioHeader = Color(0xFFAC5343)
@@ -40,10 +42,11 @@ enum class CalendarView(val label: String, val icon: ImageVector) {
 
 @Composable
 fun HeaderPage(
+    viewModel: CalendarViewModel = hiltViewModel(),
     yearMonth: YearMonth,
     currentView: CalendarView,
     onViewChange: (CalendarView) -> Unit,
-    onMonthSelected: (YearMonth) -> Unit // Cambiado para devolver el mes elegido
+    onMonthSelected: (YearMonth) -> Unit
 ) {
     var expandedMenu by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -70,6 +73,7 @@ fun HeaderPage(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+
                 Box {
                     Icon(
                         imageVector = currentView.icon,

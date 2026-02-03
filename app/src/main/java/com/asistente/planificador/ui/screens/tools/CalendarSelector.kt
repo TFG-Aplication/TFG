@@ -1,4 +1,4 @@
-package com.asistente.planificador.ui.screens
+package com.asistente.planificador.ui.screens.tools
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.asistente.core.domain.models.Calendar
+import com.asistente.planificador.ui.screens.Primario
+import com.asistente.planificador.ui.screens.Terciario
 
 
 @Composable
@@ -125,7 +127,8 @@ fun CalendarSelector (
                     if (calendars.isEmpty()) {
                         item {
                             Text("No hay calendarios disponibles",
-                                modifier = Modifier.padding(16.dp), color = Terciario)
+                                modifier = Modifier.padding(16.dp), color = Terciario
+                            )
                         }
                     } else {
                         items(calendars) { cal ->
