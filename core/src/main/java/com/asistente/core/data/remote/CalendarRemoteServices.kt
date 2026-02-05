@@ -13,8 +13,6 @@ class CalendarRemoteServices @Inject constructor(
 ) {
     private val collection = firestore.collection("calendars")
 
-
-
     suspend fun getAllCalendarByUserIdRemote(userId: String): List<Calendar> {
         return try {
             val data = collection

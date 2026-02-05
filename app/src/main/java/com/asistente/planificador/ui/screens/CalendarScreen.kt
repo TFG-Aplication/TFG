@@ -1,6 +1,8 @@
 package com.asistente.planificador.ui.screens
 
+import android.graphics.drawable.shapes.OvalShape
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -21,11 +23,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.domain.models.Calendar
 import com.asistente.core.domain.models.Task
 import com.asistente.core.ui.viewmodels.CalendarViewModel
+import com.asistente.planificador.ui.screens.tools.darkenColor
+import com.google.type.DayOfWeek
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.OutDateStyle
+import com.kizitonwose.calendar.core.WeekDay
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.LocalDate
 import java.time.YearMonth
@@ -45,19 +50,11 @@ fun CalendarScreen(
     onJumpFinished: () -> Unit = {},
 
 ) {
-    // Obtenemos las tareas del calendario seleccionado
+    // las tareas del calendario seleccionado
     val tasks by viewModel.taskList.collectAsState()
 
-    // Agrupamos las tareas por fecha para un acceso rápido (O(1))
-    val tasksByDate = remember(tasks) {
-            tasks.groupBy { task ->
-                task.init_date?.let { date ->
-                    date.toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate()
-                }
-            }
-        }
+    // Agrupamos las tareas por fecha
+    val tasksByDate = taskByDate(tasks)
 
     val currentMonth = remember { YearMonth.now() }
     var selectedDate by remember { mutableStateOf<LocalDate?>(LocalDate.now()) }
@@ -103,8 +100,8 @@ fun CalendarScreen(
 @Composable
 fun Day(
     day: CalendarDay,
-    isSelected: Boolean,
-    tasks: List<Task>, // lista de tareas
+    isSelected: Boolean, //usar para ver pantalla dia
+    tasks: List<Pair<Task, Int>>, // lista de tareas
     getTaskColor: suspend (String?) -> Color,
     onClick: (LocalDate) -> Unit,
     cellHeight: Dp
@@ -124,68 +121,107 @@ fun Day(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 8.dp),
+                .padding(top = 0.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Número del día
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
-                if (isSelected) {
-                    Box(modifier = Modifier.fillMaxSize().background(ColorPrimario, CircleShape))
+                if(day.date == LocalDate.now()){
+                    Box(modifier = Modifier.size(24.dp).background(ColorPrimario, CircleShape))
                 }
                 Text(
                     text = day.date.dayOfMonth.toString(),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) Color.White else if (day.position == DayPosition.MonthDate) Color.Black else Color.LightGray
+                    textAlign = TextAlign.Center,
+                    color = if (day.date == LocalDate.now()) Color.White else if (day.position == DayPosition.MonthDate) Color.Black else Color.LightGray
                 )
             }
 
             // --- INDICADORES DE TAREAS ---
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                    .padding(vertical = 2.dp)
+                    .weight(1f),
 
             ) {
-                // Pintamos hasta 3 tareas para no saturar la celda
-                tasks.take(3).forEach { task ->
-
-                    val color by produceState(initialValue = colorCuarto, task.categoryId) {
-                        value = getTaskColor(task.categoryId)
+                // num de representaciones
+                val numTaskPerDay = when {
+                    tasks.size <= 5 -> tasks.size
+                    else -> 4
+                }
+                tasks.take(numTaskPerDay).forEach { task ->
+                    val startDate = task.first.init_date?.toInstant()?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate()
+                    val finished = task.first.finish_date?.toInstant()?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate()
+                    val color by produceState(initialValue = colorCuarto, task.first.categoryId) {
+                        value = getTaskColor(task.first.categoryId)
                     }
+
+                    // forma de la tarea segun su duracion
+                    val taskShape = when {
+                    // Tarea de un solo día
+                    startDate == day.date && finished == day.date -> RoundedCornerShape(4.dp)
+                    // inicio tarea larga
+                    startDate == day.date -> RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)
+                    // fin tarea larga
+                    finished == day.date -> RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
+
+                    day.date.dayOfWeek == java.time.DayOfWeek.MONDAY -> RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)
+                    day.date.dayOfWeek == java.time.DayOfWeek.SUNDAY -> RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
+                    // día intermedio
+                    else -> RoundedCornerShape(0.dp)
+                }
+
+                    //margenes laterales en los dias
+                    val margenes = when {
+                        startDate == day.date && finished == day.date -> Modifier.padding(horizontal = 4.dp)
+                        startDate == day.date -> Modifier.padding(start = 4.dp)
+                        finished == day.date -> Modifier.padding(end = 4.dp)
+                        day.date.dayOfWeek == java.time.DayOfWeek.MONDAY -> Modifier.padding(start = 4.dp)
+                        day.date.dayOfWeek == java.time.DayOfWeek.SUNDAY -> Modifier.padding(end = 4.dp)
+                        else -> Modifier // Sin padding para que toque los bordes
+                    }
+
                     Box(
                         modifier = Modifier
+                            .then(margenes)
                             .fillMaxWidth()
                             .height(10.dp)
+                            .offset(y=(task.second*12).dp)
                             .background(
                                 color =color,
-                                RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 4.dp),
+                                shape = taskShape
+                            ),
+
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = task.name,
-                            fontSize = 8.sp,
-                            maxLines = 1,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium,
-                            style = LocalTextStyle.current.copy(
-                                platformStyle = PlatformTextStyle(
-                                    includeFontPadding = false // Elimina el espacio extra inferior
-                                ), baselineShift = BaselineShift(0.2f)
-                            )  )
+                        if(day.date == startDate || day.date.dayOfWeek == java.time.DayOfWeek.MONDAY) {
+                            Text(
+                                text = task.first.name,
+                                fontSize = 8.sp,
+                                maxLines = 1,
+                                color = darkenColor(color),
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 9.sp,
+                                textAlign = TextAlign.Center,
+                                style = LocalTextStyle.current.copy(
+                                    platformStyle = PlatformTextStyle(
+                                        includeFontPadding = false // Elimina el espacio extra inferior
+                                    )
+                                )
+                            )
+                        }
                     }
                 }
-                if (tasks.size > 3) {
+                if (tasks.size > 5) {
                     Text(
-                        text = "+${tasks.size - 3}",
+                        text = "+${tasks.size - 5}",
                         fontSize = 12.sp,
                         color = Terciario,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.align(Alignment.BottomCenter)
                     )
                 }
             }
@@ -212,4 +248,56 @@ fun DaysOfWeekTitle() {
         }
     }
 }
+
+fun taskByDate(tasks: List<Task>): Map<LocalDate, List<Pair<Task, Int>>>{
+    val map = mutableMapOf<LocalDate, MutableList<Pair<Task, Int>>>()
+    // ordena para que las tareas mas largas se ven las primeras
+    var sortedTask = tasks.sortedBy{ task ->
+        var initDate = task.init_date?.time ?: 0L
+        initDate
+
+    }
+    sortedTask.forEach { task ->
+        val startDate = task.init_date?.toInstant()?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate()
+        val finishDate = task.finish_date?.toInstant()?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate()
+        // por cada dia que dure la tarea A se añade al diccionario dia, tarea A
+
+
+        if (startDate != null && finishDate != null) {
+
+            var dateIter: LocalDate = startDate
+            while( !dateIter.isAfter(finishDate)) {
+                //ver si esa tarea empieza o no -> si empieza asignar primer row libre -> si continua asignar el mismo
+                if(dateIter == startDate){
+                    // buscar el primer row libre
+                    var row = 0
+                    while (true) {
+                        val same = map[dateIter]?.any { it.second == row }
+                        if (same == true) {
+                            row++
+                        }
+                        else{
+                            break
+
+                        }
+                    }
+                    map.getOrPut(dateIter) { mutableListOf() }.add(Pair(task, row))
+
+                }
+                else { // una tarea q no empieza el mismo dia del iter es q como min empieza el dia anterior
+                    // ver q valor tenia el dia anterior
+                   map[dateIter.minusDays(1)]?.find {it.first == task}?.second?.let { row ->
+                       map.getOrPut(dateIter) { mutableListOf() }.add(Pair(task, row))
+                   }
+
+                }
+
+
+                dateIter = dateIter.plusDays(1)
+            }
+            }
+        }
+    // tareas ordenadas por tamaño y row
+    return map.mapValues { entry -> entry.value.sortedBy { it.second } }
+    }
 

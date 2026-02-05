@@ -172,6 +172,6 @@ fun darkenColor(color: Color): Color {
         (color.blue * 255).toInt(),
         hsl
     )
-    hsl[2] = (hsl[2] * 0.4f).coerceIn(0f, 1f)
+    hsl[2] = (hsl[2] * 0.45f).coerceIn(0f, 1f)
     return Color(ColorUtils.HSLToColor(hsl))
 }

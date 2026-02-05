@@ -63,7 +63,7 @@ class CalendarViewModel @Inject constructor(
         return if (color != null) {
             Color(android.graphics.Color.parseColor(color))
         } else {
-            Primario
+            colorCuarto
         }
     }
 

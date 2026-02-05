@@ -13,6 +13,7 @@ data class Calendar(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     @Nonnull
+
     val name: String = "",
     @Nonnull
     val code: String = "",
