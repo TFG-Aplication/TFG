@@ -1,4 +1,4 @@
-package com.asistente.core.domain.usecase.Category
+package com.asistente.core.domain.usecase.category
 
 import com.asistente.core.domain.models.Category
 import com.asistente.core.domain.ropositories.interfaz.CategoryRepositoryInterface
@@ -16,4 +16,7 @@ class GetListCategory @Inject constructor(
         return repository.getAllCategoryByCalendarId(calendarId)
 
     }
+
+
+
 }

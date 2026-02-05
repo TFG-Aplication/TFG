@@ -4,16 +4,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.asistente.core.domain.models.Calendar
+import com.asistente.core.domain.models.Task
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -23,6 +29,7 @@ import com.kizitonwose.calendar.core.OutDateStyle
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlin.collections.groupBy
 
 
 // Colores del diseño
@@ -31,14 +38,30 @@ val ColorGrisFondo = Color(0xFFEFEFEF)
 val ColorGrisOscuro = Color(0xFF555555)
 
 @Composable
-fun CalendarScreen (
+fun CalendarScreen(
     viewModel: CalendarViewModel = hiltViewModel(),
     onMonthChanged: (YearMonth) -> Unit,
     jumpToMonth: YearMonth? = null,
-    onJumpFinished: () -> Unit = {}
+    onJumpFinished: () -> Unit = {},
+
 ) {
+    // Obtenemos las tareas del calendario seleccionado
+    val tasks by viewModel.taskList.collectAsState()
+
+    // Agrupamos las tareas por fecha para un acceso rápido (O(1))
+    val tasksByDate = remember(tasks) {
+            tasks.groupBy { task ->
+                task.init_date?.let { date ->
+                    date.toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate()
+                }
+            }
+        }
+
     val currentMonth = remember { YearMonth.now() }
     var selectedDate by remember { mutableStateOf<LocalDate?>(LocalDate.now()) }
+
     val state = rememberCalendarState(
         startMonth = currentMonth.minusMonths(100),
         endMonth = currentMonth.plusMonths(100),
@@ -47,7 +70,7 @@ fun CalendarScreen (
         outDateStyle = OutDateStyle.EndOfGrid
     )
 
-    // Escucha si el Header mandó una orden de saltar a un mes
+    // Sincronización de mes
     LaunchedEffect(jumpToMonth) {
         jumpToMonth?.let {
             state.scrollToMonth(it)
@@ -63,16 +86,29 @@ fun CalendarScreen (
         modifier = Modifier.fillMaxSize(),
         state = state,
         dayContent = { day ->
+            val dayTasks = tasksByDate[day.date] ?: emptyList()
+
             Day(
                 day = day,
                 isSelected = selectedDate == day.date,
+                tasks = dayTasks,
+                getTaskColor = { categoryId -> viewModel.getCategoryColor(categoryId) },
                 onClick = { date -> selectedDate = date },
                 cellHeight = 100.dp
-            )        }
+            )
+        }
     )
 }
+
 @Composable
-fun Day(day: CalendarDay, isSelected: Boolean, onClick: (LocalDate) -> Unit, cellHeight: androidx.compose.ui.unit.Dp) {
+fun Day(
+    day: CalendarDay,
+    isSelected: Boolean,
+    tasks: List<Task>, // lista de tareas
+    getTaskColor: suspend (String?) -> Color,
+    onClick: (LocalDate) -> Unit,
+    cellHeight: Dp
+) {
     Box(
         modifier = Modifier
             .height(cellHeight)
@@ -91,10 +127,8 @@ fun Day(day: CalendarDay, isSelected: Boolean, onClick: (LocalDate) -> Unit, cel
                 .padding(top = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(32.dp)
-            ) {
+            // Número del día
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
                 if (isSelected) {
                     Box(modifier = Modifier.fillMaxSize().background(ColorPrimario, CircleShape))
                 }
@@ -106,9 +140,55 @@ fun Day(day: CalendarDay, isSelected: Boolean, onClick: (LocalDate) -> Unit, cel
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            // --- INDICADORES DE TAREAS ---
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
 
-            // Aquí es donde aparecerán los eventos
+            ) {
+                // Pintamos hasta 3 tareas para no saturar la celda
+                tasks.take(3).forEach { task ->
+
+                    val color by produceState(initialValue = colorCuarto, task.categoryId) {
+                        value = getTaskColor(task.categoryId)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .background(
+                                color =color,
+                                RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = task.name,
+                            fontSize = 8.sp,
+                            maxLines = 1,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            style = LocalTextStyle.current.copy(
+                                platformStyle = PlatformTextStyle(
+                                    includeFontPadding = false // Elimina el espacio extra inferior
+                                ), baselineShift = BaselineShift(0.2f)
+                            )  )
+                    }
+                }
+                if (tasks.size > 3) {
+                    Text(
+                        text = "+${tasks.size - 3}",
+                        fontSize = 12.sp,
+                        color = Terciario,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
     }
 }

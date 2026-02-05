@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asistente.core.domain.models.Calendar
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.screens.ColorPrimario
 import com.asistente.planificador.ui.screens.Primario
@@ -50,7 +51,8 @@ fun HeaderPage(
     yearMonth: YearMonth,
     currentView: CalendarView,
     onViewChange: (CalendarView) -> Unit,
-    onMonthSelected: (YearMonth) -> Unit
+    onMonthSelected: (YearMonth) -> Unit,
+    onCalendarChanged: (Calendar) -> Unit
 ) {
     var expandedViewMenu by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -78,7 +80,10 @@ fun HeaderPage(
         CalendarSelector(
             calendars = calendars,
             selectedCalendar = selectedCalendar,
-            onCalendarChanged = { viewModel.onCalendarChanged(it) },
+            onCalendarChanged = { selectedCalendar ->
+                viewModel.onCalendarChanged(selectedCalendar)
+                onCalendarChanged(selectedCalendar)
+            },
             onDismiss = { showCalendarSelector = false }
         )
     }

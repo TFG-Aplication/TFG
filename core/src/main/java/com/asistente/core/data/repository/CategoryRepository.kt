@@ -18,14 +18,16 @@ class CategoryRepository @Inject constructor(
 ) : CategoryRepositoryInterface {
 
     override suspend fun getCategoryById(id: String): Category? {
-        var Category = localCategory.getCategoryById(id)
-        if (Category == null)
-            Category = remoteCategory.getCategoryByIdRemote(id)
-            if (Category != null) {
-                localCategory.insertCategory(Category)
+        externalScope.launch {
+            try {
+                val remote = remoteCategory.getCategoryByIdRemote(id)
+                if (remote != null) {
+                    localCategory.insertCategory(remote.copy(syncStatus = 1))
+                }
+            } catch (e: Exception) {
             }
-
-        return Category
+        }
+        return localCategory.getCategoryById(id)
     }
 
     override fun getAllCategoryByCalendarId(calendarId: String): Flow<List<Category>> {

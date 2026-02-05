@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asistente.core.domain.models.Calendar as CalendarModel
 import com.asistente.core.domain.models.Category
-import com.asistente.core.domain.usecase.Category.GetListCategory
+import com.asistente.core.domain.usecase.category.GetListCategory
 import com.asistente.core.domain.usecase.calendar.GetListCalendars
 import com.asistente.core.domain.usecase.task.CreateTask
 import dagger.hilt.android.lifecycle.HiltViewModel
