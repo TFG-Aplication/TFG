@@ -1,6 +1,7 @@
 package com.asistente.planificador.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -95,7 +96,11 @@ fun AgendaView(    viewModel: CalendarViewModel = hiltViewModel(),
                     TaskCard(
                         task = taskPair.first,
                         getTaskColor = { categoryId -> viewModel.getCategoryColor(categoryId) },
-                        getTaskCategory = { categoryId -> viewModel.getTaskCategory(categoryId) }
+                        getTaskCategory = { categoryId -> viewModel.getTaskCategory(categoryId) },
+                        onTaskClick = { taskId ->
+                            // navController.navigate("task_detail/$taskId")
+
+                        }
                     )
                     Spacer(modifier = Modifier.height(10.dp)) // Espacio entre tarjetas
                 }
@@ -105,7 +110,7 @@ fun AgendaView(    viewModel: CalendarViewModel = hiltViewModel(),
 }
 
 @Composable
-fun TaskCard(task: Task, getTaskColor: suspend (String?) -> Color, getTaskCategory: suspend (String?) -> String?) {
+fun TaskCard(task: Task, getTaskColor: suspend (String?) -> Color, getTaskCategory: suspend (String?) -> String?, onTaskClick: (String) -> Unit) {
     // Definimos el color de la categoría (puedes sacarlo de task.category si lo tienes)
     val color by produceState(initialValue = colorCuarto, task.categoryId) {
         value = getTaskColor(task.categoryId)
@@ -120,11 +125,12 @@ fun TaskCard(task: Task, getTaskColor: suspend (String?) -> Color, getTaskCatego
 
     val colorText = if(task.finish_date?.after(java.util.Date())?:true) Color.Black else darkenColor(color)
 
-    val durationTask = Duration.between(task.init_date?.toInstant(), task.finish_date?.toInstant()).toDays() +1
+    val durationTask = Duration.between(task.init_date?.toInstant(), task.finish_date?.toInstant()).toDays() + 1
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { /*aqui te lleva a la info de la task*/ },
         shape = RoundedCornerShape(12.dp),
+
         color = Color(0xFFF8F8F8), // Un gris muy sutil
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.3f))
     ) {
