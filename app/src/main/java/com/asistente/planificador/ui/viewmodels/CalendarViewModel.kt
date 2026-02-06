@@ -67,6 +67,10 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
+    suspend fun getTaskCategory(categoryId: String?): String? {
+        return getExpecificCategory(categoryId ?: "")?.name
+    }
+
 
     private fun observeCalendarsAndSelectFirst() {
         viewModelScope.launch {

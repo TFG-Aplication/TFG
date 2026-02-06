@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.asistente.core.domain.models.Calendar
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.components.CalendarView
 import com.asistente.planificador.ui.components.FootPage
@@ -29,6 +30,8 @@ import com.asistente.planificador.ui.components.HeaderPage
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import java.time.YearMonth
 
+val colorCuarto = Color(0xFFF3E5E2)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel, onNavigateToTask: () -> Unit) {
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
@@ -36,11 +39,34 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
     var currentTab by remember { mutableStateOf("calendar") }
 
     var monthToJump by remember { mutableStateOf<YearMonth?>(null) }
+    var calenadarToJump by remember { mutableStateOf<Calendar?>(null) }
 
     var expandedMenu by remember { mutableStateOf(false) }
     var showCategoryShow by remember { mutableStateOf(false) }
 
-    Scaffold(
+    //para el footer
+    val scaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = rememberStandardBottomSheetState(
+            initialValue = SheetValue.PartiallyExpanded // Empieza abajo
+        )
+    )
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        BottomSheetScaffold(
+            scaffoldState = scaffoldState,
+            sheetPeekHeight = 130.dp,
+            sheetContainerColor = Secundario,
+            sheetShape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp),
+            sheetDragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .width(45.dp)
+                        .height(4.dp)
+                        .background(Color(0xFFAC5343), RoundedCornerShape(2.dp))
+                )
+            },
+
         topBar = {
             // Header
             Column(
@@ -54,63 +80,47 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                     onViewChange = { currentView = it },
                     onMonthSelected = { selected ->
                         monthToJump = selected
+                    },
+                    onCalendarChanged = { selectedCalendar ->
+                        calenadarToJump = selectedCalendar
                     }
                 )
             }
-        },
-        bottomBar = {
-            FootPage(currentTab = currentTab, onTabSelected = { currentTab = it })
-        },
-        floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Solo mostramos los botones pequeños si el menú está abierto
-                if (expandedMenu) {
-
-                    FabMenuItem(label = "Personalizar Categorías", icon = Icons.Default.Bookmarks) { showCategoryShow = true }
-                    FabMenuItem(label = "Recordatorio", icon = Icons.Default.Lightbulb) { /* Acción */ }
-                    FabMenuItem(label = "Cumpleaños", icon = Icons.Default.Cake) { /* Acción */ }
-                    FabMenuItem(label = "Actividad", icon = Icons.Default.Assignment) { /* Acción */ }
-                    FabMenuItem(label = "Tarea", icon = Icons.Default.CheckCircle) { onNavigateToTask() }
-                }
-
-                // Botón Principal (El que tiene la X o el +)
-                FloatingActionButton(
-                    onClick = { expandedMenu = !expandedMenu },
-                    containerColor = Color(0xFFAC5343),
-                    contentColor = Color.White,
-                    shape = CircleShape
+        }, sheetContent = {
+                // CONTENIDO QUE APARECE AL DESLIZAR
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.6f) // Hasta donde sube
+                        .padding(top = 10.dp) // IMPORTANTE: Dejamos espacio para que no choque con los iconos fijos
+                        .padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = if (expandedMenu) Icons.Default.Close else Icons.Default.Add,
-                        contentDescription = "Menu"
-                    )
+                    AgendaView()
                 }
             }
-        }
     ) { pad ->
-        Box(modifier = Modifier.padding(pad)) {
-            if (currentView == CalendarView.MONTH) {
-                // Vista Mensual
-                Column {
-                    DaysOfWeekTitle()
-                    CalendarScreen(
+            Box(modifier = Modifier.padding(pad)) {
+                if (currentView == CalendarView.MONTH) {
+                    // Vista Mensual
+                    Column {
+                        DaysOfWeekTitle()
+                        CalendarScreen(
+                            viewModel = viewModel,
+                            onMonthChanged = { visibleMonth = it },
+                            jumpToMonth = monthToJump,
+                            onJumpFinished = { monthToJump = null }
+
+                        )
+                    }
+                } else {
+                    // Vista Semanal
+                    SemanalScreen(
                         viewModel = viewModel,
                         onMonthChanged = { visibleMonth = it },
                         jumpToMonth = monthToJump,
                         onJumpFinished = { monthToJump = null }
                     )
                 }
-            } else {
-                // Vista Semanal
-                SemanalScreen(
-                    viewModel = viewModel,
-                    onMonthChanged = { visibleMonth = it },
-                    jumpToMonth = monthToJump,
-                    onJumpFinished = { monthToJump = null }
-                )
             }
         }
 
@@ -127,8 +137,45 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                     }
             )
         }
+
+        Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+            FootPage(
+                currentTab = currentTab,
+                onTabSelected = { currentTab = it }
+            )
+        }
+
+        // FLOATING ACTION BUTTON
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 145.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (expandedMenu) {
+                    FabMenuItem("Personalizar Categorías", Icons.Default.Bookmarks) { showCategoryShow = true }
+                    FabMenuItem("Recordatorio", Icons.Default.Lightbulb) { }
+                    FabMenuItem("Cumpleaños", Icons.Default.Cake) { }
+                    FabMenuItem("Actividad", Icons.Default.Assignment) { }
+                    FabMenuItem("Tarea", Icons.Default.CheckCircle) { onNavigateToTask() }
+                }
+
+                FloatingActionButton(
+                    onClick = { expandedMenu = !expandedMenu },
+                    containerColor = Color(0xFFAC5343),
+                    contentColor = Color.White,
+                    shape = CircleShape
+                ) {
+                    Icon(if (expandedMenu) Icons.Default.Close else Icons.Default.Add, "Menu")
+                }
+            }
+        }
         if (showCategoryShow) {
             CategoryShow(
+                isVisible = showCategoryShow,
                 viewModel = categoriesViewModel,
                 onBack = { showCategoryShow = false }
             )
@@ -147,7 +194,7 @@ fun FabMenuItem(label: String, icon: ImageVector, onClick: () -> Unit) {
         // El "globo" de texto
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFFF3E5E2),
+            color = colorCuarto,
             modifier = Modifier.padding(end = 4.dp)
         ) {
             Row(

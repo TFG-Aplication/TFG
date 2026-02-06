@@ -199,12 +199,12 @@ fun Day(
                         if(day.date == startDate || day.date.dayOfWeek == java.time.DayOfWeek.MONDAY) {
                             Text(
                                 text = task.first.name,
-                                fontSize = 8.sp,
+                                fontSize = 9.sp,
                                 maxLines = 1,
                                 color = darkenColor(color),
                                 fontWeight = FontWeight.Bold,
                                 lineHeight = 9.sp,
-                                textAlign = TextAlign.Center,
+                                textAlign = TextAlign.Left,
                                 style = LocalTextStyle.current.copy(
                                     platformStyle = PlatformTextStyle(
                                         includeFontPadding = false // Elimina el espacio extra inferior
@@ -217,7 +217,7 @@ fun Day(
                 if (tasks.size > 5) {
                     Text(
                         text = "+${tasks.size - 5}",
-                        fontSize = 12.sp,
+                        fontSize = 8.sp,
                         color = Terciario,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,

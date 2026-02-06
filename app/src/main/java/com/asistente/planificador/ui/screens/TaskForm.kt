@@ -94,7 +94,7 @@ fun TaskForm(
                         ),
                         contentPadding = PaddingValues(horizontal = 15.dp, vertical = 0.dp),
                         modifier = Modifier
-                            .padding(end = 15.dp)
+                            .padding(end = 21.dp, top = 1.dp)
                             .height(28.dp)
                             .align(Alignment.CenterVertically)
                     ) {

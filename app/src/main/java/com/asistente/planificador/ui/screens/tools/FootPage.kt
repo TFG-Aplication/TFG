@@ -2,8 +2,16 @@ package com.asistente.planificador.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Today
@@ -15,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.asistente.planificador.ui.screens.FabMenuItem
 
 @Composable
 fun FootPage(currentTab: String, onTabSelected: (String) -> Unit) {
@@ -26,20 +35,10 @@ fun FootPage(currentTab: String, onTabSelected: (String) -> Unit) {
             .fillMaxWidth()
             .background(Color(0xFFEFEFEF))
     ) {
-        // 1. La barra naranja (Flota arriba del todo, centrada)
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 12.dp) // Distancia desde el borde superior del pie
-                .width(35.dp)
-                .height(4.dp)
-                .background(colorMarron, RoundedCornerShape(2.dp))
-        )
 
-        // 2. El menú de navegación real
         NavigationBar(
             containerColor = Color.Transparent, // Transparente para ver el fondo del Box
-            modifier = Modifier.height(130.dp).padding(top = 30.dp),
+            modifier = Modifier.height(100.dp),
             tonalElevation = 0.dp
         ) {
             // CALENDAR
@@ -89,3 +88,4 @@ fun FootPage(currentTab: String, onTabSelected: (String) -> Unit) {
         }
     }
 }
+
