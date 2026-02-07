@@ -20,13 +20,16 @@ class TaskRepository @Inject constructor(
 
 
     override suspend fun getTaskById(id: String): Task? {
-        var task = localTask.getTaskById(id)
-        if (task == null)
-            task = remoteTask.getTaskByIdRemote(id)
-            if (task != null)
-                localTask.insertTask(task)
-// deberia a lo mejor poner q si esta en local pero no en remoto subirla ???
-        return task
+        externalScope.launch {
+            try {
+                val remote = remoteTask.getTaskByIdRemote(id)
+                if (remote != null) {
+                    localTask.insertTask(remote.copy(syncStatus = 1))
+                }
+            } catch (e: Exception) {
+            }
+        }
+        return localTask.getTaskById(id)
     }
 
     override fun getAllTaskByUserId(id: String): Flow<List<Task>> {

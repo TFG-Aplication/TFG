@@ -35,7 +35,7 @@ import java.util.Locale
 
 
 @Composable
-fun AgendaView(    viewModel: CalendarViewModel = hiltViewModel(),
+fun AgendaView(    viewModel: CalendarViewModel = hiltViewModel(),onNavigateToDetail: (String) -> Unit
 ) {
     // 1. Obtener y formatear la fecha actual (independiente de la tab)
     val today = LocalDate.now()
@@ -97,9 +97,7 @@ fun AgendaView(    viewModel: CalendarViewModel = hiltViewModel(),
                         task = taskPair.first,
                         getTaskColor = { categoryId -> viewModel.getCategoryColor(categoryId) },
                         getTaskCategory = { categoryId -> viewModel.getTaskCategory(categoryId) },
-                        onTaskClick = { taskId ->
-                            // navController.navigate("task_detail/$taskId")
-
+                        onTaskClick = { taskId -> onNavigateToDetail(taskId)
                         }
                     )
                     Spacer(modifier = Modifier.height(10.dp)) // Espacio entre tarjetas
@@ -128,7 +126,7 @@ fun TaskCard(task: Task, getTaskColor: suspend (String?) -> Color, getTaskCatego
     val durationTask = Duration.between(task.init_date?.toInstant(), task.finish_date?.toInstant()).toDays() + 1
 
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable { /*aqui te lleva a la info de la task*/ },
+        modifier = Modifier.fillMaxWidth().clickable { onTaskClick(task.id) },
         shape = RoundedCornerShape(12.dp),
 
         color = Color(0xFFF8F8F8), // Un gris muy sutil

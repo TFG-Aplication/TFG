@@ -34,7 +34,10 @@ import java.time.YearMonth
 val colorCuarto = Color(0xFFF3E5E2)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel, onNavigateToTask: () -> Unit, onNavigateToCategory: () -> Unit) {
+fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel,
+                 onNavigateToTask: () -> Unit,
+                 onNavigateToCategory: () -> Unit,
+                 onNavigateToDetail: (String) -> Unit){
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
     var currentTab by remember { mutableStateOf("calendar") }
@@ -96,7 +99,7 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                         .padding(top = 10.dp) // IMPORTANTE: Dejamos espacio para que no choque con los iconos fijos
                         .padding(16.dp)
                 ) {
-                    AgendaView()
+                    AgendaView(onNavigateToDetail = onNavigateToDetail)
                 }
             }
     ) { pad ->

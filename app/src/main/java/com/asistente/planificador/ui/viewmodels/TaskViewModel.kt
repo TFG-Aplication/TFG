@@ -1,12 +1,19 @@
 package com.asistente.planificador.ui.viewmodels
 
+import android.graphics.Color.parseColor
+import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asistente.core.domain.models.Calendar as CalendarModel
 import com.asistente.core.domain.models.Category
+import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.usecase.category.GetListCategory
 import com.asistente.core.domain.usecase.calendar.GetListCalendars
+import com.asistente.core.domain.usecase.category.GetExpecificCategory
+import com.asistente.core.domain.usecase.category.GetExpecificTask
 import com.asistente.core.domain.usecase.task.CreateTask
+import com.asistente.planificador.ui.screens.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,11 +50,16 @@ data class TaskFormState  (
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val createTaskUseCase: CreateTask,
     private val getCalendarsUseCase: GetListCalendars,
-    private val getCategoryUseCase: GetListCategory
+    private val getCategoryUseCase: GetListCategory,
+    private val getExpecificTaskUseCase: GetExpecificTask,
+    private val getExpecificCategory: GetExpecificCategory
+
 ) : ViewModel() {
 
+    private val taskId: String? = savedStateHandle["taskId"]
     private val _uiState = MutableStateFlow(TaskFormState())
     val uiState: StateFlow<TaskFormState> = _uiState.asStateFlow()
     private val userId = "local_user"
@@ -71,6 +83,8 @@ class TaskViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
+        // Cargar los datos de la tarea si el ID existe
+        loadTaskData()
         // Autoselección inicial
         viewModelScope.launch {
             calendarsList.collect { list ->
@@ -129,6 +143,43 @@ class TaskViewModel @Inject constructor(
         calendarHelper.set(Calendar.MINUTE, minute)
 
         updateAndValidateDates(calendarHelper.time, isStart)
+    }
+    suspend fun getExpecificTask(id: String?): Task? {
+        return getExpecificTaskUseCase(id ?: "")
+    }
+
+     suspend fun getTaskCategory(categoryId: String?): Category? {
+        return getExpecificCategory(categoryId ?: "")
+    }
+    suspend fun  getCategoryColor(categoryId: String?): Color {
+        val color = getExpecificCategory(categoryId?: "")?.color
+        return if (color != null) {
+            Color(parseColor(color))
+        } else {
+            colorCuarto
+        }
+    }
+
+    private fun loadTaskData() {
+        taskId?.let { id ->
+            viewModelScope.launch {
+                val task = getExpecificTaskUseCase(id)
+                val category = task?.categoryId?.let { getExpecificCategory(it) }
+                val calendar = calendarsList.value.find { it.id == task?.parentCalendarId }
+                task?.let { task ->
+                    _uiState.update { it.copy(
+                        id = task.id,
+                        name = task.name,
+                        initDate = task.init_date ?: Date(),
+                        finishDate = task.finish_date ?: Date(),
+                        calendar = calendar,
+                        owners = task.owners,
+                        category = category
+                        //resto de atrib
+                    )}
+                }
+            }
+        }
     }
 
     private fun updateAndValidateDates(newDate: Date, isStart: Boolean) {

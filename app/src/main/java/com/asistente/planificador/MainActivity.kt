@@ -13,6 +13,7 @@ import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.screens.CategoryForm
 import com.asistente.planificador.ui.screens.MainCalendar
 import com.asistente.planificador.ui.screens.TaskForm
+import com.asistente.planificador.ui.screens.TaskView
 import com.asistente.planificador.ui.theme.TrabajoFinDeGradoTheme
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,7 +41,8 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             categoriesViewModel = categoriesViewModel,
                             onNavigateToTask = { navController.navigate("task_form") },
-                            onNavigateToCategory = { navController.navigate("category_form") }
+                            onNavigateToCategory = { navController.navigate("category_form") },
+                            onNavigateToDetail = { taskId -> navController.navigate("task_detail/$taskId") }
                         )
                     }
                     composable("task_form") {
@@ -56,6 +58,9 @@ class MainActivity : ComponentActivity() {
                                 navController.popBackStack()
                             }
                         )
+                    }
+                    composable("task_detail/{taskId}") {
+                        TaskView(onBack = { navController.popBackStack() })
                     }
                 }
             }
