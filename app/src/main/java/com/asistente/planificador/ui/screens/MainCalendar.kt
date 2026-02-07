@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.composable
 import com.asistente.core.domain.models.Calendar
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.components.CalendarView
@@ -33,7 +34,7 @@ import java.time.YearMonth
 val colorCuarto = Color(0xFFF3E5E2)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel, onNavigateToTask: () -> Unit) {
+fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel, onNavigateToTask: () -> Unit, onNavigateToCategory: () -> Unit) {
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
     var currentTab by remember { mutableStateOf("calendar") }
@@ -177,8 +178,10 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
             CategoryShow(
                 isVisible = showCategoryShow,
                 viewModel = categoriesViewModel,
-                onBack = { showCategoryShow = false }
+                onBack = { showCategoryShow = false },
+                onNavigateToCategory = { onNavigateToCategory() }
             )
+
         }
     }
 }

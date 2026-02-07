@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.asistente.core.ui.viewmodels.CalendarViewModel
+import com.asistente.planificador.ui.screens.CategoryForm
 import com.asistente.planificador.ui.screens.MainCalendar
 import com.asistente.planificador.ui.screens.TaskForm
 import com.asistente.planificador.ui.theme.TrabajoFinDeGradoTheme
@@ -38,11 +39,19 @@ class MainActivity : ComponentActivity() {
                         MainCalendar(
                             viewModel = viewModel,
                             categoriesViewModel = categoriesViewModel,
-                            onNavigateToTask = { navController.navigate("task_form") }
+                            onNavigateToTask = { navController.navigate("task_form") },
+                            onNavigateToCategory = { navController.navigate("category_form") }
                         )
                     }
                     composable("task_form") {
                         TaskForm(
+                            onBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                    composable("category_form") {
+                        CategoryForm(
                             onBack = {
                                 navController.popBackStack()
                             }

@@ -56,17 +56,22 @@ class CategoryRepository @Inject constructor(
         return localCategory.getAllCategorysByCalendarId(calendarId)
     }
 
-    override suspend fun saveCategory(Category: Category) {
+    override suspend fun saveCategory(Category: Category, isSharedCalendar: Boolean) {
         // Guarda en Room -> Sube a FireBase
-        localCategory.insertCategory(Category)
-        externalScope.launch {
+        if (isSharedCalendar) {
+            // Si caleario es compartido y solo si hay internet
             val success = remoteCategory.saveCategoryRemote(Category)
             if (success) {
-                // SOLO si Firebase confirma, actualizamos local a status 1
-                localCategory.insertCategory(Category.copy(syncStatus = 1))
-
+                localCategory.insertCategory(Category)
+            } else {
+                throw Exception("Conexión necesaria para modificar calendarios compartidos")
             }
-
+        } else {
+            // si calendario es normal
+            localCategory.insertCategory(Category)
+            externalScope.launch {
+                remoteCategory.saveCategoryRemote(Category)
+            }
         }
     }
 

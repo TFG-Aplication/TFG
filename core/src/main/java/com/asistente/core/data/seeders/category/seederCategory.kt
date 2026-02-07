@@ -12,7 +12,7 @@ class seederCategory @Inject constructor(
         val predefinedCategories = MockDataCategory.getPredefinedCategories(calendarId)
 
         predefinedCategories.forEach { category ->
-            categoryRepository.saveCategory(category)
+            categoryRepository.saveCategory(category, false)
         }
 
     }
