@@ -1,82 +1,95 @@
 package com.asistente.core.data.repository
 
+import android.content.Context
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.asistente.core.data.local.daos.CalendarDao
 import com.asistente.core.data.remote.CalendarRemoteServices
+import com.asistente.core.data.worker.CalendarWorker
+import com.asistente.core.data.worker.CategoryWorker
 import com.asistente.core.domain.models.Calendar
 import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterface
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class CalendarRepository @Inject constructor(
     private val localCalendar: CalendarDao,
-    private val remoteCalendar: CalendarRemoteServices,
-    private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    @ApplicationContext private val context: Context
+
 ) : CalendarRepositoryInterface {
 
-    // a lo mejor hay q cambiarlo :)
+    private val workManager = WorkManager.getInstance(context)
+
+
     override suspend fun getCalendarById(id: String): Calendar? {
-        var calendar = localCalendar.getCalendarById(id)
-        if (calendar == null)
-            calendar = remoteCalendar.getCalendarByIdRemote(id)
-            if (calendar != null) {
-                localCalendar.insertCalendar(calendar)
-            }
-        return calendar
+        return localCalendar.getCalendarById(id)
+
     }
 
     override fun getAllCalendarByUserId(id: String): Flow<List<Calendar>> {
-        // si los calendarios compartidos han sido borrados x otro usuario se eliminan tambien del room antes de enseñarlos todos
-        externalScope.launch {
-            try {
-                val remoteCalendars = remoteCalendar.getAllCalendarByUserIdRemote(id)
-                val localCalendars = localCalendar.getAllCalendarsList(id)
-                val remoteIds = remoteCalendars.map { it.id }
-                localCalendars.forEach { local ->
-                    if (local.syncStatus == 1 && !remoteIds.contains(local.id)) {
-                        localCalendar.deleteCalendarById(local.id)
-                    }
-                    if(local.syncStatus == 0 && !remoteIds.contains(local.id)) {
-                        remoteCalendar.saveCalendarRemote(local)
-                        local.syncStatus = 1
-                    }
-
-                }
-                // si otra persona ha creado nuevos calendarios compartidos actualiza el room
-                remoteCalendars.forEach { remote ->
-                    // Al insertar con REPLACE, se actualiza lo que ya existía
-                    localCalendar.insertCalendar(remote.copy(syncStatus = 1))
-                }
-            } catch (e: Exception) { }
-        }
+        syncWorker(id)
         return localCalendar.getAllCalendarsByUserId(id)
+
     }
 
     override suspend fun saveCalendar(calendar: Calendar) {
-        // Guarda en Room -> Sube a FireBase y marca como sincronizado
-        localCalendar.insertCalendar(calendar)
-        externalScope.launch {
-            val success = remoteCalendar.saveCalendarRemote(calendar)
-            if (success) {
-                // SOLO si Firebase confirma, actualizamos local a status 1
-                localCalendar.insertCalendar(calendar.copy(syncStatus = 1))
-                android.util.Log.d("REPO", "Calendario sincronizado con éxito")
-            }
-        }
-        println("seguardo todo todito todo")
+            // Guardar en Room con estado "pendiente de subir" (0)
+            localCalendar.insertCalendar(calendar.copy(syncStatus = 0))
+
+            // poner en cola en el Worker para que lo suba cuando haya internet
+            syncWorker("local_user")
+
     }
 
     override suspend fun deleteCalendar(id: String, isShared: Boolean) {
         if (isShared) {
+            val calendar = localCalendar.getCalendarById(id)
+            calendar?.let {
+                // Marca como "pendiente de borrar" (2) cuando haya conex
+                localCalendar.insertCalendar(it.copy(syncStatus = 2))
 
-            val success = remoteCalendar.deleteCalendarRemote(id)
-            if (success) localCalendar.deleteCalendarById(id)
-            else throw Exception("No se pudo borrar: verifica tu conexión")
+                // El Worker se encargará de borrarlo en Firebase y luego en Room
+                syncWorker("local_user")
+            }
         } else {
+            // Borrado local inmediato si no es compartido
             localCalendar.deleteCalendarById(id)
-            externalScope.launch { remoteCalendar.deleteCalendarRemote(id) }
+            // intentar borrar en remoto si existe
+            workManager.enqueue(
+                OneTimeWorkRequestBuilder<CategoryWorker>()
+                    .setInputData(workDataOf("calendar_id" to "GLOBAL", "local_user" to "local_user"))
+                    .build()
+            )
         }
     }
+
+    private fun syncWorker(userId: String) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED) //conexion a internet necesaria
+            .build()
+
+        val syncRequest = OneTimeWorkRequestBuilder<CalendarWorker>()
+            .setConstraints(constraints)
+            .setInputData(workDataOf("local_user" to userId))
+            // Reintento exponencial si falla Firebase
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "sync_calendar_$userId",
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            syncRequest
+        )
+    }
 }
+

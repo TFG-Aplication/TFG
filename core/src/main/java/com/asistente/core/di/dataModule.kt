@@ -96,18 +96,18 @@ object dataModule {
     @Singleton
     fun provideCalendarRepository(
         local: CalendarDao,
-        remote: CalendarRemoteServices
+        @ApplicationContext context: Context
     ): CalendarRepositoryInterface {
-        return CalendarRepository(local, remote)
+        return CalendarRepository(local, context)
     }
 
     @Provides
     @Singleton
     fun provideCategoryRepository(
         local: CategoryDao,
-        remote: CategoryRemoteServices
+        @ApplicationContext context: Context
     ): CategoryRepositoryInterface {
-        return CategoryRepository(local, remote)
+        return CategoryRepository(local, context)
     }
 
     @Provides

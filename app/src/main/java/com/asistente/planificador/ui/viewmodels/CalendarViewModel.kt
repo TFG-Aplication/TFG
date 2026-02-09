@@ -72,6 +72,8 @@ class CalendarViewModel @Inject constructor(
     }
 
 
+
+
     private fun observeCalendarsAndSelectFirst() {
         viewModelScope.launch {
             calendarsList.collect { list ->

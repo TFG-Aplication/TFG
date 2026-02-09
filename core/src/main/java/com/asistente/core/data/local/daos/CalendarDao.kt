@@ -28,4 +28,13 @@ interface CalendarDao {
 
     @Query("SELECT * FROM calendars where code = :code")
     fun getUsersByCodeQR(code: String): Calendar?
+
+    @Query("SELECT * FROM calendars WHERE syncStatus = 0 AND owners LIKE '%' || :userId || '%'")
+    suspend fun getUnsyncedCalendars(userId: String): List<Calendar>
+
+    @Query("SELECT * FROM calendars WHERE syncStatus = :status AND owners LIKE '%' || :userId || '%'")
+    suspend fun getCalendarBySyncStatus(status: Int, userId: String): List<Calendar>
+
+
+
 }

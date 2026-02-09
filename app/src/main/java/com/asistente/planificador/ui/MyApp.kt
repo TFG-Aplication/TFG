@@ -1,7 +1,10 @@
 package com.asistente.planificador.ui
 
 import android.app.Application
+import androidx.work.Configuration
+import androidx.hilt.work.HiltWorkerFactory
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
 /*
  * PUNTO DE ENTRADA A NIVEL DE PROCESO (Application):
@@ -13,7 +16,12 @@ import dagger.hilt.android.HiltAndroidApp
  */
 
 @HiltAndroidApp
-class MyApp : Application() {
-    // El cuerpo permanece vacío ya que Hilt automatiza la instanciación de los repositorios
-    // y servicios definidos en los módulos de inyección (DataModule).
+class MyApp : Application(), Configuration.Provider {
+
+    @Inject lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 }

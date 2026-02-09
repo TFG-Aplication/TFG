@@ -14,15 +14,13 @@ class CalendarRemoteServices @Inject constructor(
     private val collection = firestore.collection("calendars")
 
     suspend fun getAllCalendarByUserIdRemote(userId: String): List<Calendar> {
-        return try {
+
             val data = collection
                 .whereArrayContains("owners", userId)
                 .get()
                 .await()
-            data.toObjects(Calendar::class.java)
-        } catch (e: Exception) {
-            emptyList()
-        }
+            return data.toObjects(Calendar::class.java)
+
     }
 
     suspend fun getCalendarByIdRemote(id: String): Calendar? {
@@ -34,22 +32,14 @@ class CalendarRemoteServices @Inject constructor(
         }
     }
 
-    suspend fun saveCalendarRemote(calendar: Calendar): Boolean {
-        return try {
+    suspend fun saveCalendarRemote(calendar: Calendar) {
             collection.document(calendar.id).set(calendar).await()
-            true
-        } catch (e: Exception) {
-            false
-        }
+
     }
 
-    suspend fun deleteCalendarRemote(id: String): Boolean {
-        return try {
+    suspend fun deleteCalendarRemote(id: String) {
             collection.document(id).delete().await()
-            true
-        } catch (e: Exception) {
-            false
-        }
+
     }
 
 }

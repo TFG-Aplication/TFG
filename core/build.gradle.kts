@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.ksp)
-    id("com.google.dagger.hilt.android") version "2.51.1"
+    id("com.google.dagger.hilt.android") version "2.54"
     id("kotlin-kapt")
 }
 
@@ -52,6 +52,9 @@ dependencies {
     // Room (Usa KSP para el compilador)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.hilt.common)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.room.ktx)
     ksp(libs.androidx.room.compiler)
 
     // Firebase
@@ -69,6 +72,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Hilt (Usa KAPT para el compilador)
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+    implementation("com.google.dagger:hilt-android:2.54")
+    kapt("com.google.dagger:hilt-android-compiler:2.54")
+    // Hilt + WorkManager
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    kapt("androidx.hilt:hilt-compiler:1.2.0")
 }

@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.dagger.hilt.android") version "2.51.1"
+    id("com.google.dagger.hilt.android") version "2.54"
     id("kotlin-kapt")
     id("com.google.gms.google-services")
 }
@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.ui)
     implementation(libs.foundation)
+    implementation(libs.androidx.hilt.work)
 
 
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -83,7 +84,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     //hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+    implementation("com.google.dagger:hilt-android:2.54")
+    kapt("com.google.dagger:hilt-android-compiler:2.54")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    // WorkManager + Hilt
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    implementation("androidx.startup:startup-runtime:1.1.1")
 }

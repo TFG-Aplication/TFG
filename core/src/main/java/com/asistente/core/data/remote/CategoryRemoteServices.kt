@@ -21,36 +21,20 @@ private val firestore: FirebaseFirestore
 
 
     suspend fun getAllCategorysByCalendarIdRemote(calendarId: String): List<Category> {
-        return try {
             val data = collection
                 .whereEqualTo("parentCalendarId", calendarId)
                 .get()
                 .await()
-            data.toObjects(Category::class.java)
-        } catch (e: Exception) {
-            emptyList()
-        }
+            return data.toObjects(Category::class.java)
     }
 
 
-    suspend fun saveCategoryRemote(Category: Category): Boolean {
-        return try {
-            collection.document(Category.id).set(Category).await()
-            true
-        } catch (e: Exception) {
-            false
-        }
-
-
+    suspend fun saveCategoryRemote(Category: Category) {
+        collection.document(Category.id).set(Category).await()
     }
 
-    suspend fun deleteCategoryRemote(CategoryId: String): Boolean {
-        return try {
+    suspend fun deleteCategoryRemote(CategoryId: String) {
             collection.document(CategoryId).delete().await()
-            true
-        } catch (e: Exception) {
-            false
-        }
     }
     
 }
