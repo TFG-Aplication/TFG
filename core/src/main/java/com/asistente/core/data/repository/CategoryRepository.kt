@@ -82,13 +82,12 @@ class CategoryRepository @Inject constructor(
         val syncRequest = OneTimeWorkRequestBuilder<CategoryWorker>()
             .setConstraints(constraints)
             .setInputData(workDataOf("calendar_id" to calendarId))
-            // Reintento exponencial si falla Firebase
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
             .build()
 
         workManager.enqueueUniqueWork(
             "sync_category_$calendarId",
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            ExistingWorkPolicy.REPLACE,
             syncRequest
         )
     }
@@ -98,11 +97,12 @@ class CategoryRepository @Inject constructor(
         val periodicRequest = PeriodicWorkRequestBuilder<CategoryWorker>(15, TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setInputData(workDataOf("calendar_id" to calendarId))
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
 
         workManager.enqueueUniquePeriodicWork(
             "periodic_sync_$calendarId",
-            ExistingPeriodicWorkPolicy.KEEP, // Mantener si ya existe
+            ExistingPeriodicWorkPolicy.REPLACE,
             periodicRequest
         )
     }

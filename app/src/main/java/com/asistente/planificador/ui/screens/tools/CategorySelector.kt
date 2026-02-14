@@ -175,3 +175,23 @@ fun darkenColor(color: Color): Color {
     hsl[2] = (hsl[2] * 0.45f).coerceIn(0f, 1f)
     return Color(ColorUtils.HSLToColor(hsl))
 }
+
+@Composable
+fun CategoryLabel(name: String, colorHex: String) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = Color(parseColor(colorHex)),
+        modifier = Modifier
+            .width(100.dp)
+            .height(35.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = name.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = darkenColor(Color(parseColor(colorHex)))
+            )
+        }
+    }
+}

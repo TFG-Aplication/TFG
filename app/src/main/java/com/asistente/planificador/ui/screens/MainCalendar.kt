@@ -37,7 +37,8 @@ val colorCuarto = Color(0xFFF3E5E2)
 fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel,
                  onNavigateToTask: () -> Unit,
                  onNavigateToCategory: () -> Unit,
-                 onNavigateToDetail: (String) -> Unit){
+                 onNavigateToDetail: (String) -> Unit,
+                 onNavigateToEditCategory: (String) -> Unit) {
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
     var currentTab by remember { mutableStateOf("calendar") }
@@ -99,7 +100,7 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                         .padding(top = 10.dp) // IMPORTANTE: Dejamos espacio para que no choque con los iconos fijos
                         .padding(16.dp)
                 ) {
-                    AgendaView(onNavigateToDetail = onNavigateToDetail)
+                    AgendaView(onNavigateToDetail = onNavigateToDetail, viewModel = viewModel)
                 }
             }
     ) { pad ->
@@ -178,13 +179,16 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
             }
         }
         if (showCategoryShow) {
+            expandedMenu = false
             CategoryShow(
                 isVisible = showCategoryShow,
                 viewModel = categoriesViewModel,
                 onBack = { showCategoryShow = false },
-                onNavigateToCategory = { onNavigateToCategory() }
+                onNavigateToCategory = { onNavigateToCategory() },
+                onNavigateToEditCategory = { categoryId ->
+                    onNavigateToEditCategory(categoryId)
+                }
             )
-
         }
     }
 }

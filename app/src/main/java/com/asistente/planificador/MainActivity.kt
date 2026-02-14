@@ -6,9 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.screens.CategoryForm
 import com.asistente.planificador.ui.screens.MainCalendar
@@ -42,7 +44,9 @@ class MainActivity : ComponentActivity() {
                             categoriesViewModel = categoriesViewModel,
                             onNavigateToTask = { navController.navigate("task_form") },
                             onNavigateToCategory = { navController.navigate("category_form") },
-                            onNavigateToDetail = { taskId -> navController.navigate("task_detail/$taskId") }
+                            onNavigateToDetail = { taskId -> navController.navigate("task_detail/$taskId") },
+                            onNavigateToEditCategory = { categoryId -> navController.navigate("edit_category/$categoryId") }
+
                         )
                     }
                     composable("task_form") {
@@ -54,6 +58,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("category_form") {
                         CategoryForm(
+                            categoryId = null,
                             onBack = {
                                 navController.popBackStack()
                             }
@@ -61,6 +66,16 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("task_detail/{taskId}") {
                         TaskView(onBack = { navController.popBackStack() })
+                    }
+                    composable("edit_category/{categoryId}",
+                        arguments = listOf(navArgument("categoryId") { type = NavType.StringType })) { entry ->
+                        val categoryId = entry.arguments?.getString("categoryId")
+                        CategoryForm(
+                            categoryId = categoryId,
+                            onBack = {
+                                navController.popBackStack()
+                            }
+                        )
                     }
                 }
             }

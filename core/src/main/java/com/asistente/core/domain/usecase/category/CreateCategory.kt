@@ -26,7 +26,7 @@ class CreateCategory @Inject constructor(
             id = id,
             name = name,
             parentCalendarId = calendar.id,
-            syncStatus = syncStatus,
+            syncStatus = 0,
             color = color
         )
 
