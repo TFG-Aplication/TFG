@@ -13,11 +13,11 @@ data class Calendar(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     @Nonnull
-
     val name: String = "",
     @Nonnull
     val code: String = "",
     val owners: List<String> = emptyList(),
     val isShared: Boolean = false,
-    var syncStatus: Int = 0
+    var syncStatus: Int = 0,
+    val firebaseId: String? = null
 )
