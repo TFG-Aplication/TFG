@@ -11,24 +11,16 @@ import javax.annotation.Nonnull
 
 @Entity(
     tableName = "categories",
-
-    foreignKeys = [
-        ForeignKey(
-            entity = Calendar::class,
-            parentColumns = ["id"],
-            childColumns = ["parentCalendarId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],indices = [Index(value = ["parentCalendarId"])]
+    indices = [Index(value = ["parentCalendarId"])]
 )
 data class Category(
     @PrimaryKey var id: String = UUID.randomUUID().toString(),
-
     var syncStatus: Int = 0,
     @Nonnull
     var name: String = "",
     @Nonnull
     var parentCalendarId: String = "",
     var color: String = "",
+    val firebaseId: String? = null
 
     )
