@@ -5,35 +5,33 @@ import androidx.room.PrimaryKey
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 import androidx.room.ForeignKey
+import androidx.room.Index
 import java.util.UUID
 import javax.annotation.Nonnull
 
 
 @Entity(
     tableName = "tasks",
-    foreignKeys = [
-        ForeignKey(
-            entity = Calendar::class,
-            parentColumns = ["id"],
-            childColumns = ["parentCalendarId"],
-            onDelete = ForeignKey.CASCADE
-        )
+    indices = [
+        Index(value = ["parentCalendarId"]),
+        Index(value = ["categoryId"])
     ]
 )
 data class Task(
-    @PrimaryKey override val id: String = UUID.randomUUID().toString(),
-    override val owners: List<String> = emptyList(),
-    override var syncStatus: Int = 0,
-    override val categoryId: String? = null,
-    override val place: String? = null,
-    override val notes: String? = null,
-    @Nonnull
-    override val name: String = "",
-    @Nonnull
-    override val parentCalendarId: String = "",
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
 
-    override val alerts: List<Long>? = emptyList(),
+    val owners: List<String> = emptyList(),
+    var syncStatus: Int = 0,
+    val categoryId: String? = null,
+    val place: String? = null,
+    val notes: String? = null,
+    @Nonnull
+    val name: String = "",
+    @Nonnull
+    val parentCalendarId: String = "",
 
+    val alerts: List<Long>? = emptyList(),
 
     //atrib expecificos
     @Nonnull
@@ -42,6 +40,6 @@ data class Task(
     @Nonnull
     @set:ServerTimestamp
     var finish_date: Date? = null,
+    val firebaseId: String? = null
 
-
-    ) : BaseEntity(id, owners, place, notes, parentCalendarId, name, categoryId, alerts, syncStatus)
+    ) 

@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.Flow
 interface CalendarDao {
 
     // Reactivas para UI)
-    @Query("SELECT * FROM calendars where (owners LIKE '%\"' || :userId || '\"%' OR owners LIKE '%' || :userId || '%')")
+    @Query("SELECT * FROM calendars where (owners LIKE '%\"' || :userId || '\"%' OR owners LIKE '%' || :userId || '%') AND syncStatus != 2")
     fun getAllCalendarsByUserIdFlow(userId: String): Flow<List<Calendar>>
 
-    @Query("SELECT * FROM calendars WHERE id = :calendarId AND syncStatus != 2")
+    @Query("SELECT * FROM calendars WHERE id = :calendarId ")
     fun getCalendarByIdFlow(calendarId: String): Flow<Calendar?>
 
     @Query("SELECT * FROM calendars WHERE code = :code ")
@@ -24,13 +24,13 @@ interface CalendarDao {
 
     // SUSPENDIDAS (para lógica de repositorio/sync)
     @Query("SELECT * FROM calendars where (owners LIKE '%\"' || :userId || '\"%' OR owners LIKE '%' || :userId || '%')")
-    fun getAllCalendarsByUserId(userId: String): List<Calendar>
+    suspend fun getAllCalendarsByUserId(userId: String): List<Calendar>
 
     @Query("SELECT * FROM calendars WHERE id = :calendarId AND syncStatus != 2")
-    fun getCalendarById(calendarId: String): Calendar?
+    suspend fun getCalendarById(calendarId: String): Calendar?
 
     @Query("SELECT * FROM calendars WHERE code = :code ")
-    fun getCalendarByCode(code: String): Calendar?
+    suspend fun getCalendarByCode(code: String): Calendar?
 
 
     //  INSERT / UPDATE / DELETE
