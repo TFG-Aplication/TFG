@@ -1,6 +1,7 @@
-package com.asistente.core.local.dao
+package com.asistente.core.data.local.dao
 
 import android.content.Context
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -317,7 +318,7 @@ class CalendarDaoTest {
             calendarDao.insertCalendar(cal2)
             // Si llega aquí, Room reemplazó por el OnConflictStrategy.REPLACE
             // O lanzó excepción por el índice único
-        } catch (e: android.database.sqlite.SQLiteConstraintException) {
+        } catch (e: SQLiteConstraintException) {
             // Esperado si el índice único funciona
             assertTrue(true)
         }
