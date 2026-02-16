@@ -10,74 +10,164 @@ import com.asistente.core.data.remote.CalendarRemoteServices
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
+
 @HiltWorker
 class CalendarWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
-    private val localCalendar: CalendarDao,
-    private val remoteCalendar: CalendarRemoteServices,
+    private val calendarDao: CalendarDao,
+    private val remoteServices: CalendarRemoteServices
 ) : CoroutineWorker(context, params) {
 
+    companion object {
+        private const val TAG = "tag" // pa el debug
+        const val KEY_USER_ID = "user_id"
+    }
+
     override suspend fun doWork(): Result {
-        val userId = inputData.getString("local_user") ?: return Result.failure()
+        val userId = inputData.getString(KEY_USER_ID) ?: run {
+            Log.e(TAG, "userId no proporcionado")
+            return Result.failure()
+        }
 
         return try {
+            Log.d(TAG, "Iniciando sincronización para usuario: $userId")
 
-            val unsyncedCalendar = localCalendar.getUnsyncedCalendars(userId)
+            // SUBIDA: Subir calendarios pendientes (syncStatus = 0)
+            uploadPendingCalendars(userId)
 
-            val remoteCalendars = remoteCalendar.getAllCalendarByUserIdRemote(userId)
-            val remoteIds = remoteCalendars.map { it.id }.toSet()
+            // ELIMINACIÓN: Borrar calendarios marcados (syncStatus = 2)
+            deleteMarkedCalendars(userId)
 
-            // SUBIDA: Buscar en Room   syncStatus = 0 para subirlas
-            // en room + syn = 0 -> sube a fb
-            unsyncedCalendar.forEach { local ->
-                remoteCalendar.saveCalendarRemote(local)
-                localCalendar.insertCalendar(local.copy(syncStatus = 1))
+            // BAJADA: Descargar calendarios de Firebase
+            downloadRemoteCalendars(userId)
 
-            }
+            // LIMPIEZA: Eliminar calendarios locales que no existen en Firebase
+            cleanupDeletedCalendars(userId)
 
-            // Si está en Firebase pero no en mi Room ->
-            // 2 opciones:
-            // - estaba en room y se borro sin internet (sync = 2) -> lo borro de fb
-            // - otro lo creo y nunca estuvo en room -> lo bajo
-
-            // opcion 1
-            val CalendarToDelete = localCalendar.getCalendarBySyncStatus(2, userId)
-            CalendarToDelete.forEach { local ->
-                remoteCalendar.deleteCalendarRemote(local.id)
-                localCalendar.deleteCalendarById(local.id)
-
-            }
-
-            //opcion 2
-            // Solo bajamos lo que no tenemos Y que no esté marcado para borrar (estado 2)
-            remoteCalendars.forEach { remote ->
-                val localVersion = localCalendar.getCalendarById(remote.id)
-                if (localVersion == null) { // no existe en local
-                    // Es nuevo de otra persona -> Lo bajo
-                    localCalendar.insertCalendar(remote.copy(syncStatus = 1))
-                } else if (localVersion.syncStatus == 1) {
-                    // Ya lo tengo, solo actualizo por si el otro usuario cambió
-                    localCalendar.insertCalendar(remote.copy(syncStatus = 1))
-                }
-                // Si localVersion.syncStatus es 2, NO HACEMOS NADA (ignoramos Firebase hasta que se borre)
-            }
-
-
-            // BAJADA Y LIMPIEZA: Solo si el calendario es compartido
-            // Si está en mi Room con syncStatus = 1 pero NO está en Firebase -> Alguien lo borró
-            //en room + syn =1 + no fb -> borra de room
-            val localCalendars = localCalendar.getAllCalendarsList(userId)
-            localCalendars.forEach { local ->
-                if (local.syncStatus == 1 && !remoteIds.contains(local.id)) {
-                    localCalendar.deleteCalendarById(local.id)
-                }
-            }
-
+            Log.d(TAG, "Sincronización completada")
             Result.success()
+
         } catch (e: Exception) {
-            // Si hay error de red, WorkManager no borra nada y reintenta luego
+            Log.e(TAG, "Error en sincronización: ${e.message}", e)
             Result.retry()
+        }
+    }
+
+    // SUBIDA: LOCAL → FIREBASE
+
+    private suspend fun uploadPendingCalendars(userId: String) {
+        val unsyncedCalendars = calendarDao.getUnsyncedCalendars(userId)
+
+        if (unsyncedCalendars.isEmpty()) {
+            Log.d(TAG, "Sin calendarios pendientes de subir")
+            return
+        }
+
+        Log.d(TAG, "Subiendo ${unsyncedCalendars.size} calendarios pendientes")
+
+        unsyncedCalendars.forEach { calendar ->
+            val success = remoteServices.saveCalendarRemote(calendar)
+
+            if (success) {
+                calendarDao.insertCalendar(calendar.copy(syncStatus = 1))
+                Log.d(TAG, " Subido: ${calendar.name}")
+            } else {
+                Log.w(TAG, "  Fallo al subir: ${calendar.name}")
+            }
+        }
+    }
+
+    //ELIMINACIÓN: BORRAR CALENDARIOS MARCADOS
+
+    private suspend fun deleteMarkedCalendars(userId: String) {
+        val calendarsToDelete = calendarDao.getCalendarBySyncStatus(2, userId)
+
+        if (calendarsToDelete.isEmpty()) {
+            Log.d(TAG, "Sin calendarios marcados para eliminar")
+            return
+        }
+
+        Log.d(TAG, "Eliminando ${calendarsToDelete.size} calendarios marcados")
+
+        calendarsToDelete.forEach { calendar ->
+            val deletedInFirebase = remoteServices.deleteCalendarRemote(calendar.id)
+
+            val existsInFirebase = remoteServices.existsCalendar(calendar.id)
+
+            if (deletedInFirebase || !existsInFirebase) {
+                calendarDao.deleteCalendarById(calendar.id)
+                Log.d(TAG, " Eliminado: ${calendar.name}")
+            } else {
+                Log.w(TAG, " Fallo al eliminar: ${calendar.name}")
+            }
+        }
+    }
+
+    //BAJADA: FIREBASE → LOCAL
+
+    private suspend fun downloadRemoteCalendars(userId: String) {
+        val remoteCalendars = remoteServices.getAllCalendarByUserIdRemote(userId)
+
+        if (remoteCalendars.isEmpty()) {
+            Log.d(TAG, "Sin calendarios remotos para descargar")
+            return
+        }
+
+        Log.d(TAG, "Descargando ${remoteCalendars.size} calendarios de Firebase")
+
+        remoteCalendars.forEach { remoteCalendar ->
+            val localCalendar = calendarDao.getCalendarById(remoteCalendar.id)
+
+            when {
+                localCalendar == null -> {
+                    // No existe localmente → Insertar (es nuevo de otro)
+                    calendarDao.insertCalendar(remoteCalendar.copy(syncStatus = 1))
+                    Log.d(TAG, "Nuevo: ${remoteCalendar.name}")
+                }
+
+                localCalendar.syncStatus == 1 -> {
+                    // Ya sincronizado → Actualizar
+                    calendarDao.insertCalendar(remoteCalendar.copy(syncStatus = 1))
+                    Log.d(TAG, " Actualizado: ${remoteCalendar.name}")
+                }
+
+                localCalendar.syncStatus == 2 -> {
+                    // Marcado para eliminar → NO sobrescribir
+                    Log.d(TAG, "Ignorado (marcado para eliminar): ${remoteCalendar.name}")
+                }
+
+                localCalendar.syncStatus == 0 -> {
+                    // Pendiente de subir → Conflicto ????
+                    Log.d(TAG, "Conflicto, manteniendo local: ${remoteCalendar.name}")
+                }
+            }
+        }
+    }
+
+    // ELIMINAR LOCALES QUE NO EXISTEN EN FIREBASE
+
+    private suspend fun cleanupDeletedCalendars(userId: String) {
+        val localCalendars = calendarDao.getAllCalendarsByUserId(userId)
+        val remoteCalendars = remoteServices.getAllCalendarByUserIdRemote(userId)
+        val remoteIds = remoteCalendars.map { it.id }.toSet()
+
+        var deletedCount = 0
+
+        localCalendars.forEach { local ->
+            // Eliminar solo si:
+            // 1. Está sincronizado (syncStatus = 1) +
+            // 2. NO existe en Firebase +
+            // 3. Es compartido (calendarios locales no se borran)
+            if (local.syncStatus == 1 && !remoteIds.contains(local.id) && local.isShared) {
+                calendarDao.deleteCalendarById(local.id)
+                deletedCount++
+                Log.d(TAG, " Eliminado (borrado en Firebase): ${local.name}")
+            }
+        }
+
+        if (deletedCount > 0) {
+            Log.d(TAG, "Limpieza: $deletedCount calendarios eliminados")
         }
     }
 }
