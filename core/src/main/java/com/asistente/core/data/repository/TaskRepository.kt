@@ -1,114 +1,81 @@
 package com.asistente.core.data.repository
 
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.asistente.core.data.local.daos.TaskDao
-import com.asistente.core.data.remote.TaskRemoteServices
+import com.asistente.core.data.worker.TaskWorker
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-
 class TaskRepository @Inject constructor(
-    private val localTask: TaskDao,
-    private val remoteTask: TaskRemoteServices,
-    private val externalScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val taskDao: TaskDao,
+    private val workManager: WorkManager
 ) : TaskRepositoryInterface {
 
-
-
     override suspend fun getTaskById(id: String): Task? {
-        externalScope.launch {
-            try {
-                val remote = remoteTask.getTaskByIdRemote(id)
-                if (remote != null) {
-                    localTask.insertTask(remote.copy(syncStatus = 1))
-                }
-            } catch (e: Exception) {
-            }
-        }
-        return localTask.getTaskById(id)
+        return taskDao.getTaskById(id)
     }
 
-    override fun getAllTaskByUserId(id: String): Flow<List<Task>> {
-        externalScope.launch {
-            try {
-                val remoteTasks = remoteTask.getAllTasksByUserIdRemote(id)
-                val localTasks = localTask.getAllTaskListByUserId(id)
-                val remoteIds = remoteTasks.map { it.id }
-                localTasks.forEach { local ->
-                    if (local.syncStatus == 1 && !remoteIds.contains(local.id)) {
-                        localTask.deleteTaskById(local.id)
-                    }
-                    if (local.syncStatus == 0 && !remoteIds.contains(local.id)) {
-                        remoteTask.saveTaskRemote(local)
-                        local.syncStatus = 1
-                    }
-                }
-                remoteTasks.forEach { remote ->
-                    localTask.insertTask(remote)
-                }
-
-            } catch (e: Exception) {
-            }
-        }
-
-        // El Flow de Room se disparará automáticamente al detectar los cambios del launch
-        return localTask.getAllTasksByUserId(id)
+    override fun getAllTaskByUserId(userId: String): Flow<List<Task>> {
+        return taskDao.getAllTasksByUserIdFlow(userId)
     }
 
     override fun getAllTaskByCalendarId(calendarId: String): Flow<List<Task>> {
-        externalScope.launch {
-            try {
-                val remoteTasks = remoteTask.getAllTasksByCalendarIdRemote(calendarId)
-
-                val localTasks = localTask.getAllTaskList(calendarId)
-
-                val remoteIds = remoteTasks.map { it.id }
-                localTasks.forEach { local ->
-                    if (local.syncStatus == 1 && !remoteIds.contains(local.id)) {
-                        localTask.deleteTaskById(local.id)
-                    }
-                    if (local.syncStatus == 0 && !remoteIds.contains(local.id)) {
-                        remoteTask.saveTaskRemote(local)
-                        local.syncStatus = 1
-                    }
-                }
-                remoteTasks.forEach { localTask.insertTask(it) }
-            } catch (e: Exception) {
-            }
-        }
-        return localTask.getAllTasksByCalendarId(calendarId)
+        return taskDao.getAllTasksByCalendarIdFlow(calendarId)
     }
 
     override suspend fun saveTask(task: Task, isSharedCalendar: Boolean) {
+        taskDao.insertTask(task.copy(syncStatus = 0))
+
         if (isSharedCalendar) {
-            // Si caleario es compartido y solo si hay internet
-            val success = remoteTask.saveTaskRemote(task)
-            if (success) {
-                localTask.insertTask(task)
-            } else {
-                throw Exception("Conexión necesaria para modificar calendarios compartidos")
-            }
-        } else {
-            // si calendario es normal
-            localTask.insertTask(task)
-            externalScope.launch {
-                remoteTask.saveTaskRemote(task)
-            }
+            enqueueSyncWorker(task.parentCalendarId)
         }
+    }
+
+    override suspend fun updateTask(task: Task) {
+        taskDao.insertTask(task.copy(syncStatus = 0))
+        enqueueSyncWorker(task.parentCalendarId)
     }
 
     override suspend fun deleteTask(taskId: String, isShared: Boolean) {
         if (isShared) {
-            val success = remoteTask.deleteTaskRemote(taskId)
-            if (success) localTask.deleteTaskById(taskId)
-            else throw Exception("No se pudo borrar: verifica tu conexión")
+            val task = taskDao.getTaskById(taskId)
+            task?.let {
+                taskDao.insertTask(it.copy(syncStatus = 2))
+                enqueueSyncWorker(it.parentCalendarId)
+            }
         } else {
-            localTask.deleteTaskById(taskId)
-            externalScope.launch { remoteTask.deleteTaskRemote(taskId) }
+            taskDao.deleteTaskById(taskId)
         }
+    }
+
+    private fun enqueueSyncWorker(calendarId: String) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val syncWorkRequest = OneTimeWorkRequestBuilder<TaskWorker>()
+            .setConstraints(constraints)
+            .setInputData(workDataOf(TaskWorker.KEY_CALENDAR_ID to calendarId))
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                10,
+                TimeUnit.SECONDS
+            )
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "sync_task_$calendarId",
+            ExistingWorkPolicy.REPLACE,
+            syncWorkRequest
+        )
     }
 }

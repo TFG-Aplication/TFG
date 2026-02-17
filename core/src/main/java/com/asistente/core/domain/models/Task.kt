@@ -35,11 +35,9 @@ data class Task(
 
     //atrib expecificos
     @Nonnull
-    @set:ServerTimestamp
-    var init_date: Date? = null,
+    val init_date: Date? = null,
     @Nonnull
-    @set:ServerTimestamp
-    var finish_date: Date? = null,
+    val finish_date: Date? = null,
     val firebaseId: String? = null
 
     ) 

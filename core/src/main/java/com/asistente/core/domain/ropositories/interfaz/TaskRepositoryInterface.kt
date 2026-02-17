@@ -12,6 +12,8 @@ interface TaskRepositoryInterface {
 
     suspend fun saveTask(Task: Task, isSharedCalendar: Boolean)
 
+    suspend fun updateTask(Task: Task)
+
     suspend fun deleteTask(taskId: String, isShared: Boolean)
 
 }
