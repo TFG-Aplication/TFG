@@ -122,9 +122,10 @@ object dataModule {
     @Provides
     @Singleton
     fun provideTaskRepository(
-        local: TaskDao
+        taskDao: TaskDao,
+        workManager: WorkManager
     ): TaskRepositoryInterface {
-        return TaskRepository(local)
+        return TaskRepository(taskDao, workManager)
     }
 
     @Provides
