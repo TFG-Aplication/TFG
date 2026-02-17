@@ -74,7 +74,7 @@ class CalendarRemoteTest {
         whenever(query.get()).thenReturn(Tasks.forResult(querySnapshot))
         whenever(querySnapshot.toObjects(Calendar::class.java)).thenReturn(calendars)
 
-        
+
         val result = remoteServices.getAllCalendarByUserIdRemote(testUserId)
 
         assertEquals(2, result.size)

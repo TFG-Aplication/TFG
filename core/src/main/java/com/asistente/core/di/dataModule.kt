@@ -2,6 +2,7 @@ package com.asistente.core.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.asistente.core.data.local.AppDatabase
 import com.asistente.core.data.local.daos.CalendarDao
 import com.asistente.core.data.local.daos.CategoryDao
@@ -94,29 +95,36 @@ object dataModule {
     // --- REPOSITORIOS ---
     @Provides
     @Singleton
+    fun provideWorkManager(
+        @ApplicationContext context: Context
+    ): WorkManager {
+        return WorkManager.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideCalendarRepository(
         local: CalendarDao,
-        @ApplicationContext context: Context
+        workManager: WorkManager
     ): CalendarRepositoryInterface {
-        return CalendarRepository(local, context)
+        return CalendarRepository(local, workManager)
     }
 
     @Provides
     @Singleton
     fun provideCategoryRepository(
         local: CategoryDao,
-        @ApplicationContext context: Context
+        workManager: WorkManager
     ): CategoryRepositoryInterface {
-        return CategoryRepository(local, context)
+        return CategoryRepository(local, workManager)
     }
 
     @Provides
     @Singleton
     fun provideTaskRepository(
-        local: TaskDao,
-        remote: TaskRemoteServices
+        local: TaskDao
     ): TaskRepositoryInterface {
-        return TaskRepository(local, remote)
+        return TaskRepository(local)
     }
 
     @Provides
