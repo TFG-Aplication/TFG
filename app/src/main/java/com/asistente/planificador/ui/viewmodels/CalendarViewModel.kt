@@ -7,9 +7,8 @@ import com.asistente.core.domain.models.Calendar
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterface
 import com.asistente.core.domain.usecase.calendar.CreateCalendar
-import com.asistente.core.domain.usecase.category.GetExpecificCategory
+import com.asistente.core.domain.usecase.category.GetSpecificCategory
 import com.asistente.core.domain.usecase.task.GetListTask
-import com.asistente.planificador.ui.screens.Primario
 import com.asistente.planificador.ui.screens.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -21,7 +20,7 @@ class CalendarViewModel @Inject constructor(
     private val createCalendarUseCase: CreateCalendar,
     private val repository: CalendarRepositoryInterface,
     private val getTaskUseCase: GetListTask,
-    private val getExpecificCategory: GetExpecificCategory
+    private val getExpecificCategory: GetSpecificCategory
 ) : ViewModel() {
 
     private val userId = "local_user"
@@ -89,7 +88,7 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             val currentList = repository.getAllCalendarByUserId(userId)?.firstOrNull() ?: emptyList()
             if (currentList.isEmpty()) {
-                createCalendarUseCase(name = "Mi primer calendario")
+                createCalendarUseCase(name = "Mi primer calendario", owners = listOf(userId))
             }
         }
     }

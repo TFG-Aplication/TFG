@@ -10,9 +10,9 @@ import com.asistente.core.domain.models.Category
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.usecase.category.GetListCategory
 import com.asistente.core.domain.usecase.calendar.GetListCalendars
-import com.asistente.core.domain.usecase.category.GetExpecificCategory
-import com.asistente.core.domain.usecase.category.GetExpecificTask
+import com.asistente.core.domain.usecase.category.GetSpecificCategory
 import com.asistente.core.domain.usecase.task.CreateTask
+import com.asistente.core.domain.usecase.task.GetSpecificTask
 import com.asistente.planificador.ui.screens.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,8 +54,8 @@ class TaskViewModel @Inject constructor(
     private val createTaskUseCase: CreateTask,
     private val getCalendarsUseCase: GetListCalendars,
     private val getCategoryUseCase: GetListCategory,
-    private val getExpecificTaskUseCase: GetExpecificTask,
-    private val getExpecificCategory: GetExpecificCategory
+    private val getExpecificTaskUseCase: GetSpecificTask,
+    private val getExpecificCategory: GetSpecificCategory
 
 ) : ViewModel() {
 
@@ -221,15 +221,15 @@ class TaskViewModel @Inject constructor(
                 val actualCalenda = actual.calendar ?: throw Exception("Error al vincular con el calendario")
 
                 createTaskUseCase(
-                    id = actual.id,
                     name = actual.name,
                     notes = null,
                     place = null,
-                    init_date = actual.initDate,
-                    finich_date = actual.finishDate,
-                    calendar = actualCalenda,
+                    initDate = actual.initDate,
+                    finishDate = actual.finishDate,
+                    calendarId = actualCalenda.id,
                     owners = actual.owners,
-                    category = actual.category,
+                    categoryId = actual.category?.id,
+                    isSharedCalendar = actualCalenda.isShared,
                     alerts = null
                 )
             } catch (e: Exception) {
