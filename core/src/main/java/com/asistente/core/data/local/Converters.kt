@@ -31,12 +31,12 @@ class Converters {
 
 //list en room (alert)
 @TypeConverter
-fun fromLongList(value: List<Long>?): String? {
-    return value?.joinToString(separator = ",")
+fun fromLongList(value: List<Long>?): String {
+    return value?.joinToString(separator = ",")?: ""
 }
 
 @TypeConverter
-fun toLongList(value: String?): List<Long>? {
-    return value?.split(",")?.map { it.toLong() }
+fun toLongList(value: String?): List<Long> {
+    return value?.split(",")?.mapNotNull { it.toLongOrNull() } ?: emptyList() // ⬅️ Corregido
 }
 }

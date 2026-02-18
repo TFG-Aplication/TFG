@@ -4,15 +4,12 @@ import com.asistente.core.domain.models.Calendar
 import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterface
 import javax.inject.Inject
 
-class GetExpecificCalendar @Inject constructor(
-    private val repository: CalendarRepositoryInterface,
 
-    ){
-
-    operator suspend fun invoke(id: String): Calendar? {
+class GetSpecificCalendar @Inject constructor(
+    private val repository: CalendarRepositoryInterface
+) {
+    suspend operator fun invoke(id: String): Calendar? {
+        require(id.isNotBlank()) { "Calendar ID cannot be empty" }
         return repository.getCalendarById(id)
-
-
-
     }
 }

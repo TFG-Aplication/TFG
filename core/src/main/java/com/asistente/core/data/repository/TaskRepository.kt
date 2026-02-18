@@ -35,9 +35,9 @@ class TaskRepository @Inject constructor(
     override suspend fun saveTask(task: Task, isSharedCalendar: Boolean) {
         taskDao.insertTask(task.copy(syncStatus = 0))
 
-        if (isSharedCalendar) {
+
             enqueueSyncWorker(task.parentCalendarId)
-        }
+
     }
 
     override suspend fun updateTask(task: Task) {

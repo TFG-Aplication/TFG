@@ -6,40 +6,52 @@ import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterfa
 import java.util.UUID
 import javax.inject.Inject
 
-// Indica a Hilt que debe suministrar automáticamente las dependencias
-// del constructor, evitando la creación manual de la clase.
 class CreateCalendar @Inject constructor(
     private val repository: CalendarRepositoryInterface,
     private val categorySeeder: seederCategory
 ) {
-    /**
-     * Crea o actualiza un calendario.
-     * Si no se pasa un ID, genera uno nuevo (Creación).
-     */
     suspend operator fun invoke(
         name: String,
-        id: String = UUID.randomUUID().toString(),
-        owners: List<String> = listOf("local_user"),
-        isShared: Boolean = false,
-        syncStatus: Int = 0
-    ): Calendar {
-        val calendar = Calendar(
-            id = id,
-            name = name,
-            owners = owners,
-            isShared = isShared,
-            syncStatus = syncStatus
-        )
+        code: String = generateCode(name),
+        owners: List<String>,
+        isShared: Boolean = false
+    ): Result<Calendar> {
+        return try {
+            // Validaciones
+            if (name.isBlank()) {
+                return Result.failure(IllegalArgumentException("Calendar name cannot be empty"))
+            }
+            if(name.length < 3) {
+                return Result.failure(IllegalArgumentException("Calendar name must be at least 3 characters long"))
+            }
+            if(name.length > 20) {
+                return Result.failure(IllegalArgumentException("Calendar name must be less than 20 characters long"))
+            }
+            if (owners.isEmpty()) {
+                return Result.failure(IllegalArgumentException("Calendar must have at least one owner"))
+            }
 
+            val calendar = Calendar(
+                id = UUID.randomUUID().toString(),
+                name = name.trim(),
+                code = code,
+                owners = owners,
+                isShared = isShared,
+                syncStatus = 0 // Pendiente de sincronización
+            )
 
-        repository.saveCalendar(calendar)
+            repository.saveCalendar(calendar)
 
+            // Sembrar categorías por defecto
+            categorySeeder.seedDefaultCategories(calendarId = calendar.id)
 
-        categorySeeder.seedDefaultCategories(
-            calendarId = calendar.id
-        )
-
-        return calendar
+            Result.success(calendar)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
+    private fun generateCode(name: String): String {
+        return name.take(4).uppercase() + UUID.randomUUID().toString().take(4)
+    }
 }

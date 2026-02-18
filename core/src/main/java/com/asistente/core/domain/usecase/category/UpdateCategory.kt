@@ -2,53 +2,50 @@ package com.asistente.core.domain.usecase.category
 
 import com.asistente.core.domain.models.Category
 import com.asistente.core.domain.ropositories.interfaz.CategoryRepositoryInterface
-import java.util.UUID
 import javax.inject.Inject
 
 
-class CreateCategory @Inject constructor(
+class UpdateCategory @Inject constructor(
     private val repository: CategoryRepositoryInterface
 ) {
     suspend operator fun invoke(
-        name: String,
-        calendarId: String,
-        color: String,
-        isSharedCalendar: Boolean
+        categoryId: String,
+        newName: String? = null,
+        newColor: String? = null
     ): Result<Category> {
         return try {
-            // Validaciones
-            if (name.isBlank()) {
+            // Obtener categoría actual
+            val currentCategory = repository.getCategoryById(categoryId)
+                ?: return Result.failure(IllegalArgumentException("Category not found"))
+
+            // Validar cambios
+            if (newName != null && newName.isBlank()) {
                 return Result.failure(IllegalArgumentException("Category name cannot be empty"))
             }
-            if(name.length < 3) {
+            if(newName?.length?:0 < 3 ) {
                 return Result.failure(IllegalArgumentException("Category name must be at least 3 characters long"))
             }
-            if(name.length > 10) {
+            if(newName?.length?:0 > 10) {
                 return Result.failure(IllegalArgumentException("Category name must be less than 20 characters long"))
             }
-            if (calendarId.isBlank()) {
-                return Result.failure(IllegalArgumentException("Calendar ID cannot be empty"))
-            }
-            if (!isValidColor(color)) {
+            if (newColor != null && !isValidColor(newColor)) {
                 return Result.failure(IllegalArgumentException("Invalid color format. Use #RRGGBB"))
             }
 
-            val category = Category(
-                id = UUID.randomUUID().toString(),
-                name = name.trim(),
-                parentCalendarId = calendarId,
-                color = color.uppercase(),
-                syncStatus = 0 // Pendiente de sincronización
+            // Aplicar cambios
+            val updatedCategory = currentCategory.copy(
+                name = newName?.trim() ?: currentCategory.name,
+                color = newColor?.uppercase() ?: currentCategory.color,
+                syncStatus = 0 // Marcar como pendiente
             )
 
-            repository.saveCategory(category)
+            repository.updateCategory(updatedCategory)
 
-            Result.success(category)
+            Result.success(updatedCategory)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
 
     private fun isValidColor(color: String): Boolean {
         return color.matches(Regex("^#[0-9A-Fa-f]{6}$"))

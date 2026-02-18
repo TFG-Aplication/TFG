@@ -1,49 +1,67 @@
 package com.asistente.core.domain.usecase.task
 
-import com.asistente.core.domain.models.Calendar
-import com.asistente.core.domain.models.Category
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
 
+
 class CreateTask @Inject constructor(
     private val repository: TaskRepositoryInterface
 ) {
-    /**
-     * Crea o actualiza una tarea.
-     * Si no se pasa un ID, genera uno nuevo (Creación).
-     */
-
     suspend operator fun invoke(
-        id: String = UUID.randomUUID().toString(),
         name: String,
-        owners: List<String> = listOf("local_user"),
-        place: String?,
-        notes: String?,
-        init_date: Date,
-        finich_date: Date,
-        syncStatus: Int = 0,
-        calendar: Calendar,
-        category: Category?,
-        alerts: List<Long>?
-        ) {
+        calendarId: String,
+        owners: List<String>,
+        initDate: Date,
+        finishDate: Date,
+        categoryId: String? = null,
+        place: String? = null,
+        notes: String? = null,
+        alerts: List<Long>? = null,
+        isSharedCalendar: Boolean
+    ): Result<Task> {
+        return try {
+            // Validaciones
+            if (name.isBlank()) {
+                return Result.failure(IllegalArgumentException("Task name cannot be empty"))
+            }
+            if(name.length < 3) {
+                return Result.failure(IllegalArgumentException("Task name must be at least 3 characters long"))
+            }
+            if(name.length > 30) {
+                return Result.failure(IllegalArgumentException("Task name must be less than 20 characters long"))
+            }
+            if (calendarId.isBlank()) {
+                return Result.failure(IllegalArgumentException("Calendar ID cannot be empty"))
+            }
+            if (owners.isEmpty()) {
+                return Result.failure(IllegalArgumentException("Task must have at least one owner"))
+            }
+            if (finishDate.before(initDate)) {
+                return Result.failure(IllegalArgumentException("Finish date cannot be before init date"))
+            }
 
-        val task = Task(
-            id = id,
-            name = name,
-            owners = owners,
-            place = place,
-            notes = notes,
-            init_date = init_date,
-            finish_date = finich_date,
-            parentCalendarId = calendar.id,
-            syncStatus = syncStatus,
-            categoryId = if(category != null) category.id else null,
-            alerts = alerts
+            val task = Task(
+                id = UUID.randomUUID().toString(),
+                name = name.trim(),
+                owners = owners,
+                parentCalendarId = calendarId,
+                categoryId = categoryId,
+                place = place?.trim(),
+                notes = notes?.trim(),
+                init_date = initDate,
+                finish_date = finishDate,
+                alerts = alerts,
+                syncStatus = 0
             )
 
-        repository.saveTask(task, calendar.isShared)
+            repository.saveTask(task, isSharedCalendar)
+
+            Result.success(task)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
