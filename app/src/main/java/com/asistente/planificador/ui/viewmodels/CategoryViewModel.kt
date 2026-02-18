@@ -4,8 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asistente.core.domain.usecase.calendar.GetListCalendars
+import com.asistente.core.domain.usecase.category.CreateCategory
 import com.asistente.core.domain.usecase.category.DeleteCategory
-import com.asistente.core.domain.usecase.category.GetExpecificCategory
+import com.asistente.core.domain.usecase.category.GetSpecificCategory
+import com.asistente.core.domain.usecase.category.UpdateCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.asistente.core.domain.models.Calendar as CalendarModel
-import com.asistente.core.domain.usecase.task.CreateCategory
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -36,8 +37,9 @@ class CategoryViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val createCategory: CreateCategory,
     private val getCalendarsUseCase: GetListCalendars,
-    private val getExpecificCategoryUseCase: GetExpecificCategory,
+    private val getExpecificCategoryUseCase: GetSpecificCategory,
     private val deleteCategoryUseCase: DeleteCategory,
+    private val updateCategoryUseCase: UpdateCategory
     ): ViewModel() {
 
     private val categoryId: String? = savedStateHandle["categoryId"]
@@ -112,6 +114,30 @@ class CategoryViewModel @Inject constructor(
         }
     }
 
+    fun updateCategory(onSuccess: () -> Unit) {
+        val currentState = _uiState.value
+        if (currentState.name.isBlank()) {
+            _uiState.update { it.copy(error = "El nombre es obligatorio") }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val calendar = currentState.calendar ?: throw IllegalStateException("El calendario no puede ser nulo al actualizar")
+                val categoryToUpdate = com.asistente.core.domain.models.Category(
+                    id = currentState.id,
+                    name = currentState.name,
+                    color = currentState.color ?: "#F3E5E2",
+                    parentCalendarId = calendar.id
+                )
+                updateCategoryUseCase(categoryToUpdate.id, categoryToUpdate.name, categoryToUpdate.color)
+                onSuccess()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "No se pudo actualizar: ${e.message}") }
+            }
+        }
+    }
+
     fun saveCategory(onSuccess: () -> Unit) {
         val actual = _uiState.value
         if (actual.name.isBlank()) {
@@ -124,10 +150,10 @@ class CategoryViewModel @Inject constructor(
                 val actualCalendar = actual.calendar ?: throw Exception("Error al vincular calendario")
                 val finalColor = _uiState.value.color ?: "#F3E5E2"
                 createCategory(
-                    id = actual.id,
                     name = actual.name,
                     color = finalColor,
-                    calendar = actualCalendar,
+                    calendarId = actualCalendar.id,
+                    isSharedCalendar = actualCalendar.isShared
                 )
                 onSuccess()
             } catch (e: Exception) {
