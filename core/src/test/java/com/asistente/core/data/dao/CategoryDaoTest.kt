@@ -1,4 +1,4 @@
-package com.asistente.core.local.dao
+package com.asistente.core.data.dao
 
 import android.content.Context
 import androidx.room.Room
