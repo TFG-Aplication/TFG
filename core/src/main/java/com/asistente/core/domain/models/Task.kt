@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.Date
 import androidx.room.Index
+import java.time.Instant
 import java.util.UUID
 import javax.annotation.Nonnull
 
@@ -33,9 +34,9 @@ data class Task(
 
     //atrib expecificos
     @Nonnull
-    val init_date: Date? = null,
+    val init_date: Date = Date.from(Instant.now()),
     @Nonnull
-    val finish_date: Date? = null,
+    val finish_date: Date = Date.from(Instant.now()),
     val firebaseId: String? = null
 
     ) 
