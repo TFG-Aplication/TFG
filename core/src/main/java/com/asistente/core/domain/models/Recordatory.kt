@@ -29,7 +29,7 @@ data class Recordatory(
     @Nonnull
     var parentCalendarId: String = "",
     var color: String = "",
-    @Nonnull
+
     @set:ServerTimestamp
     var date: Date? = null,
 
