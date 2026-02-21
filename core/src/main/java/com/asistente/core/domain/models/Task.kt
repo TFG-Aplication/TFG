@@ -2,9 +2,7 @@ package com.asistente.core.domain.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
-import androidx.room.ForeignKey
 import androidx.room.Index
 import java.util.UUID
 import javax.annotation.Nonnull

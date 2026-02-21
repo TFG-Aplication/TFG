@@ -32,6 +32,7 @@ import com.asistente.planificador.ui.viewmodels.CategoryViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryForm(
+    categoryId: String? = null,
     viewModel: CategoryViewModel = hiltViewModel(),
     onBack: () -> Unit
 ) {

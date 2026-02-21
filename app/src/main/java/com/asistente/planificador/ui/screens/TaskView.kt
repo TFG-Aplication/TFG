@@ -1,7 +1,6 @@
 package com.asistente.planificador.ui.screens
 
 
-import android.graphics.Color.parseColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

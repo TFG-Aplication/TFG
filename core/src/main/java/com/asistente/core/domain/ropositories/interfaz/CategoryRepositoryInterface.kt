@@ -1,6 +1,5 @@
 package com.asistente.core.domain.ropositories.interfaz
 
-import com.asistente.core.domain.models.Calendar
 import com.asistente.core.domain.models.Category
 import kotlinx.coroutines.flow.Flow
 
