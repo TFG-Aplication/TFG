@@ -22,12 +22,31 @@ sonar {
         property("sonar.projectKey", "TFG-Aplication_TFG")
         property("sonar.organization", "tfg-aplication")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.modules", "app,core,data")
-
         property("sonar.gradle.skipCompile", "true")
 
-        property("sonar.kotlin.binaries", "**/build/classes/kotlin")
+        // Tests
+        property("sonar.tests", "core/src/test/java")
+        property(
+            "sonar.junit.reportPaths",
+            "core/build/reports/tests/testDebugUnitTest/xml"
+        )
 
-        property("sonar.coverage.jacoco.xmlReportPaths", "**/build/reports/jacoco/**/*.xml")
+        // Coverage
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            "core/build/reports/jacoco/jacocoTestReport/xml/jacocoTestReport.xml"
+        )
+
+        // Binarios para análisis
+        property(
+            "sonar.kotlin.binaries",
+            "core/build/tmp/kotlin-classes/debug"
+        )
+
+        // Exclusiones (generados, DI, etc.)
+        property(
+            "sonar.coverage.exclusions",
+            "**/di/**,**/BuildConfig.*,**/*_Impl.*,**/Hilt_*.*,**/*Module_*.*"
+        )
     }
 }

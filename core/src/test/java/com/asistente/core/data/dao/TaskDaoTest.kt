@@ -16,6 +16,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.junit.runner.RunWith
 import java.util.Date
 import java.util.UUID
@@ -24,7 +26,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@RunWith(AndroidJUnit4::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class TaskDaoTest {
 
     private lateinit var database: AppDatabase

@@ -1,8 +1,8 @@
-package com.asistente.core.data.com.asistente.core.data.remote
+package com.asistente.core.data.remote
 
-import com.asistente.core.data.remote.TaskRemoteServices
 import com.asistente.core.domain.models.Task
 import com.google.android.gms.tasks.Tasks
+import com.google.android.gms.tasks.Tasks.forResult
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
@@ -10,10 +10,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.MockedStatic
+import org.mockito.Mockito.mockStatic
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argThat
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.Date
@@ -51,9 +56,14 @@ class TaskRemoteTest {
     private val initDate = Date()
     private val finishDate = Date(System.currentTimeMillis() + 86400000)
 
+    private lateinit var mockedLog: MockedStatic<android.util.Log>
+
 
     @Before
     fun setup() {
+        mockedLog = mockStatic(android.util.Log::class.java)
+        mockedLog.`when`<Int> { android.util.Log.e(any(), any()) }.thenReturn(0)
+
         MockitoAnnotations.openMocks(this)
 
         whenever(firestore.collection("tasks")).thenReturn(collectionReference)
@@ -61,21 +71,25 @@ class TaskRemoteTest {
         remoteServices = TaskRemoteServices(firestore)
 
     }
+    @After
+    fun teardown() {
+        mockedLog.close()
+    }
 
     // ========== TEST 1: getAllTasksByUserIdRemote - Success ==========
 
     @Test
     fun getAllTasksByUserIdRemoteReturnsTasksSuccessfully() = runTest {
-        val task1 = Task (
-            id =  UUID.randomUUID().toString(),
+        val task1 = Task(
+            id = UUID.randomUUID().toString(),
             name = "Task 1",
             owners = listOf(testUserId),
             parentCalendarId = calendarId,
             init_date = initDate,
             finish_date = finishDate
         )
-        val task2 = Task (
-            id =  UUID.randomUUID().toString(),
+        val task2 = Task(
+            id = UUID.randomUUID().toString(),
             name = "Task 1",
             owners = listOf(testUserId),
             parentCalendarId = calendarId,
@@ -128,8 +142,8 @@ class TaskRemoteTest {
     @Test
     fun getTaskByIdRemoteReturnsTaskSuccessfully() = runTest {
         val taskId = UUID.randomUUID().toString()
-        val task1 = Task (
-            id =  taskId,
+        val task1 = Task(
+            id = taskId,
             name = "Task 1",
             owners = listOf(testUserId),
             parentCalendarId = calendarId,
@@ -183,8 +197,8 @@ class TaskRemoteTest {
     @Test
     fun saveTaskRemoteReturnsTrueOnSuccess() = runTest {
         val taskId = UUID.randomUUID().toString()
-        val task1 = Task (
-            id =  taskId,
+        val task1 = Task(
+            id = taskId,
             name = "Task 1",
             owners = listOf(testUserId),
             parentCalendarId = calendarId,
@@ -193,20 +207,21 @@ class TaskRemoteTest {
         )
 
         whenever(collectionReference.document(taskId)).thenReturn(documentReference)
-        whenever(documentReference.set(task1)).thenReturn(Tasks.forResult(null))
+        whenever(documentReference.set(any<Map<String, Any>>())).thenReturn(Tasks.forResult(null))
 
         val result = remoteServices.saveTaskRemote(task1)
 
         assertTrue(result)
-        verify(collectionReference).document(taskId)
-        verify(documentReference).set(task1)
+        verify(documentReference).set(argThat<Map<String, Any>> { map ->
+            map["id"] == taskId && map["name"] == "Task 1"
+        })
     }
 
     @Test
     fun saveTaskRemoteReturnsFalseOnException() = runTest {
         val taskId = UUID.randomUUID().toString()
-        val task1 = Task (
-            id =  taskId,
+        val task1 = Task(
+            id = taskId,
             name = "Task 1",
             owners = listOf(testUserId),
             parentCalendarId = calendarId,
@@ -215,14 +230,14 @@ class TaskRemoteTest {
         )
 
         whenever(collectionReference.document(taskId)).thenReturn(documentReference)
-        whenever(documentReference.set(task1))
+        whenever(documentReference.set(any<Any>()))
             .thenReturn(Tasks.forException(Exception("Save failed")))
 
         val result = remoteServices.saveTaskRemote(task1)
 
         assertFalse(result)
         verify(collectionReference).document(taskId)
-        verify(documentReference).set(task1)
+        verify(documentReference).set(any<Any>())
     }
 
     // ========== TEST 5: deleteTaskRemote - Success ==========

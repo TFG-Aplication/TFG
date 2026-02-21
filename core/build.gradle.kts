@@ -5,6 +5,7 @@ plugins {
     id("com.google.dagger.hilt.android") version "2.54"
     id("com.google.gms.google-services")
     id("kotlin-kapt")
+    id("jacoco")
 }
 
 android {
@@ -19,6 +20,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -33,10 +37,52 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+
     kotlinOptions {
         jvmTarget = "17"
     }
 }
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    val fileFilter = listOf(
+        "**/R.class", "**/R\$*.class", "**/BuildConfig.*",
+        "**/Manifest*.*", "**/*Test*.*", "android/**/*.*",
+        "**/*_Hilt*.*", "**/Hilt_*.*",
+        "**/*_MembersInjector*.*",
+        "**/*Module_*Factory*.*",
+        "**/*Dao_Impl*.*",
+        "**/*_Impl*.*"
+    )
+
+    val debugTree = fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
+        exclude(fileFilter)
+    }
+
+    sourceDirectories.setFrom(files("${project.projectDir}/src/main/java"))
+    classDirectories.setFrom(files(debugTree))
+    executionData.setFrom(fileTree(layout.buildDirectory.get()) {
+        include(
+            "jacoco/testDebugUnitTest.exec",
+            "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
+        )
+    })
+
+}
+
+
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
@@ -56,6 +102,7 @@ dependencies {
     implementation(libs.androidx.hilt.common)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.room.ktx)
+    implementation(libs.androidx.junit.ktx)
     ksp(libs.androidx.room.compiler)
 
     // Firebase
@@ -91,6 +138,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.22")
     androidTestImplementation("org.mockito:mockito-android:5.11.0")
     androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.robolectric:robolectric:4.12.1")
 
 
     // Hilt (Usa KAPT para el compilador)
