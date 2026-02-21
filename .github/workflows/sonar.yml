@@ -45,6 +45,10 @@ jobs:
             **/build/reports/tests/
             **/build/reports/jacoco/
 
+      - name: Run Lint
+        run: ./gradlew :app:lintDebug :core:lintDebug --continue
+        continue-on-error: true
+
       - name: Cache SonarCloud packages
         uses: actions/cache@v4
         with:

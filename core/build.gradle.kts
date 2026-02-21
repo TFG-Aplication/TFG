@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.ksp)
     id("com.google.dagger.hilt.android") version "2.54"
-    id("com.google.gms.google-services")
     id("kotlin-kapt")
     id("jacoco")
 }
