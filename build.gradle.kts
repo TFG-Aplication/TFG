@@ -22,7 +22,6 @@ sonar {
         property("sonar.projectKey", "TFG-Aplication_TFG")
         property("sonar.organization", "tfg-aplication")
         property("sonar.host.url", "https://sonarcloud.io")
-
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
             "core/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
@@ -31,11 +30,9 @@ sonar {
             "sonar.coverage.exclusions",
             "**/di/**,**/BuildConfig.*,**/*_Impl.*,**/Hilt_*.*,**/*Module_*.*"
         )
-        // Esto es lo que resuelve el error de fichero indexado dos veces
         property(
             "sonar.exclusions",
             "**/test/**,**/androidTest/**"
         )
-        property("sonar.androidLint.reportPaths", "")
     }
 }
