@@ -24,26 +24,14 @@ sonar {
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.gradle.skipCompile", "true")
 
-        // Tests
-        property("sonar.tests", "core/src/test/java")
-        property(
-            "sonar.junit.reportPaths",
-            "core/build/reports/tests/testDebugUnitTest/xml"
-        )
-
-        // Coverage
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
-            "core/build/reports/jacoco/jacocoTestReport/xml/jacocoTestReport.xml"
+            "${rootProject.projectDir}/core/build/reports/jacoco/jacocoTestReport/xml/jacocoTestReport.xml"
         )
-
-        // Binarios para análisis
         property(
             "sonar.kotlin.binaries",
-            "core/build/tmp/kotlin-classes/debug"
+            "${rootProject.projectDir}/core/build/tmp/kotlin-classes/debug"
         )
-
-        // Exclusiones (generados, DI, etc.)
         property(
             "sonar.coverage.exclusions",
             "**/di/**,**/BuildConfig.*,**/*_Impl.*,**/Hilt_*.*,**/*Module_*.*"
