@@ -10,6 +10,8 @@ import com.asistente.core.data.local.daos.CalendarDao
 import com.asistente.core.domain.models.Calendar
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -20,7 +22,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@RunWith(AndroidJUnit4::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class CalendarDaoTest {
 
     private lateinit var database: AppDatabase

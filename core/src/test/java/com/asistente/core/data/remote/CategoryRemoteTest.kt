@@ -3,13 +3,23 @@ package com.asistente.core.data.remote
 import com.asistente.core.domain.models.Calendar
 import com.asistente.core.domain.models.Category
 import com.google.android.gms.tasks.Tasks
-import com.google.firebase.firestore.*
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.MockedStatic
+import org.mockito.Mockito.mockStatic
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -41,14 +51,25 @@ class CategoryRemoteTest {
 
     private val testCalendarId = "calendar123"
 
+    private lateinit var mockedLog: MockedStatic<android.util.Log>
+
+
     @Before
     fun setup() {
+        mockedLog = mockStatic(android.util.Log::class.java)
+        mockedLog.`when`<Int> { android.util.Log.e(any(), any()) }.thenReturn(0)
+
         MockitoAnnotations.openMocks(this)
 
         // Mock Firestore collection
         whenever(firestore.collection("categories")).thenReturn(collectionReference)
 
         remoteServices = CategoryRemoteServices(firestore)
+    }
+
+    @After
+    fun teardown() {
+        mockedLog.close()
     }
 
     // ========== TEST 1: getAllByUserIdRemote - Success ==========
