@@ -22,31 +22,20 @@ sonar {
         property("sonar.projectKey", "TFG-Aplication_TFG")
         property("sonar.organization", "tfg-aplication")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.gradle.skipCompile", "true")
 
-        // Tests
-        property("sonar.tests", "core/src/test/java")
-        property(
-            "sonar.junit.reportPaths",
-            "core/build/reports/tests/testDebugUnitTest/xml"
-        )
-
-        // Coverage
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
-            "core/build/reports/jacoco/jacocoTestReport/xml/jacocoTestReport.xml"
+            "core/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
         )
-
-        // Binarios para análisis
-        property(
-            "sonar.kotlin.binaries",
-            "core/build/tmp/kotlin-classes/debug"
-        )
-
-        // Exclusiones (generados, DI, etc.)
         property(
             "sonar.coverage.exclusions",
             "**/di/**,**/BuildConfig.*,**/*_Impl.*,**/Hilt_*.*,**/*Module_*.*"
         )
+        // Esto es lo que resuelve el error de fichero indexado dos veces
+        property(
+            "sonar.exclusions",
+            "**/test/**,**/androidTest/**"
+        )
+        property("sonar.androidLint.reportPaths", "")
     }
 }
