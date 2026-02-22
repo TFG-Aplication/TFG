@@ -35,7 +35,7 @@ import javax.inject.Inject
 data class TaskFormState  (
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
-    //val notes: String = "",
+    val notes: String = "",
     //val place: String = "",
     val initDate: Date = Date(),
     val finishDate: Date = Date().apply { time += 3600000 },
@@ -45,7 +45,7 @@ data class TaskFormState  (
     val error: String? = null,
     //val alerts: List<Long> = listOf(15),
     val category: Category? = null,
-    //val isAllDay: Boolean = false
+    val isAllDay: Boolean = false
 )
 
 @HiltViewModel
@@ -108,6 +108,10 @@ class TaskViewModel @Inject constructor(
         _uiState.update { it.copy(calendar = newCalendar) }
     }
 
+    fun onNoteChanged(newNote: String) {
+        _uiState.update { it.copy(notes = newNote) }
+    }
+
     fun onCategoryChanged(newCategory: Category?) {
         _uiState.update { it.copy(category = newCategory) }
     }
@@ -143,6 +147,34 @@ class TaskViewModel @Inject constructor(
         calendarHelper.set(Calendar.MINUTE, minute)
 
         updateAndValidateDates(calendarHelper.time, isStart)
+    }
+
+    fun allDay(isSelected: Boolean) {
+        _uiState.update { currentState ->
+            if (isSelected) {
+                val calStart = java.util.Calendar.getInstance().apply {
+                    time = currentState.initDate
+                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }
+                val calEnd = java.util.Calendar.getInstance().apply {
+                    time = currentState.initDate // Usa initDate como base, no finishDate
+                    set(java.util.Calendar.HOUR_OF_DAY, 23)
+                    set(java.util.Calendar.MINUTE, 59)
+                    set(java.util.Calendar.SECOND, 59)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }
+                currentState.copy(
+                    isAllDay = true,
+                    initDate = calStart.time,
+                    finishDate = calEnd.time
+                )
+            } else {
+                currentState.copy(isAllDay = false)
+            }
+        }
     }
     suspend fun getExpecificTask(id: String?): Task? {
         return getExpecificTaskUseCase(id ?: "")
@@ -222,7 +254,7 @@ class TaskViewModel @Inject constructor(
 
                 createTaskUseCase(
                     name = actual.name,
-                    notes = null,
+                    notes = actual.notes,
                     place = null,
                     initDate = actual.initDate,
                     finishDate = actual.finishDate,

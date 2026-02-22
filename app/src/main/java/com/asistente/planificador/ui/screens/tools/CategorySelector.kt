@@ -43,7 +43,7 @@ fun CategoryField(
             imageVector = Icons.Default.Bookmarks,
             contentDescription = null,
             tint = Primario,
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(26.dp)
         )
 
         Spacer(modifier = Modifier.width(16.dp))

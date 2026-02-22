@@ -1,5 +1,6 @@
 package com.asistente.planificador.ui.screens
 
+import DateTimeSelector
 import SelectionDate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,9 +27,6 @@ import com.asistente.planificador.ui.screens.tools.CalendarSelector
 import com.asistente.planificador.ui.screens.tools.CategoryField
 import com.asistente.planificador.ui.screens.tools.CategorySelector
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
-import formatDate
-import formatTime
-
 val Primario = Color(0xFFAC5343)
 val Secundario = Color(0xFFEFEFEF)
 val Terciario = Color(0xFFA6A6A6)
@@ -65,7 +63,7 @@ fun TaskForm(
                             text = "Nueva Tarea",
                             fontWeight = FontWeight.Bold,
                             color = Color.Black,
-                            fontSize = 20.sp // Ajusta según necesites
+                            fontSize = 20.sp
                         )
                     }
                 },
@@ -122,7 +120,7 @@ fun TaskForm(
                 .padding(pad)
                 .padding(horizontal = 18.dp, vertical = 10.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Nombre
             OutlinedTextField(
@@ -133,7 +131,7 @@ fun TaskForm(
                         imageVector = Icons.Default.Create,
                         contentDescription = null,
                         tint = Primario,
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(26.dp)
 
                     )
                 },
@@ -165,7 +163,7 @@ fun TaskForm(
                     unfocusedTextColor = Terciario
                 )
             )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp), thickness = 0.5.dp)
+            HorizontalDivider(thickness = 0.5.dp)
 
             // SELECTOR DE CALENDARIOS
             CalendarField(
@@ -173,87 +171,21 @@ fun TaskForm(
                 onClick = { expandedCalendarSelector = true }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(top = 0.dp, bottom = 2.dp), thickness = 0.5.dp)
+            HorizontalDivider(thickness = 0.5.dp)
 
             // seleccion de fecha y hora
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp) // Alineación con el resto de iconos
-            ) {
-                // Fila de Inicio
-                // --- FILA DE INICIO ---
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Iconos y línea (se mantienen igual)
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.RadioButtonUnchecked, contentDescription = null, tint = Primario, modifier = Modifier.size(14.dp))
-                        Box(modifier = Modifier.width(1.dp).height(20.dp).padding(vertical = 2.dp)) {
-                            VerticalDivider(color = Primario.copy(alpha = 0.5f), thickness = 1.dp)
-                        }
-                    }
+            DateTimeSelector(
+                initDate = uiState.initDate,
+                finishDate = uiState.finishDate,
+                isAllDay = uiState.isAllDay,
+                onAllDayChanged = { viewModel.allDay(it) },
+                onStartDateClick = { showStartDatePicker = true },
+                onStartTimeClick = { showStartTimePicker = true },
+                onEndDateClick = { showEndDatePicker = true },
+                onEndTimeClick = { showEndTimePicker = true }
+            )
 
-                    Spacer(modifier = Modifier.width(20.dp))
-
-                    // FECHA (Click para calendario)
-                    Text(
-                        text = formatDate(uiState.initDate),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showStartDatePicker = true }, // SOLO CALENDARIO
-                        fontSize = 18.sp,
-                        color = Color.Black
-                    )
-
-                    // HORA (Click para reloj)
-                    Text(
-                        text = formatTime(uiState.initDate),
-                        modifier = Modifier.clickable { showStartTimePicker = true }, // SOLO RELOJ
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                }
-
-                // --- FILA DE FIN ---
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Primario, modifier = Modifier.size(16.dp))
-                    }
-
-                    Spacer(modifier = Modifier.width(20.dp))
-
-                    // FECHA (Click para calendario)
-                    Text(
-                        text = formatDate(uiState.finishDate),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showEndDatePicker = true }, // SOLO CALENDARIO
-                        fontSize = 18.sp,
-                        color = Color.Black
-                    )
-
-                    // HORA (Click para reloj)
-                    Text(
-                        text = formatTime(uiState.finishDate),
-                        modifier = Modifier.clickable { showEndTimePicker = true }, // SOLO RELOJ
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp), thickness = 0.5.dp)
+            HorizontalDivider(thickness = 0.5.dp)
 
             //  SELECTOR DE CATEGORÍAS
             CategoryField(
@@ -264,6 +196,123 @@ fun TaskForm(
             if (uiState.error != null) {
                 Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
+
+
+
+
+
+            HorizontalDivider(thickness = 0.5.dp)
+
+// ALARMAS
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 10.dp)
+                    .clickable { /* TODO: abrir selector de alarma */ },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.NotificationsNone,
+                    contentDescription = null,
+                    tint = Primario,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Agregar alarma",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+            }
+
+            HorizontalDivider(thickness = 0.5.dp)
+
+// REPETICIÓN
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 10.dp)
+                    .clickable { /* TODO: abrir selector de repetición */ },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Repeat,
+                    contentDescription = null,
+                    tint = Primario,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "No se repite",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                    color = Color.Black
+                )
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Terciario,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            HorizontalDivider(thickness = 0.5.dp)
+
+// NOTAS
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        tint = Primario,
+                        modifier = Modifier.size(26.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = "Agregar descripción",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black
+                    )
+                }
+                OutlinedTextField(
+                    value = uiState.notes ?: "",
+                    onValueChange = { viewModel.onNoteChanged(it) },
+                    placeholder = {
+                        Text(
+                            text = "Agregar descripción aquí...",
+                            color = Terciario.copy(alpha = 0.7f),
+                            fontSize = 16.sp
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 120.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Secundario,
+                        unfocusedContainerColor = Secundario,
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        cursorColor = Primario,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    )
+                )
+            }
+
+
         }
 
 
@@ -295,7 +344,7 @@ fun TaskForm(
                 onConfirm = { millis ->
                     millis?.let { viewModel.onDateChanged(it, true) }
                     showStartDatePicker = false
-                    showStartTimePicker = true // Salta automáticamente al reloj
+                    if (!uiState.isAllDay) showStartTimePicker = true
                 }
             )
         }
@@ -321,7 +370,7 @@ fun TaskForm(
                 onConfirm = { millis ->
                     millis?.let { viewModel.onDateChanged(it, false) } // Corregido a false (isStart)
                     showEndDatePicker = false
-                    showEndTimePicker = true // Salta automáticamente al reloj
+                    if (!uiState.isAllDay) showStartTimePicker = true
                 }
             )
         }

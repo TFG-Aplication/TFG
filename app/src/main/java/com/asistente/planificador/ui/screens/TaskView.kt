@@ -1,6 +1,5 @@
 package com.asistente.planificador.ui.screens
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -30,7 +29,9 @@ import formatTime
 @Composable
 fun TaskView(
     viewModel: TaskViewModel = hiltViewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onEdit: () -> Unit = {},
+    onDelete: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val task by produceState<Task?>(initialValue = null, uiState) {
@@ -68,6 +69,29 @@ fun TaskView(
                         )
                     }
                 },
+                actions = {
+                    // Botón editar
+                    IconButton(onClick = onEdit) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            tint = Primario,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    // Botón borrar
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Borrar",
+                            tint = Primario,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
             )
         }
@@ -77,93 +101,169 @@ fun TaskView(
                 .padding(pad)
                 .padding(horizontal = 24.dp, vertical = 10.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- TÍTULO (ESTÁTICO) ---
-            Row(verticalAlignment = Alignment.Top) {
-                Icon(
-                    imageVector = Icons.Default.Create,
-                    contentDescription = null,
-                    tint = Primario,
-                    modifier = Modifier.size(30.dp).padding(top = 4.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
+            // --- TÍTULO con categoría a la izquierda ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Categoría como chip a la izquierda del título
+                val color by produceState(Color.LightGray, task?.categoryId) {
+                    value = viewModel.getCategoryColor(task?.categoryId)
+                }
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = color,
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    ) {
+                        Text(
+                            text = (category?.name ?: "NINGUNA").uppercase(),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = darkenColor(color)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
                 Text(
-                    text = uiState.name.ifBlank { task?.name?: "Sin nombre" },
-                    fontSize = 28.sp,
+                    text = uiState.name.ifBlank { task?.name ?: "Sin nombre" },
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (uiState.name.isBlank()) Terciario else Color.Black
+                    color = Color.Black
                 )
             }
 
-            HorizontalDivider(thickness = 0.5.dp)
-
-            // --- CALENDARIO (ESTÁTICO) ---
+            // --- CALENDARIO ---
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
                     contentDescription = null,
                     tint = Primario,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(26.dp)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = uiState.calendar?.name ?: "Calendario no asignado",
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     color = Color.Black
                 )
             }
 
             // --- FECHAS Y HORAS ---
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Inicio
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.RadioButtonUnchecked, null, tint = Primario, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(24.dp))
-                    Text(formatDate(task?.init_date?:uiState.initDate), modifier = Modifier.weight(1f), fontSize = 17.sp)
-                    Text(formatTime(task?.init_date?:uiState.initDate), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                // Columna izquierda: círculo + línea + flecha
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(26.dp)
+                ) {
+                    Icon(
+                        Icons.Default.RadioButtonUnchecked,
+                        null,
+                        tint = Primario,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    repeat(4) {
+                        Box(
+                            modifier = Modifier
+                                .width(1.5.dp)
+                                .height(5.dp)
+                                .background(Primario.copy(alpha = 0.4f))
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                    }
+                    Icon(
+                        Icons.Default.ArrowDownward,
+                        null,
+                        tint = Primario,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
 
-                // Línea de conexión visual
-                Box(modifier = Modifier.padding(start = 6.dp).width(1.dp).height(20.dp).background(Primario.copy(alpha = 0.3f)))
+                Spacer(modifier = Modifier.width(16.dp))
 
-                // Fin
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.KeyboardArrowDown, null, tint = Primario, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(22.dp))
-                    Text(formatDate(task?.finish_date?:uiState.finishDate), modifier = Modifier.weight(1f), fontSize = 17.sp)
-                    Text(formatTime(task?.finish_date?:uiState.finishDate), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                // Columna derecha: textos
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = formatDate(task?.init_date ?: uiState.initDate),
+                            modifier = Modifier.weight(1f),
+                            fontSize = 17.sp
+                        )
+                        if (!uiState.isAllDay) {
+                            Text(
+                                text = formatTime(task?.init_date ?: uiState.initDate),
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = formatDate(task?.finish_date ?: uiState.finishDate),
+                            modifier = Modifier.weight(1f),
+                            fontSize = 17.sp
+                        )
+                        if (!uiState.isAllDay) {
+                            Text(
+                                text = formatTime(task?.finish_date ?: uiState.finishDate),
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
 
-            HorizontalDivider(thickness = 0.5.dp)
-
-            // CATEGORÍA
+            // --- ALARMA (estática por ahora) ---
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val color by produceState(Color.LightGray, task?.categoryId) {
-                    value = viewModel.getCategoryColor(task?.categoryId)
-                }
                 Icon(
-                    imageVector = Icons.Default.Bookmarks,
+                    imageVector = Icons.Default.NotificationsNone,
                     contentDescription = null,
                     tint = Primario,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(26.dp)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = color,
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
-                        Text(
-                            text = (category?.name ?: "NINGUNA").uppercase(),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = darkenColor(color )
-                        )
-                    }
+                Text(text = "Sin alarma", fontSize = 17.sp, color = Terciario)
+            }
+
+            // --- REPETICIÓN (estática por ahora) ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Repeat,
+                    contentDescription = null,
+                    tint = Primario,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(text = "No se repite", fontSize = 17.sp, color = Terciario)
+            }
+
+            // --- NOTAS (solo si hay) ---
+            val notes = task?.notes ?: uiState.notes
+            if (!notes.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        tint = Primario,
+                        modifier = Modifier.size(26.dp).padding(top = 2.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = notes,
+                        fontSize = 17.sp,
+                        color = Color.Black
+                    )
                 }
             }
         }

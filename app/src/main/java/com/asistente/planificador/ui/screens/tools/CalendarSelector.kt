@@ -59,7 +59,7 @@ fun CalendarField(
             imageVector = Icons.Default.CalendarMonth,
             contentDescription = null,
             tint = Primario,
-            modifier = Modifier.size(30.dp)
+            modifier = Modifier.size(26.dp)
         )
 
         Spacer(modifier = Modifier.width(16.dp)) // Espacio estándar entre icono y texto
