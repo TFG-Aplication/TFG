@@ -262,7 +262,7 @@ class TaskViewModel @Inject constructor(
                     owners = actual.owners,
                     categoryId = actual.category?.id,
                     isSharedCalendar = actualCalenda.isShared,
-                    alerts = null
+                    alerts = listOf(System.currentTimeMillis() + 30_000L)
                 )
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error al guardar: ${e.message}") }

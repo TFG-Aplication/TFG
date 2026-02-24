@@ -2,13 +2,15 @@ package com.asistente.core.domain.usecase.task
 
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
+import com.asistente.core.domain.usecase.alerts.Alerts
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
 
 
 class CreateTask @Inject constructor(
-    private val repository: TaskRepositoryInterface
+    private val repository: TaskRepositoryInterface,
+    private val scheduleTaskAlerts: Alerts
 ) {
     suspend operator fun invoke(
         name: String,
@@ -19,7 +21,7 @@ class CreateTask @Inject constructor(
         categoryId: String? = null,
         place: String? = null,
         notes: String? = null,
-        alerts: List<Long>? = null,
+        alerts: List<Long>? = listOf(System.currentTimeMillis() + 30_000L), // alerta en 1 minuto,
         isSharedCalendar: Boolean
     ): Result<Task> {
         return try {
@@ -58,6 +60,7 @@ class CreateTask @Inject constructor(
             )
 
             repository.saveTask(task, isSharedCalendar)
+            scheduleTaskAlerts(task)
 
             Result.success(task)
         } catch (e: Exception) {

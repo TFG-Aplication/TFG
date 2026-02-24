@@ -25,6 +25,7 @@ import com.asistente.core.domain.ropositories.interfaz.CategoryRepositoryInterfa
 import com.asistente.core.domain.ropositories.interfaz.RecodatoryRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.UserRepositoryInterface
+import com.asistente.core.domain.usecase.alerts.Alerts
 import com.asistente.core.domain.usecase.calendar.CreateCalendar
 import com.asistente.core.domain.usecase.task.CreateTask
 import com.google.firebase.firestore.FirebaseFirestore
@@ -155,7 +156,7 @@ object dataModule {
     }
 
     @Provides
-    fun provideCreateTaskUseCase(repo: TaskRepositoryInterface): CreateTask {
-        return CreateTask(repo)
+    fun provideCreateTaskUseCase(repo: TaskRepositoryInterface, scheduleTaskAlerts: Alerts): CreateTask {
+        return CreateTask(repo, scheduleTaskAlerts)
     }
 }
