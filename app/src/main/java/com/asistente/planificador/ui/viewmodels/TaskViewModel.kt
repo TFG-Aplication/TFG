@@ -43,7 +43,7 @@ data class TaskFormState  (
     val owners: List<String> = listOf("local_user"),
     //val syncStatus: Int = 0,
     val error: String? = null,
-    //val alerts: List<Long> = listOf(15),
+    val alerts: List<Long> = emptyList(),
     val category: Category? = null,
     val isAllDay: Boolean = false
 )
@@ -118,6 +118,10 @@ class TaskViewModel @Inject constructor(
 
     fun onNameChanged(newName: String) {
         _uiState.update { it.copy(name = newName) }
+    }
+
+    fun onAlertsChanged(offsets: List<Long>) {
+        _uiState.update { it.copy(alerts = offsets) }
     }
 
     // ACTUALIZACIÓN DE FECHA (Día/Mes/Año)
@@ -262,7 +266,9 @@ class TaskViewModel @Inject constructor(
                     owners = actual.owners,
                     categoryId = actual.category?.id,
                     isSharedCalendar = actualCalenda.isShared,
-                    alerts = listOf(System.currentTimeMillis() + 30_000L)
+                    alerts = actual.alerts.map { offsetMinutes ->
+                        actual.initDate.time - (offsetMinutes * 60_000L)
+                    }
                 )
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error al guardar: ${e.message}") }

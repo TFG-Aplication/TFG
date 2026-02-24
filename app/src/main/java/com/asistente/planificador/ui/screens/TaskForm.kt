@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asistente.planificador.ui.screens.tools.AlertSelector
 import com.asistente.planificador.ui.screens.tools.CalendarField
 import com.asistente.planificador.ui.screens.tools.CalendarSelector
 import com.asistente.planificador.ui.screens.tools.CategoryField
@@ -204,28 +205,11 @@ fun TaskForm(
             HorizontalDivider(thickness = 0.5.dp)
 
 // ALARMAS
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 10.dp)
-                    .clickable { /* TODO: abrir selector de alarma */ },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.NotificationsNone,
-                    contentDescription = null,
-                    tint = Primario,
-                    modifier = Modifier.size(26.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "Agregar alarma",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
-            }
+            AlertSelector(
+                initDate = uiState.initDate,
+                alerts = uiState.alerts,
+                onAlertsChanged = { viewModel.onAlertsChanged(it) }
+            )
 
             HorizontalDivider(thickness = 0.5.dp)
 

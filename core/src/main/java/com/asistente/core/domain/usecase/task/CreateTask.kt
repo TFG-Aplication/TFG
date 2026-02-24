@@ -21,7 +21,7 @@ class CreateTask @Inject constructor(
         categoryId: String? = null,
         place: String? = null,
         notes: String? = null,
-        alerts: List<Long>? = listOf(System.currentTimeMillis() + 30_000L), // alerta en 1 minuto,
+        alerts: List<Long>? = null,
         isSharedCalendar: Boolean
     ): Result<Task> {
         return try {

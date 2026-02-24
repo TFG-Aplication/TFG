@@ -86,7 +86,7 @@ fun CalendarField(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             tint = Terciario,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 
