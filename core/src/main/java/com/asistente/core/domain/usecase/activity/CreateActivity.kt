@@ -5,6 +5,10 @@ import com.asistente.core.domain.models.Activity
 import com.asistente.core.domain.repositories.interfaz.ActivityRepositoryInterface
 import javax.inject.Inject
 
+/*
+- Para crear una actividad tiene q ver q no se ponga en una fanja bloqueada
+- Las franjas bloqueadas pueden ser periodos de tiempo q no interesan poner una act o tareas bloqueantes
+ */
 class CreateActivity @Inject constructor(
     private val repository: ActivityRepositoryInterface
 ) {

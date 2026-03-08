@@ -9,17 +9,21 @@ import com.asistente.core.data.local.daos.CalendarDao
 import com.asistente.core.data.local.daos.CategoryDao
 import com.asistente.core.data.local.daos.RecordatoryDao
 import com.asistente.core.data.local.daos.TaskDao
+import com.asistente.core.data.local.daos.TimeSlotDao
 import com.asistente.core.data.local.daos.UserDao
+import com.asistente.core.data.remote.ActivityRemoteServices
 import com.asistente.core.data.remote.CalendarRemoteServices
 import com.asistente.core.data.remote.CategoryRemoteServices
 import com.asistente.core.data.remote.RecordatoryRemoteServices
 import com.asistente.core.data.remote.TaskRemoteServices
+import com.asistente.core.data.remote.TimeSlotRemoteServices
 import com.asistente.core.data.remote.UserRemoteService
 import com.asistente.core.data.repository.ActivityRepository
 import com.asistente.core.data.repository.CalendarRepository
 import com.asistente.core.data.repository.CategoryRepository
 import com.asistente.core.data.repository.RecordatoryRepository
 import com.asistente.core.data.repository.TaskRepository
+import com.asistente.core.data.repository.TimeSlotRepository
 import com.asistente.core.data.repository.UserRepository
 import com.asistente.core.data.seeders.category.seederCategory
 import com.asistente.core.domain.repositories.interfaz.ActivityRepositoryInterface
@@ -27,6 +31,7 @@ import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterfa
 import com.asistente.core.domain.ropositories.interfaz.CategoryRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.RecodatoryRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.TimeSlotRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.UserRepositoryInterface
 import com.asistente.core.domain.usecase.alerts.Alerts
 import com.asistente.core.domain.usecase.calendar.CreateCalendar
@@ -72,6 +77,9 @@ object dataModule {
     @Provides
     fun provideActivityDao(db: AppDatabase): ActivityDao = db.activityDao()
 
+    @Provides
+    fun provideTimeSlotDao(db: AppDatabase): TimeSlotDao = db.timeSlotDao()
+
 
     // --- FIREBASE ---
     @Provides
@@ -97,6 +105,14 @@ object dataModule {
     @Provides
     @Singleton
     fun provideRemoteRecordatory(firestore: FirebaseFirestore) = RecordatoryRemoteServices(firestore)
+
+    @Provides
+    @Singleton
+    fun provideRemoteActivity(firestore: FirebaseFirestore) = ActivityRemoteServices(firestore)
+
+    @Provides
+    @Singleton
+    fun provideRemoteTimeSlot(firestore: FirebaseFirestore) = TimeSlotRemoteServices(firestore)
 
 
     // --- REPOSITORIOS ---
@@ -162,6 +178,14 @@ object dataModule {
         return ActivityRepository(local, workManager)
     }
 
+    @Provides
+    @Singleton
+    fun provideTimeSlotRepository(
+        local: TimeSlotDao,
+        workManager: WorkManager
+    ): TimeSlotRepositoryInterface {
+        return TimeSlotRepository(local, workManager)
+    }
 
     // --- CASOS DE USO ---
     @Provides

@@ -8,6 +8,8 @@ import com.asistente.core.data.local.daos.CalendarDao
 import com.asistente.core.data.local.daos.CategoryDao
 import com.asistente.core.data.local.daos.RecordatoryDao
 import com.asistente.core.data.local.daos.TaskDao
+import com.asistente.core.data.local.daos.TimeSlotDao
+import com.asistente.core.domain.models.TimeSlot
 import com.asistente.core.data.local.daos.UserDao
 import com.asistente.core.domain.models.User
 import com.asistente.core.domain.models.Recordatory
@@ -24,7 +26,8 @@ import com.asistente.core.domain.models.Activity
         Task::class,
         Category::class,
         Recordatory::class,
-        Activity::class
+        Activity::class,
+        TimeSlot::class
     ],
     version = 6,
     exportSchema = false
@@ -41,6 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recordatoryDao(): RecordatoryDao
 
     abstract fun activityDao(): ActivityDao
+
+    abstract fun timeSlotDao(): TimeSlotDao
 
     companion object {
         const val DATABASE_NAME = "asistente_db"
