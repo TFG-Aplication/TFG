@@ -4,6 +4,9 @@
     package="com.asistente.planificador">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".ui.MyApp"
@@ -13,7 +16,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.App.Starting">
-
+        <receiver
+            android:name="com.asistente.core.data.receiver.TaskAlertReceiver"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

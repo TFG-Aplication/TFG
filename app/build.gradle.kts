@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.foundation.foundation)
+    implementation(libs.foundation.layout)
 
 
     debugImplementation(libs.androidx.compose.ui.tooling)

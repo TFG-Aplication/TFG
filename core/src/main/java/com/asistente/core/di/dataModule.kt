@@ -156,7 +156,10 @@ object dataModule {
     }
 
     @Provides
-    fun provideCreateTaskUseCase(repo: TaskRepositoryInterface, scheduleTaskAlerts: Alerts): CreateTask {
+    fun provideCreateTaskUseCase(
+        repo: TaskRepositoryInterface,
+        scheduleTaskAlerts: Alerts
+    ): CreateTask {
         return CreateTask(repo, scheduleTaskAlerts)
     }
 }
