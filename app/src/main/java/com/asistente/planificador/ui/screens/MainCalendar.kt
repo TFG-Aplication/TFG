@@ -42,6 +42,8 @@ fun MainCalendar(
     onNavigateToCategory: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToEditCategory: (String) -> Unit,
+    onNavigateToActivityForm: () -> Unit
+
 ) {
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -174,7 +176,7 @@ fun MainCalendar(
                     FabMenuItem("Personalizar Categorías", Icons.Default.Bookmarks) { showCategoryShow = true }
                     FabMenuItem("Recordatorio", Icons.Default.Lightbulb) { }
                     FabMenuItem("Cumpleaños", Icons.Default.Cake) { }
-                    FabMenuItem("Actividad", Icons.Default.Assignment) { }
+                    FabMenuItem("Actividad", Icons.Default.Assignment) {onNavigateToActivityForm() }
                     FabMenuItem("Tarea", Icons.Default.CheckCircle) { onNavigateToTask() }
                 }
 

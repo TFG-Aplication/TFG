@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.work.WorkManager
 import com.asistente.core.data.local.AppDatabase
+import com.asistente.core.data.local.daos.ActivityDao
 import com.asistente.core.data.local.daos.CalendarDao
 import com.asistente.core.data.local.daos.CategoryDao
 import com.asistente.core.data.local.daos.RecordatoryDao
@@ -14,12 +15,14 @@ import com.asistente.core.data.remote.CategoryRemoteServices
 import com.asistente.core.data.remote.RecordatoryRemoteServices
 import com.asistente.core.data.remote.TaskRemoteServices
 import com.asistente.core.data.remote.UserRemoteService
+import com.asistente.core.data.repository.ActivityRepository
 import com.asistente.core.data.repository.CalendarRepository
 import com.asistente.core.data.repository.CategoryRepository
 import com.asistente.core.data.repository.RecordatoryRepository
 import com.asistente.core.data.repository.TaskRepository
 import com.asistente.core.data.repository.UserRepository
 import com.asistente.core.data.seeders.category.seederCategory
+import com.asistente.core.domain.repositories.interfaz.ActivityRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.CategoryRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.RecodatoryRepositoryInterface
@@ -65,6 +68,9 @@ object dataModule {
 
     @Provides
     fun provideUserDao(db: AppDatabase): UserDao = db.userDao()
+
+    @Provides
+    fun provideActivityDao(db: AppDatabase): ActivityDao = db.activityDao()
 
 
     // --- FIREBASE ---
@@ -147,6 +153,14 @@ object dataModule {
         return RecordatoryRepository(local, remote)
     }
 
+    @Provides
+    @Singleton
+    fun provideActivityRepository(
+        local: ActivityDao,
+        workManager: WorkManager
+    ): ActivityRepositoryInterface {
+        return ActivityRepository(local, workManager)
+    }
 
 
     // --- CASOS DE USO ---

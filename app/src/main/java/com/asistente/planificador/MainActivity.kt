@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.asistente.core.ui.viewmodels.CalendarViewModel
+import com.asistente.planificador.ui.screens.ActivityForm
 import com.asistente.planificador.ui.screens.CategoryForm
 import com.asistente.planificador.ui.screens.DayViewScreen
 import com.asistente.planificador.ui.screens.MainCalendar
@@ -57,12 +58,16 @@ class MainActivity : ComponentActivity() {
                             onNavigateToTask = { navController.navigate("task_form") },
                             onNavigateToCategory = { navController.navigate("category_form") },
                             onNavigateToDetail = { taskId -> navController.navigate("task_detail/$taskId") },
-                            onNavigateToEditCategory = { categoryId -> navController.navigate("edit_category/$categoryId") }
+                            onNavigateToEditCategory = { categoryId -> navController.navigate("edit_category/$categoryId")},
+                            onNavigateToActivityForm = { navController.navigate("activity_form") }
                             // ← onNavigateToDayView eliminado
                         )
                     }
                     composable("task_form") {
                         TaskForm(onBack = { navController.popBackStack() })
+                    }
+                    composable("activity_form") {
+                        ActivityForm(onBack = { navController.popBackStack() })
                     }
                     composable("category_form") {
                         CategoryForm(categoryId = null, onBack = { navController.popBackStack() })

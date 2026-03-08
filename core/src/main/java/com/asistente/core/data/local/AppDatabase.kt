@@ -26,7 +26,7 @@ import com.asistente.core.domain.models.Activity
         Recordatory::class,
         Activity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
