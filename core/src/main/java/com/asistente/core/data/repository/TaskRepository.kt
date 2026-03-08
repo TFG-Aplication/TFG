@@ -46,15 +46,13 @@ class TaskRepository @Inject constructor(
     }
 
     override suspend fun deleteTask(taskId: String, isShared: Boolean) {
-        if (isShared) {
+
             val task = taskDao.getTaskById(taskId)
             task?.let {
                 taskDao.insertTask(it.copy(syncStatus = 2))
                 enqueueSyncWorker(it.parentCalendarId)
             }
-        } else {
-            taskDao.deleteTaskById(taskId)
-        }
+
     }
 
     private fun enqueueSyncWorker(calendarId: String) {

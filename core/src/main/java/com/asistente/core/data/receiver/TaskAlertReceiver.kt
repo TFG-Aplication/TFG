@@ -1,40 +1,30 @@
-package com.asistente.core.data.worker
+package com.asistente.core.data.receiver
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.hilt.work.HiltWorker
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 
-@HiltWorker
-class TaskAlertWorker @AssistedInject constructor(
-    @Assisted private val context: Context,
-    @Assisted workerParams: WorkerParameters
-) : CoroutineWorker(context, workerParams) {
+class TaskAlertReceiver : BroadcastReceiver() {
 
     @SuppressLint("MissingPermission")
-    override suspend fun doWork(): Result {
+    override fun onReceive(context: Context, intent: Intent) {
+        val taskId   = intent.getStringExtra(KEY_TASK_ID)   ?: return
+        val taskName = intent.getStringExtra(KEY_TASK_NAME) ?: return
 
-        val taskId   = inputData.getString(KEY_TASK_ID)   ?: return Result.failure()
-        val taskName = inputData.getString(KEY_TASK_NAME) ?: return Result.failure()
-
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("asistente://task/$taskId")).apply {
+        val deepLinkIntent = Intent(Intent.ACTION_VIEW, Uri.parse("asistente://task/$taskId")).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
         val pendingIntent = PendingIntent.getActivity(
             context,
             taskId.hashCode(),
-            intent,
+            deepLinkIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -53,7 +43,6 @@ class TaskAlertWorker @AssistedInject constructor(
         ) {
             NotificationManagerCompat.from(context).notify(taskId.hashCode(), notification)
         }
-        return Result.success()
     }
 
     companion object {
