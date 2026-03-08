@@ -1,13 +1,17 @@
 package com.asistente.planificador.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ViewDay
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -42,7 +46,8 @@ import com.asistente.planificador.ui.screens.tools.CalendarSelector
 // Definimos un enum para gestionar las vistas
 enum class CalendarView(val label: String, val icon: ImageVector) {
     MONTH("Vista Mes", Icons.Default.ViewModule),
-    WEEK("Vista Semana", Icons.Default.ViewWeek)
+    WEEK("Vista Semana", Icons.Default.ViewWeek),
+    DAY("Vista Día", Icons.Default.ViewDay)
 }
 
 @Composable
@@ -119,30 +124,39 @@ fun HeaderPage(
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                Box {
-                    Icon(
-                        imageVector = currentView.icon,
-                        contentDescription = "Cambiar Vista",
-                        tint = Primario,
-                        modifier = Modifier.size(24.dp).clickable { expandedViewMenu = true }
-                    )
-                    DropdownMenu(
-                        expanded = expandedViewMenu,
-                        onDismissRequest = { expandedViewMenu = false }
-                    ) {
-                        CalendarView.values().forEach { view ->
-                            DropdownMenuItem(
-                                text = { Text(view.label) },
-                                onClick = {
-                                    onViewChange(view)
-                                    expandedViewMenu = false
-                                },
-                                leadingIcon = { Icon(view.icon, contentDescription = null) }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                // ← Reemplaza el Box con DropdownMenu por esto:
+                Row(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFFE0E0E0),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(1.dp)
+                ) {
+                    CalendarView.values().forEach { view ->
+                        val isSelected = currentView == view
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = if (isSelected) Color.White else Color.Transparent,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .clickable { onViewChange(view) }
+                                .padding(horizontal = 6.dp, vertical = 5.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = view.icon,
+                                contentDescription = view.label,
+                                tint = if (isSelected) Primario else Color.Gray,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
+
                 Icon(Icons.Default.Search, null, tint = Primario, modifier = Modifier.size(24.dp))
                 Icon(Icons.Outlined.ChatBubbleOutline, null, tint = Primario, modifier = Modifier.size(24.dp))
             }

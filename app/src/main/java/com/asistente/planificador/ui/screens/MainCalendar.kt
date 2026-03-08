@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CheckCircle
@@ -28,32 +28,35 @@ import com.asistente.planificador.ui.components.CalendarView
 import com.asistente.planificador.ui.components.FootPage
 import com.asistente.planificador.ui.components.HeaderPage
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
+import java.time.LocalDate
 import java.time.YearMonth
 
 val colorCuarto = Color(0xFFF3E5E2)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategoriesViewModel,
-                 onNavigateToTask: () -> Unit,
-                 onNavigateToCategory: () -> Unit,
-                 onNavigateToDetail: (String) -> Unit,
-                 onNavigateToEditCategory: (String) -> Unit) {
+fun MainCalendar(
+    viewModel: CalendarViewModel,
+    categoriesViewModel: ShowCategoriesViewModel,
+    onNavigateToTask: () -> Unit,
+    onNavigateToCategory: () -> Unit,
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateToEditCategory: (String) -> Unit,
+) {
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
     var currentTab by remember { mutableStateOf("calendar") }
-
     var monthToJump by remember { mutableStateOf<YearMonth?>(null) }
-    var calenadarToJump by remember { mutableStateOf<Calendar?>(null) }
-
     var expandedMenu by remember { mutableStateOf(false) }
     var showCategoryShow by remember { mutableStateOf(false) }
+    var selectedDay by remember { mutableStateOf(LocalDate.now()) } // ← fecha para DayView
 
-    //para el footer
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
-            initialValue = SheetValue.PartiallyExpanded // Empieza abajo
+            initialValue = SheetValue.PartiallyExpanded
         )
     )
+
     Box(modifier = Modifier.fillMaxSize()) {
 
         BottomSheetScaffold(
@@ -70,59 +73,58 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                         .background(Color(0xFFAC5343), RoundedCornerShape(2.dp))
                 )
             },
-
-        topBar = {
-            // Header
-            Column(
-                modifier = Modifier
-                    .background(Color(0xFFEFEFEF))
-                    .statusBarsPadding()
-            ) {
-                HeaderPage(
-                    yearMonth = visibleMonth,
-                    currentView = currentView,
-                    onViewChange = { currentView = it },
-                    onMonthSelected = { selected ->
-                        monthToJump = selected
-                    },
-                    onCalendarChanged = { selectedCalendar ->
-                        calenadarToJump = selectedCalendar
-                    }
-                )
-            }
-        }, sheetContent = {
-                // CONTENIDO QUE APARECE AL DESLIZAR
+            topBar = {
+                Column(
+                    modifier = Modifier
+                        .background(Color(0xFFEFEFEF))
+                        .statusBarsPadding()
+                ) {
+                    HeaderPage(
+                        yearMonth = visibleMonth,
+                        currentView = currentView,
+                        onViewChange = { currentView = it },
+                        onMonthSelected = { selected -> monthToJump = selected },
+                        onCalendarChanged = { viewModel.onCalendarChanged(it) }
+                    )
+                }
+            },
+            sheetContent = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.6f) // Hasta donde sube
-                        .padding(top = 10.dp) // IMPORTANTE: Dejamos espacio para que no choque con los iconos fijos
+                        .fillMaxHeight(0.6f)
+                        .padding(top = 10.dp)
                         .padding(16.dp)
                 ) {
                     AgendaView(onNavigateToDetail = onNavigateToDetail, viewModel = viewModel)
                 }
             }
-    ) { pad ->
+        ) { pad ->
             Box(modifier = Modifier.padding(pad)) {
-                if (currentView == CalendarView.MONTH) {
-                    // Vista Mensual
-                    Column {
+                when (currentView) {
+                    CalendarView.MONTH -> Column {
                         DaysOfWeekTitle()
                         CalendarScreen(
                             viewModel = viewModel,
                             onMonthChanged = { visibleMonth = it },
                             jumpToMonth = monthToJump,
-                            onJumpFinished = { monthToJump = null }
-
+                            onJumpFinished = { monthToJump = null },
+                            onDayClick = { date ->
+                                selectedDay = date
+                                currentView = CalendarView.DAY  // ← cambia vista en lugar de navegar
+                            }
                         )
                     }
-                } else {
-                    // Vista Semanal
-                    SemanalScreen(
+                    CalendarView.WEEK -> SemanalScreen(
                         viewModel = viewModel,
                         onMonthChanged = { visibleMonth = it },
                         jumpToMonth = monthToJump,
                         onJumpFinished = { monthToJump = null }
+                    )
+                    CalendarView.DAY -> DayViewScreen(
+                        date = selectedDay,
+                        viewModel = viewModel,
+                        onNavigateToDetail = onNavigateToDetail
                     )
                 }
             }
@@ -136,20 +138,29 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) {
-                        expandedMenu = false
-                    }
+                    ) { expandedMenu = false }
             )
         }
 
         Box(modifier = Modifier.align(Alignment.BottomCenter)) {
             FootPage(
                 currentTab = currentTab,
-                onTabSelected = { currentTab = it }
+                onTabSelected = { tab ->
+                    currentTab = tab
+                    when (tab) {
+                        "calendar" -> {
+                            currentView = CalendarView.MONTH
+                            monthToJump = YearMonth.now() // ← salta al mes actual
+                        }
+                        "today" -> {
+                            selectedDay = LocalDate.now() // ← día de hoy
+                            currentView = CalendarView.DAY
+                        }
+                    }
+                }
             )
         }
 
-        // FLOATING ACTION BUTTON
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -173,10 +184,14 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                     contentColor = Color.White,
                     shape = CircleShape
                 ) {
-                    Icon(if (expandedMenu) Icons.Default.Close else Icons.Default.Add, "Menu")
+                    Icon(
+                        imageVector = if (expandedMenu) Icons.Default.Close else Icons.Default.Add,
+                        contentDescription = "Menu"
+                    )
                 }
             }
         }
+
         if (showCategoryShow) {
             expandedMenu = false
             CategoryShow(
@@ -184,9 +199,7 @@ fun MainCalendar(viewModel: CalendarViewModel, categoriesViewModel: ShowCategori
                 viewModel = categoriesViewModel,
                 onBack = { showCategoryShow = false },
                 onNavigateToCategory = { onNavigateToCategory() },
-                onNavigateToEditCategory = { categoryId ->
-                    onNavigateToEditCategory(categoryId)
-                }
+                onNavigateToEditCategory = { categoryId -> onNavigateToEditCategory(categoryId) }
             )
         }
     }
@@ -200,7 +213,6 @@ fun FabMenuItem(label: String, icon: ImageVector, onClick: () -> Unit) {
             .clickable { onClick() }
             .padding(end = 0.dp)
     ) {
-        // El "globo" de texto
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = colorCuarto,

@@ -81,7 +81,7 @@ fun TaskView(
                     }
                     // Botón borrar
                     IconButton(
-                        onClick = onDelete,
+                        onClick = { viewModel.deleteTask(onDelete) },
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
                         Icon(

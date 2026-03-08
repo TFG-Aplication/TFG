@@ -16,12 +16,14 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.screens.CategoryForm
+import com.asistente.planificador.ui.screens.DayViewScreen
 import com.asistente.planificador.ui.screens.MainCalendar
 import com.asistente.planificador.ui.screens.TaskForm
 import com.asistente.planificador.ui.screens.TaskView
 import com.asistente.planificador.ui.theme.TrabajoFinDeGradoTheme
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.LocalDate
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -56,45 +58,32 @@ class MainActivity : ComponentActivity() {
                             onNavigateToCategory = { navController.navigate("category_form") },
                             onNavigateToDetail = { taskId -> navController.navigate("task_detail/$taskId") },
                             onNavigateToEditCategory = { categoryId -> navController.navigate("edit_category/$categoryId") }
-
+                            // ← onNavigateToDayView eliminado
                         )
                     }
                     composable("task_form") {
-                        TaskForm(
-                            onBack = {
-                                navController.popBackStack()
-                            }
-                        )
+                        TaskForm(onBack = { navController.popBackStack() })
                     }
                     composable("category_form") {
-                        CategoryForm(
-                            categoryId = null,
-                            onBack = {
-                                navController.popBackStack()
-                            }
-                        )
+                        CategoryForm(categoryId = null, onBack = { navController.popBackStack() })
                     }
                     composable("task_detail/{taskId}") {
                         TaskView(onBack = { navController.popBackStack() })
                     }
-
                     composable(
                         route = "task_detail/{taskId}",
                         deepLinks = listOf(navDeepLink { uriPattern = "asistente://task/{taskId}" })
                     ) {
                         TaskView(onBack = { navController.popBackStack() })
                     }
-
-                    composable("edit_category/{categoryId}",
-                        arguments = listOf(navArgument("categoryId") { type = NavType.StringType })) { entry ->
+                    composable(
+                        "edit_category/{categoryId}",
+                        arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
+                    ) { entry ->
                         val categoryId = entry.arguments?.getString("categoryId")
-                        CategoryForm(
-                            categoryId = categoryId,
-                            onBack = {
-                                navController.popBackStack()
-                            }
-                        )
+                        CategoryForm(categoryId = categoryId, onBack = { navController.popBackStack() })
                     }
+                    // ← composable "day_view/{date}" eliminado
                 }
             }
         }

@@ -40,7 +40,9 @@ fun CalendarScreen(
     viewModel: CalendarViewModel = hiltViewModel(),
     onMonthChanged: (YearMonth) -> Unit,
     jumpToMonth: YearMonth? = null,
-    onJumpFinished: () -> Unit = {}
+    onJumpFinished: () -> Unit = {},
+    onDayClick: (LocalDate) -> Unit = {}
+
 
 ) {
     // las tareas del calendario seleccionado
@@ -83,7 +85,8 @@ fun CalendarScreen(
                 isSelected = selectedDate == day.date,
                 tasks = tasksByDate[day.date].orEmpty(),
                 getTaskColor = { categoryId -> viewModel.getCategoryColor(categoryId) },
-                onClick = { date -> selectedDate = date },
+                onClick = { date -> selectedDate = date
+                    onDayClick(date) },
                 cellHeight = 100.dp
             )
         }

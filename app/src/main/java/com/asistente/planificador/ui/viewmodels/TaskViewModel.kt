@@ -12,6 +12,7 @@ import com.asistente.core.domain.usecase.category.GetListCategory
 import com.asistente.core.domain.usecase.calendar.GetListCalendars
 import com.asistente.core.domain.usecase.category.GetSpecificCategory
 import com.asistente.core.domain.usecase.task.CreateTask
+import com.asistente.core.domain.usecase.task.DeleteTask
 import com.asistente.core.domain.usecase.task.GetSpecificTask
 import com.asistente.planificador.ui.screens.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -54,6 +55,7 @@ class TaskViewModel @Inject constructor(
     private val createTaskUseCase: CreateTask,
     private val getCalendarsUseCase: GetListCalendars,
     private val getCategoryUseCase: GetListCategory,
+    private val deleteTaskUseCase: DeleteTask,
     private val getExpecificTaskUseCase: GetSpecificTask,
     private val getExpecificCategory: GetSpecificCategory
 
@@ -140,6 +142,20 @@ class TaskViewModel @Inject constructor(
         calendarHelper.set(Calendar.MINUTE, minute)
 
         updateAndValidateDates(calendarHelper.time, isStart)
+    }
+
+    fun deleteTask(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                deleteTaskUseCase(
+                    taskId = uiState.value.id,
+                    isShared = uiState.value.calendar?.isShared?: false
+                )
+                onSuccess()
+            } catch (e: Exception) {
+                // manejar error si quieres
+            }
+        }
     }
 
     // ACTUALIZACIÓN DE HORA (Hora/Minuto)
