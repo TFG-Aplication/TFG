@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.foundation.foundation)
     implementation(libs.foundation.layout)
+    implementation(libs.androidx.ui.text)
+    implementation(libs.androidx.room.external.antlr)
 
 
     debugImplementation(libs.androidx.compose.ui.tooling)

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.asistente.core.domain.models.Calendar
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.components.CalendarView
 import com.asistente.planificador.ui.components.FootPage
@@ -42,8 +42,8 @@ fun MainCalendar(
     onNavigateToCategory: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToEditCategory: (String) -> Unit,
-    onNavigateToActivityForm: () -> Unit
-
+    onNavigateToActivityForm: () -> Unit,
+    onNavigateToTimeSlots: (calendarId: String, calendarName: String) -> Unit
 ) {
     var currentView by remember { mutableStateOf(CalendarView.MONTH) }
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -51,7 +51,8 @@ fun MainCalendar(
     var monthToJump by remember { mutableStateOf<YearMonth?>(null) }
     var expandedMenu by remember { mutableStateOf(false) }
     var showCategoryShow by remember { mutableStateOf(false) }
-    var selectedDay by remember { mutableStateOf(LocalDate.now()) } // ← fecha para DayView
+    var showPlanningAssistant by remember { mutableStateOf(false) }
+    var selectedDay by remember { mutableStateOf(LocalDate.now()) }
 
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
@@ -113,7 +114,7 @@ fun MainCalendar(
                             onJumpFinished = { monthToJump = null },
                             onDayClick = { date ->
                                 selectedDay = date
-                                currentView = CalendarView.DAY  // ← cambia vista en lugar de navegar
+                                currentView = CalendarView.DAY
                             }
                         )
                     }
@@ -152,10 +153,10 @@ fun MainCalendar(
                     when (tab) {
                         "calendar" -> {
                             currentView = CalendarView.MONTH
-                            monthToJump = YearMonth.now() // ← salta al mes actual
+                            monthToJump = YearMonth.now()
                         }
                         "today" -> {
-                            selectedDay = LocalDate.now() // ← día de hoy
+                            selectedDay = LocalDate.now()
                             currentView = CalendarView.DAY
                         }
                     }
@@ -174,9 +175,13 @@ fun MainCalendar(
             ) {
                 if (expandedMenu) {
                     FabMenuItem("Personalizar Categorías", Icons.Default.Bookmarks) { showCategoryShow = true }
+                    FabMenuItem("Configuración del Asistente de Planificación", Icons.Default.Extension) {
+                        expandedMenu = false
+                        showPlanningAssistant = true
+                    }
                     FabMenuItem("Recordatorio", Icons.Default.Lightbulb) { }
                     FabMenuItem("Cumpleaños", Icons.Default.Cake) { }
-                    FabMenuItem("Actividad", Icons.Default.Assignment) {onNavigateToActivityForm() }
+                    FabMenuItem("Actividad", Icons.Default.Assignment) { onNavigateToActivityForm() }
                     FabMenuItem("Tarea", Icons.Default.CheckCircle) { onNavigateToTask() }
                 }
 
@@ -194,6 +199,7 @@ fun MainCalendar(
             }
         }
 
+        // Panel categorías
         if (showCategoryShow) {
             expandedMenu = false
             CategoryShow(
@@ -204,6 +210,16 @@ fun MainCalendar(
                 onNavigateToEditCategory = { categoryId -> onNavigateToEditCategory(categoryId) }
             )
         }
+
+        // Panel asistente — FUERA del if de categorías, siempre en el árbol
+        PlanningAssistantShow(
+            isVisible = showPlanningAssistant,
+            viewModel = viewModel,
+            onBack = { showPlanningAssistant = false },
+            onNavigateToTimeSlots = { calendarId, calendarName ->
+                onNavigateToTimeSlots(calendarId, calendarName)
+            }
+        )
     }
 }
 

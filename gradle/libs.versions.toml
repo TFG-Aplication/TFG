@@ -31,6 +31,8 @@ runtime = "1.10.3"
 firebaseFunctionsKtx = "22.1.0"
 androidxFoundation = "1.10.4"
 foundationLayoutVersion = "1.10.4"
+uiTextVersion = "1.10.4"
+roomExternalAntlr = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -72,6 +74,8 @@ androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime
 firebase-functions-ktx = { group = "com.google.firebase", name = "firebase-functions-ktx", version.ref = "firebaseFunctionsKtx" }
 androidx-compose-foundation-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidxFoundation" }
 foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
+androidx-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiTextVersion" }
+androidx-room-external-antlr = { group = "androidx.room", name = "room-external-antlr", version.ref = "roomExternalAntlr" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

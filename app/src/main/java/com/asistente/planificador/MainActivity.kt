@@ -21,6 +21,8 @@ import com.asistente.planificador.ui.screens.DayViewScreen
 import com.asistente.planificador.ui.screens.MainCalendar
 import com.asistente.planificador.ui.screens.TaskForm
 import com.asistente.planificador.ui.screens.TaskView
+import com.asistente.planificador.ui.screens.TimeSlotForm
+import com.asistente.planificador.ui.screens.TimeSlotListScreen
 import com.asistente.planificador.ui.theme.TrabajoFinDeGradoTheme
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -59,8 +61,10 @@ class MainActivity : ComponentActivity() {
                             onNavigateToCategory = { navController.navigate("category_form") },
                             onNavigateToDetail = { taskId -> navController.navigate("task_detail/$taskId") },
                             onNavigateToEditCategory = { categoryId -> navController.navigate("edit_category/$categoryId")},
-                            onNavigateToActivityForm = { navController.navigate("activity_form") }
-                            // ← onNavigateToDayView eliminado
+                            onNavigateToActivityForm = { navController.navigate("activity_form") },
+                            onNavigateToTimeSlots = { calendarId, calendarName ->   // ← NUEVO
+                                navController.navigate("timeslot_list/$calendarId/$calendarName")
+                            }
                         )
                     }
                     composable("task_form") {
@@ -88,7 +92,48 @@ class MainActivity : ComponentActivity() {
                         val categoryId = entry.arguments?.getString("categoryId")
                         CategoryForm(categoryId = categoryId, onBack = { navController.popBackStack() })
                     }
-                    // ← composable "day_view/{date}" eliminado
+
+                    composable(
+                        route = "timeslot_list/{calendarId}/{calendarName}",
+                        arguments = listOf(
+                            navArgument("calendarId")   { type = NavType.StringType },
+                            navArgument("calendarName") { type = NavType.StringType }
+                        )
+                    ) { backStackEntry ->
+                        val calendarName = backStackEntry.arguments?.getString("calendarName") ?: ""
+                        val calendarId   = backStackEntry.arguments?.getString("calendarId")   ?: ""
+                        TimeSlotListScreen(
+                            calendarName = calendarName,
+                            onNavigateToForm = { existingSlot ->
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("editSlot", existingSlot)
+                                navController.navigate("timeslot_form/$calendarId")
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable(
+                        route = "timeslot_form/{calendarId}",
+                        arguments = listOf(
+                            navArgument("calendarId") { type = NavType.StringType }
+                        )
+                    ) {
+                        val editSlot = navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.get<com.asistente.core.domain.models.TimeSlot>("editSlot")
+                        TimeSlotForm(
+                            existingSlot = editSlot,
+                            onBack = {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.remove<com.asistente.core.domain.models.TimeSlot>("editSlot")
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
                 }
             }
         }
