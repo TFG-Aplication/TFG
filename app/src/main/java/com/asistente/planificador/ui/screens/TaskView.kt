@@ -30,7 +30,7 @@ import formatTime
 fun TaskView(
     viewModel: TaskViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onEdit: () -> Unit = {},
+    onNavigateToEditTask: (String) -> Unit,
     onDelete: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -71,7 +71,7 @@ fun TaskView(
                 },
                 actions = {
                     // Botón editar
-                    IconButton(onClick = onEdit) {
+                    IconButton(onClick = {onNavigateToEditTask(uiState.id)}) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Editar",

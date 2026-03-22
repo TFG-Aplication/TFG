@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -28,12 +29,15 @@ import com.asistente.planificador.ui.screens.tools.CalendarSelector
 import com.asistente.planificador.ui.screens.tools.CategoryField
 import com.asistente.planificador.ui.screens.tools.CategorySelector
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
+
 val Primario = Color(0xFFAC5343)
 val Secundario = Color(0xFFEFEFEF)
 val Terciario = Color(0xFFA6A6A6)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskForm(
+    taskId: String? = null,
     viewModel: TaskViewModel = hiltViewModel(),
     onBack: () -> Unit
 ) {
@@ -42,26 +46,29 @@ fun TaskForm(
     val category by viewModel.categoryList.collectAsStateWithLifecycle()
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
-
     var expandedCategorySelector by remember { mutableStateOf(false) }
     var expandedCalendarSelector by remember { mutableStateOf(false) }
-
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
+
+    val isEditMode = uiState.isEditMode
 
     val selectionDate = remember { SelectionDate() }
 
     Scaffold(
         containerColor = Color.White,
-
         topBar = {
             TopAppBar(
-                modifier = Modifier.padding(vertical = 10.dp).height(72.dp),
+                modifier = Modifier
+                    .padding(vertical = 10.dp)
+                    .height(72.dp),
                 title = {
-                    // Envolvemos en un Box para asegurar el centrado vertical si el texto es pequeño
-                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                    Box(
+                        modifier = Modifier.fillMaxHeight(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
                         Text(
-                            text = "Nueva Tarea",
+                            text = if (isEditMode) "Editar Tarea" else "Nueva Tarea",
                             fontWeight = FontWeight.Bold,
                             color = Color.Black,
                             fontSize = 20.sp
@@ -71,7 +78,9 @@ fun TaskForm(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        modifier = Modifier.fillMaxHeight().padding(start = 14.dp) // Alinea al centro de la barra
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(start = 14.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
@@ -82,10 +91,27 @@ fun TaskForm(
                     }
                 },
                 actions = {
+                    if (isEditMode) {
+                        IconButton(
+                            onClick = {
+                                viewModel.deleteTask(onSuccess = onBack)
+                            },
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Delete,
+                                contentDescription = "Eliminar",
+                                tint = Color.Red.copy(alpha = 0.7f),
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                    }
+
+                    // Botón guardar / actualizar
                     Button(
                         onClick = {
-                            viewModel.saveTask()
-                            onBack()
+                            if (isEditMode) viewModel.updateTask(onSuccess = onBack)
+                            else viewModel.saveTask(onSuccess = onBack)
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Primario,
@@ -98,7 +124,7 @@ fun TaskForm(
                             .align(Alignment.CenterVertically)
                     ) {
                         Text(
-                            text = "Guardar", // Como en tu imagen
+                            text = "Guardar",
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
                             style = LocalTextStyle.current.copy(
@@ -114,7 +140,6 @@ fun TaskForm(
                 ),
             )
         }
-
     ) { pad ->
         Column(
             modifier = Modifier
@@ -133,7 +158,6 @@ fun TaskForm(
                         contentDescription = null,
                         tint = Primario,
                         modifier = Modifier.size(26.dp)
-
                     )
                 },
                 placeholder = {
@@ -164,9 +188,10 @@ fun TaskForm(
                     unfocusedTextColor = Terciario
                 )
             )
+
             HorizontalDivider(thickness = 0.5.dp)
 
-            // SELECTOR DE CALENDARIOS
+            // Selector de calendario
             CalendarField(
                 selectedCalendar = uiState.calendar,
                 onClick = { expandedCalendarSelector = true }
@@ -174,7 +199,7 @@ fun TaskForm(
 
             HorizontalDivider(thickness = 0.5.dp)
 
-            // seleccion de fecha y hora
+            // Fecha y hora
             DateTimeSelector(
                 initDate = uiState.initDate,
                 finishDate = uiState.finishDate,
@@ -188,23 +213,23 @@ fun TaskForm(
 
             HorizontalDivider(thickness = 0.5.dp)
 
-            //  SELECTOR DE CATEGORÍAS
+            // Selector de categorías
             CategoryField(
                 selectedCategory = uiState.category,
                 onClick = { expandedCategorySelector = true }
             )
 
             if (uiState.error != null) {
-                Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = uiState.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
-
-
-
-
 
             HorizontalDivider(thickness = 0.5.dp)
 
-// ALARMAS
+            // Alarmas
             AlertSelector(
                 initDate = uiState.initDate,
                 alerts = uiState.alerts,
@@ -213,7 +238,7 @@ fun TaskForm(
 
             HorizontalDivider(thickness = 0.5.dp)
 
-// REPETICIÓN
+            // Repetición
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -246,7 +271,50 @@ fun TaskForm(
 
             HorizontalDivider(thickness = 0.5.dp)
 
-// NOTAS
+            // Bloquear franja
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Block,
+                    contentDescription = null,
+                    tint = Primario,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Bloquear franja",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = "Reserva este tiempo para que el asistente no planifique nada aquí.",
+                        fontSize = 12.sp,
+                        color = Terciario,
+                        lineHeight = 16.sp
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = uiState.blockTimeSlot,
+                    onCheckedChange = { viewModel.onBlockTimeSlotChanged(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = Primario,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = Terciario.copy(alpha = 0.35f)
+                    )
+                )
+            }
+
+            HorizontalDivider(thickness = 0.5.dp)
+
+            // Notas
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -271,7 +339,7 @@ fun TaskForm(
                     )
                 }
                 OutlinedTextField(
-                    value = uiState.notes ?: "",
+                    value = uiState.notes,
                     onValueChange = { viewModel.onNoteChanged(it) },
                     placeholder = {
                         Text(
@@ -295,12 +363,9 @@ fun TaskForm(
                     )
                 )
             }
-
-
         }
 
-
-        //dialogo de la categoria
+        // Diálogo categoría
         if (expandedCategorySelector) {
             CategorySelector(
                 categories = category,
@@ -309,7 +374,7 @@ fun TaskForm(
             )
         }
 
-        // dialogo del calendario
+        // Diálogo calendario
         if (expandedCalendarSelector) {
             CalendarSelector(
                 calendars = calendars,
@@ -319,8 +384,7 @@ fun TaskForm(
             )
         }
 
-        // Diálogos de Hora
-        // --- DIÁLOGOS DE INICIO ---
+        // Diálogos de fecha/hora — inicio
         if (showStartDatePicker) {
             selectionDate.DatePickerModal(
                 initialDateMillis = uiState.initDate.time,
@@ -346,15 +410,15 @@ fun TaskForm(
             )
         }
 
-// --- DIÁLOGOS DE FIN ---
+        // Diálogos de fecha/hora — fin
         if (showEndDatePicker) {
             selectionDate.DatePickerModal(
-                initialDateMillis = uiState.finishDate.time, // Corregido a finishDate
+                initialDateMillis = uiState.finishDate.time,
                 onDismiss = { showEndDatePicker = false },
                 onConfirm = { millis ->
-                    millis?.let { viewModel.onDateChanged(it, false) } // Corregido a false (isStart)
+                    millis?.let { viewModel.onDateChanged(it, false) }
                     showEndDatePicker = false
-                    if (!uiState.isAllDay) showStartTimePicker = true
+                    if (!uiState.isAllDay) showEndTimePicker = true
                 }
             )
         }
@@ -372,16 +436,12 @@ fun TaskForm(
             )
         }
     }
+
     if (uiState.error != null) {
         Text(
             text = uiState.error!!,
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall
         )
-
-
     }
 }
-
-
-

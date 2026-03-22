@@ -14,6 +14,7 @@ import com.asistente.core.domain.usecase.category.GetSpecificCategory
 import com.asistente.core.domain.usecase.task.CreateTask
 import com.asistente.core.domain.usecase.task.DeleteTask
 import com.asistente.core.domain.usecase.task.GetSpecificTask
+import com.asistente.core.domain.usecase.task.UpdateTask
 import com.asistente.planificador.ui.screens.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -33,32 +35,33 @@ import java.util.UUID
 import javax.inject.Inject
 
 
-data class TaskFormState  (
+data class TaskFormState(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
     val notes: String = "",
-    //val place: String = "",
     val initDate: Date = Date(),
     val finishDate: Date = Date().apply { time += 3600000 },
     val calendar: CalendarModel? = null,
     val owners: List<String> = listOf("local_user"),
-    //val syncStatus: Int = 0,
     val error: String? = null,
     val alerts: List<Long> = emptyList(),
     val category: Category? = null,
-    val isAllDay: Boolean = false
+    val isAllDay: Boolean = false,
+    val blockTimeSlot: Boolean = false,
+    val isEditMode: Boolean = false,
+    val previouslyBlockedTimeSlot: Boolean = false
 )
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val createTaskUseCase: CreateTask,
+    private val updateTaskUseCase: UpdateTask,
     private val getCalendarsUseCase: GetListCalendars,
     private val getCategoryUseCase: GetListCategory,
     private val deleteTaskUseCase: DeleteTask,
     private val getExpecificTaskUseCase: GetSpecificTask,
     private val getExpecificCategory: GetSpecificCategory
-
 ) : ViewModel() {
 
     private val taskId: String? = savedStateHandle["taskId"]
@@ -66,17 +69,16 @@ class TaskViewModel @Inject constructor(
     val uiState: StateFlow<TaskFormState> = _uiState.asStateFlow()
     private val userId = "local_user"
 
-    // Lista de Calendarios del usuario
-    val calendarsList: StateFlow<List<CalendarModel>> = (getCalendarsUseCase(userId) ?: flowOf(emptyList()))
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    val calendarsList: StateFlow<List<CalendarModel>> =
+        (getCalendarsUseCase(userId) ?: flowOf(emptyList()))
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
-    // Lista de Categorías reactiva al calendario seleccionado
     val categoryList: StateFlow<List<Category>> = _uiState
-        .map { it.calendar?.id } // Observamos solo el ID del calendario actual
+        .map { it.calendar?.id }
         .distinctUntilChanged()
         .flatMapLatest { calendarId ->
             if (calendarId == null) flowOf(emptyList())
@@ -85,19 +87,17 @@ class TaskViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        // Cargar los datos de la tarea si el ID existe
         loadTaskData()
-        // Autoselección inicial
         viewModelScope.launch {
             calendarsList.collect { list ->
-                if (list.isNotEmpty() && _uiState.value.calendar == null) {
+                // Solo autoseleccionar si NO estamos en modo edición y no hay calendario elegido
+                if (list.isNotEmpty() && _uiState.value.calendar == null && !_uiState.value.isEditMode) {
                     onCalendarChanged(list.first())
                 }
             }
         }
         viewModelScope.launch {
             categoryList.collect { list ->
-                //pa cuando cambia de calendario, si la categoria seleccionada no existe en sicho calendario
                 val currentCategory = _uiState.value.category
                 if (currentCategory != null && !list.contains(currentCategory)) {
                     _uiState.update { it.copy(category = null) }
@@ -105,6 +105,8 @@ class TaskViewModel @Inject constructor(
             }
         }
     }
+
+    // ── Handlers ─────────────────────────────────────────────────────────────
 
     fun onCalendarChanged(newCalendar: CalendarModel) {
         _uiState.update { it.copy(calendar = newCalendar) }
@@ -116,6 +118,10 @@ class TaskViewModel @Inject constructor(
 
     fun onCategoryChanged(newCategory: Category?) {
         _uiState.update { it.copy(category = newCategory) }
+    }
+
+    fun onBlockTimeSlotChanged(value: Boolean) {
+        _uiState.update { it.copy(blockTimeSlot = value) }
     }
 
     fun onNameChanged(newName: String) {
@@ -180,7 +186,7 @@ class TaskViewModel @Inject constructor(
                     set(java.util.Calendar.MILLISECOND, 0)
                 }
                 val calEnd = java.util.Calendar.getInstance().apply {
-                    time = currentState.initDate // Usa initDate como base, no finishDate
+                    time = currentState.initDate
                     set(java.util.Calendar.HOUR_OF_DAY, 23)
                     set(java.util.Calendar.MINUTE, 59)
                     set(java.util.Calendar.SECOND, 59)
@@ -200,9 +206,10 @@ class TaskViewModel @Inject constructor(
         return getExpecificTaskUseCase(id ?: "")
     }
 
-     suspend fun getTaskCategory(categoryId: String?): Category? {
+    suspend fun getTaskCategory(categoryId: String?): Category? {
         return getExpecificCategory(categoryId ?: "")
     }
+
     suspend fun  getCategoryColor(categoryId: String?): Color {
         val color = getExpecificCategory(categoryId?: "")?.color
         return if (color != null) {
@@ -212,23 +219,33 @@ class TaskViewModel @Inject constructor(
         }
     }
 
+    // ── Privados ──────────────────────────────────────────────────────────────
+
     private fun loadTaskData() {
         taskId?.let { id ->
             viewModelScope.launch {
-                val task = getExpecificTaskUseCase(id)
-                val category = task?.categoryId?.let { getExpecificCategory(it) }
-                val calendar = calendarsList.value.find { it.id == task?.parentCalendarId }
-                task?.let { task ->
-                    _uiState.update { it.copy(
+                val task = getExpecificTaskUseCase(id) ?: return@launch
+                val category = task.categoryId?.let { getExpecificCategory(it) }
+
+                // Esperar a que la lista no esté vacía
+                val calendar = calendarsList
+                    .first { it.isNotEmpty() }
+                    .find { it.id == task.parentCalendarId }
+
+                _uiState.update {
+                    it.copy(
                         id = task.id,
                         name = task.name,
+                        notes = task.notes ?: "",
                         initDate = task.init_date ?: Date(),
                         finishDate = task.finish_date ?: Date(),
                         calendar = calendar,
                         owners = task.owners,
-                        category = category
-                        //resto de atrib
-                    )}
+                        category = category,
+                        blockTimeSlot = task.blockTimeSlot,
+                        previouslyBlockedTimeSlot = task.blockTimeSlot,
+                        isEditMode = true
+                    )
                 }
             }
         }
@@ -261,7 +278,7 @@ class TaskViewModel @Inject constructor(
     }
 
 
-    fun saveTask() {
+    fun saveTask(onSuccess: () -> Unit) {
         val actual = _uiState.value
         if (actual.name.isBlank()) {
             _uiState.update { it.copy(error = "El nombre es obligatorio") }
@@ -284,10 +301,50 @@ class TaskViewModel @Inject constructor(
                     isSharedCalendar = actualCalenda.isShared,
                     alerts = actual.alerts.map { offsetMinutes ->
                         actual.initDate.time - (offsetMinutes * 60_000L)
-                    }
+                    },
+                    blockTimeSlot = actual.blockTimeSlot,
                 )
+                onSuccess()
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error al guardar: ${e.message}") }
+            }
+        }
+    }
+
+    fun updateTask(onSuccess: () -> Unit) {
+        val actual = _uiState.value
+        if (actual.name.isBlank()) {
+            _uiState.update { it.copy(error = "El nombre es obligatorio") }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val actualCalendar = actual.calendar
+                    ?: throw IllegalStateException("El calendario no puede ser nulo al actualizar")
+
+                val mappedAlerts = actual.alerts.map { offsetMinutes ->
+                    actual.initDate.time - (offsetMinutes * 60_000L)
+                }
+
+                updateTaskUseCase(
+                    id = actual.id,
+                    name = actual.name,
+                    notes = actual.notes,
+                    place = null,
+                    initDate = actual.initDate,
+                    finishDate = actual.finishDate,
+                    calendarId = actualCalendar.id,
+                    owners = actual.owners,
+                    categoryId = actual.category?.id,
+                    isSharedCalendar = actualCalendar.isShared,
+                    alerts = mappedAlerts,
+                    blockTimeSlot = actual.blockTimeSlot,
+                    previouslyBlockedTimeSlot = actual.previouslyBlockedTimeSlot
+                )
+                onSuccess()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "No se pudo actualizar: ${e.message}") }
             }
         }
     }

@@ -91,6 +91,7 @@ class TaskRemoteServices @Inject constructor(
             "categoryId" to task.categoryId,
             "owners" to task.owners,
             "syncStatus" to task.syncStatus,
+            "blockTimeSlot" to task.blockTimeSlot,
         )
         task.place?.let { map["place"] = it }
         task.notes?.let { map["notes"] = it }
@@ -109,6 +110,7 @@ class TaskRemoteServices @Inject constructor(
             "parentCalendarId" to task.parentCalendarId,
             "owners" to task.owners,
             "syncStatus" to task.syncStatus,
+            "blockTimeSlot" to task.blockTimeSlot,
         )
         task.place?.let { map["place"] = it }
         task.notes?.let { map["notes"] = it }

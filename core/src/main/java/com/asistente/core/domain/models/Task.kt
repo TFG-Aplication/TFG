@@ -37,6 +37,7 @@ data class Task(
     val init_date: Date = Date.from(Instant.now()),
     @Nonnull
     val finish_date: Date = Date.from(Instant.now()),
-    val firebaseId: String? = null
+    val firebaseId: String? = null,
+    val blockTimeSlot: Boolean = false
 
     ) 

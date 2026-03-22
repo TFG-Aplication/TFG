@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.LaunchedEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -17,7 +16,6 @@ import androidx.navigation.navDeepLink
 import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.screens.ActivityForm
 import com.asistente.planificador.ui.screens.CategoryForm
-import com.asistente.planificador.ui.screens.DayViewScreen
 import com.asistente.planificador.ui.screens.MainCalendar
 import com.asistente.planificador.ui.screens.TaskForm
 import com.asistente.planificador.ui.screens.TaskView
@@ -26,7 +24,6 @@ import com.asistente.planificador.ui.screens.TimeSlotListScreen
 import com.asistente.planificador.ui.theme.TrabajoFinDeGradoTheme
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import java.time.LocalDate
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -34,7 +31,6 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
 
         setContent {
             TrabajoFinDeGradoTheme {
@@ -51,6 +47,7 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     startDestination = "main_calendar"
                 ) {
+                    // ── Calendario principal ──────────────────────────────────
                     composable("main_calendar") {
                         val viewModel: CalendarViewModel = hiltViewModel()
                         val categoriesViewModel: ShowCategoriesViewModel = hiltViewModel()
@@ -59,40 +56,82 @@ class MainActivity : ComponentActivity() {
                             categoriesViewModel = categoriesViewModel,
                             onNavigateToTask = { navController.navigate("task_form") },
                             onNavigateToCategory = { navController.navigate("category_form") },
-                            onNavigateToDetail = { taskId -> navController.navigate("task_detail/$taskId") },
-                            onNavigateToEditCategory = { categoryId -> navController.navigate("edit_category/$categoryId")},
+                            onNavigateToDetail = { taskId ->
+                                navController.navigate("task_detail/$taskId")
+                            },
+                            onNavigateToEditCategory = { categoryId ->
+                                navController.navigate("edit_category/$categoryId")
+                            },
                             onNavigateToActivityForm = { navController.navigate("activity_form") },
-                            onNavigateToTimeSlots = { calendarId, calendarName ->   // ← NUEVO
+                            onNavigateToTimeSlots = { calendarId, calendarName ->
                                 navController.navigate("timeslot_list/$calendarId/$calendarName")
                             }
                         )
                     }
+
+                    // ── Nueva tarea ───────────────────────────────────────────
                     composable("task_form") {
                         TaskForm(onBack = { navController.popBackStack() })
                     }
+
+                    // ── Detalle de tarea ──────────────────────────────────────
+                    composable(
+                        route = "task_detail/{taskId}",
+                        arguments = listOf(navArgument("taskId") { type = NavType.StringType })
+                    ) { entry ->
+                        val taskId = entry.arguments?.getString("taskId") ?: ""
+                        TaskView(
+                            onBack = { navController.popBackStack() },
+                            onNavigateToEditTask = { navController.navigate("edit_task/$taskId") },
+                            onDelete = { navController.popBackStack() }
+                        )
+                    }
+
+                    // Deep link para notificaciones
+                    composable(
+                        route = "task_detail_deep/{taskId}",
+                        deepLinks = listOf(
+                            navDeepLink { uriPattern = "asistente://task/{taskId}" }
+                        ),
+                        arguments = listOf(navArgument("taskId") { type = NavType.StringType })
+                    ) { entry ->
+                        val taskId = entry.arguments?.getString("taskId") ?: ""
+                        TaskView(
+                            onBack = { navController.popBackStack() },
+                            onNavigateToEditTask = { navController.navigate("edit_task/$taskId") }, // ← con taskId
+                            onDelete = { navController.popBackStack() }
+                        )
+                    }
+
+                    // ── Editar tarea ──────────────────────────────────────────
+                    composable(
+                        route = "edit_task/{taskId}",
+                        arguments = listOf(navArgument("taskId") { type = NavType.StringType })
+                    ) {entry ->
+                        val taskId = entry.arguments?.getString("taskId")
+                        TaskForm(taskId = taskId, onBack = { navController.popBackStack() })
+                    }
+
+                    // ── Actividad ─────────────────────────────────────────────
                     composable("activity_form") {
                         ActivityForm(onBack = { navController.popBackStack() })
                     }
+
+                    // ── Nueva categoría ───────────────────────────────────────
                     composable("category_form") {
                         CategoryForm(categoryId = null, onBack = { navController.popBackStack() })
                     }
-                    composable("task_detail/{taskId}") {
-                        TaskView(onBack = { navController.popBackStack() })
-                    }
+
+                    // ── Editar categoría ──────────────────────────────────────
                     composable(
-                        route = "task_detail/{taskId}",
-                        deepLinks = listOf(navDeepLink { uriPattern = "asistente://task/{taskId}" })
-                    ) {
-                        TaskView(onBack = { navController.popBackStack() })
-                    }
-                    composable(
-                        "edit_category/{categoryId}",
+                        route = "edit_category/{categoryId}",
                         arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
                     ) { entry ->
                         val categoryId = entry.arguments?.getString("categoryId")
                         CategoryForm(categoryId = categoryId, onBack = { navController.popBackStack() })
                     }
 
+                    // ── Lista de franjas ──────────────────────────────────────
                     composable(
                         route = "timeslot_list/{calendarId}/{calendarName}",
                         arguments = listOf(
@@ -114,6 +153,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    // ── Form de franja ────────────────────────────────────────
                     composable(
                         route = "timeslot_form/{calendarId}",
                         arguments = listOf(
@@ -133,10 +173,8 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
-
                 }
             }
         }
     }
 }
-
