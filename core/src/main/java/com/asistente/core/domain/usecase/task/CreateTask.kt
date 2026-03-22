@@ -1,8 +1,12 @@
 package com.asistente.core.domain.usecase.task
 
+import com.asistente.core.domain.models.RecurrenceType
+import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.Task
+import com.asistente.core.domain.models.TimeSlot
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
 import com.asistente.core.domain.usecase.alerts.Alerts
+import com.asistente.core.domain.usecase.timeslot.CreateTimeSlot
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -10,7 +14,9 @@ import javax.inject.Inject
 
 class CreateTask @Inject constructor(
     private val repository: TaskRepositoryInterface,
-    private val scheduleTaskAlerts: Alerts
+    private val scheduleTaskAlerts: Alerts,
+    private val createTimeSlot: CreateTimeSlot
+
 ) {
     suspend operator fun invoke(
         name: String,
@@ -22,7 +28,9 @@ class CreateTask @Inject constructor(
         place: String? = null,
         notes: String? = null,
         alerts: List<Long>? = null,
-        isSharedCalendar: Boolean
+        isSharedCalendar: Boolean,
+        blockTimeSlot: Boolean = false
+
     ): Result<Task> {
         return try {
             // Validaciones
@@ -45,8 +53,11 @@ class CreateTask @Inject constructor(
                 return Result.failure(IllegalArgumentException("Finish date cannot be before init date"))
             }
 
+            val taskId = UUID.randomUUID().toString()
+
+
             val task = Task(
-                id = UUID.randomUUID().toString(),
+                id = taskId,
                 name = name.trim(),
                 owners = owners,
                 parentCalendarId = calendarId,
@@ -56,11 +67,29 @@ class CreateTask @Inject constructor(
                 init_date = initDate,
                 finish_date = finishDate,
                 alerts = alerts,
-                syncStatus = 0
+                syncStatus = 0,
+                blockTimeSlot = blockTimeSlot
+
             )
 
             repository.saveTask(task, isSharedCalendar)
             scheduleTaskAlerts(task)
+
+            // ── Crear franja bloqueada si se solicitó ─────────────────────────
+            if (blockTimeSlot) {
+                val timeSlot = TimeSlot(
+                    name = name.trim(),
+                    parentCalendarId = calendarId,
+                    owners = owners,
+                    slotType = SlotType.TASK_BLOCKED,
+                    taskId = taskId,
+                    recurrenceType = RecurrenceType.SINGLE_DAY,
+                    rangeStart = initDate,
+                    rangeEnd = finishDate,
+                    isActive = true
+                )
+                createTimeSlot(timeSlot, isSharedCalendar)
+            }
 
             Result.success(task)
         } catch (e: Exception) {
