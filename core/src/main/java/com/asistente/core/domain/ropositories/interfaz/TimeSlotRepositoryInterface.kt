@@ -10,7 +10,5 @@ interface TimeSlotRepositoryInterface {
     suspend fun saveTimeSlot(timeSlot: TimeSlot, isSharedCalendar: Boolean)
     suspend fun updateTimeSlot(timeSlot: TimeSlot)
     suspend fun deleteTimeSlot(timeSlotId: String, isShared: Boolean)
-    // Para el PlanningEngine
-    suspend fun getBlockedSlots(calendarId: String): List<TimeSlot>
-    suspend fun getPreferredSlots(calendarId: String): List<TimeSlot>
+    suspend fun deleteTimeSlotByTaskId(taskId: String, isShared: Boolean)
 }

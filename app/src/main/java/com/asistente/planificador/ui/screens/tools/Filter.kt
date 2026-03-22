@@ -204,9 +204,8 @@ fun SearchAndFilterBar(
                 ) {
                     activeTypeFilters.forEach { type ->
                         val (label, accent, bg) = when (type) {
-                            SlotType.BLOCKED   -> Triple("Bloqueada",  Color(0xFFE53935), Color(0xFFFFEBEE))
-                            SlotType.PREFERRED -> Triple("Preferida",  Color(0xFFFB8C00), Color(0xFFFFF3E0))
-                            SlotType.AVAILABLE -> Triple("Disponible", Color(0xFF43A047), Color(0xFFE8F5E9))
+                            SlotType.BLOCKED      -> Triple("Bloqueada", Color(0xFFE53935), Color(0xFFFFEBEE))
+                            SlotType.TASK_BLOCKED -> Triple("Por tarea", Color(0xFF7B1FA2), Color(0xFFF3E5F5))
                         }
                         ActiveFilterChip(label = label, bg = bg, textColor = accent, onRemove = { onTypeFilterToggle(type) })
                     }
@@ -341,9 +340,8 @@ private fun FilterBottomSheet(
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
-                    SlotType.BLOCKED   to Triple("Bloqueada",  Color(0xFFE53935), Color(0xFFFFEBEE)),
-                    SlotType.PREFERRED to Triple("Preferida",  Color(0xFFFB8C00), Color(0xFFFFF3E0)),
-                    SlotType.AVAILABLE to Triple("Disponible", Color(0xFF43A047), Color(0xFFE8F5E9))
+                    SlotType.BLOCKED      to Triple("Bloqueada",  Color(0xFFE53935), Color(0xFFFFEBEE)),
+                    SlotType.TASK_BLOCKED to Triple("Por tarea",  Color(0xFF7B1FA2), Color(0xFFF3E5F5))
                 ).forEach { (type, triple) ->
                     val (label, accent, bg) = triple
                     val selected = type in activeTypeFilters

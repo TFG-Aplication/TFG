@@ -106,10 +106,6 @@ class TimeSlotViewModel @Inject constructor(
         _formState.update { it.copy(rangeEnd = Date(millis)) }
     }
 
-    fun onSlotTypeChanged(type: SlotType) {
-        _formState.update { it.copy(slotType = type) }
-    }
-
     fun loadForEdit(timeSlot: TimeSlot) {
         _formState.update {
             TimeSlotFormState(

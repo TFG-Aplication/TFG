@@ -306,9 +306,9 @@ fun WeekHeatmap(slots: List<TimeSlot>, modifier: Modifier = Modifier) {
                 ) {
                     LegendItem(Color(0xFFE53935).copy(alpha = 0.25f), "Bloqueada")
                     Spacer(Modifier.width(12.dp))
-                    LegendItem(Color(0xFF43A047).copy(alpha = 0.25f), "Disponible")
+                    LegendItem(Color(0xFF7B1FA2).copy(alpha = 0.25f), "Por tarea")
                     Spacer(Modifier.width(12.dp))
-                    LegendItem(Color(0xFFFB8C00).copy(alpha = 0.25f), "Preferida")
+                    LegendItem(Color(0xFFF0F0F0), "Disponible")
                 }
             }
         }
@@ -461,9 +461,8 @@ private fun getCellColor(slots: List<TimeSlot>, dayNum: Int, hour: Int, date: Lo
         }
     } ?: return Color(0xFFF0F0F0)
     return when (match.slotType) {
-        SlotType.BLOCKED   -> Color(0xFFE53935).copy(alpha = 0.22f)
-        SlotType.PREFERRED -> Color(0xFFFB8C00).copy(alpha = 0.22f)
-        SlotType.AVAILABLE -> Color(0xFF43A047).copy(alpha = 0.22f)
+        SlotType.BLOCKED      -> Color(0xFFE53935).copy(alpha = 0.22f)
+        SlotType.TASK_BLOCKED -> Color(0xFF7B1FA2).copy(alpha = 0.22f)
     }
 }
 
@@ -531,21 +530,18 @@ fun PlanningToggleBanner(
 // ─────────────────────────────────────────────────────────────────────────────
 
 fun SlotType.dotColor(): Color = when (this) {
-    SlotType.BLOCKED   -> Color(0xFFE53935)
-    SlotType.PREFERRED -> Color(0xFFFB8C00)
-    SlotType.AVAILABLE -> Color(0xFF43A047)
+    SlotType.BLOCKED      -> Color(0xFFE53935)
+    SlotType.TASK_BLOCKED -> Color(0xFF7B1FA2)
 }
 
 fun SlotType.badgeColors(): Pair<Color, Color> = when (this) {
-    SlotType.BLOCKED   -> Pair(Color(0xFFFFEBEE), Color(0xFFE53935))
-    SlotType.PREFERRED -> Pair(Color(0xFFFFF3E0), Color(0xFFFB8C00))
-    SlotType.AVAILABLE -> Pair(Color(0xFFE8F5E9), Color(0xFF43A047))
+    SlotType.BLOCKED      -> Pair(Color(0xFFFFEBEE), Color(0xFFE53935))
+    SlotType.TASK_BLOCKED -> Pair(Color(0xFFF3E5F5), Color(0xFF7B1FA2))
 }
 
 fun SlotType.label(): String = when (this) {
-    SlotType.BLOCKED   -> "Bloqueada"
-    SlotType.PREFERRED -> "Preferida"
-    SlotType.AVAILABLE -> "Disponible"
+    SlotType.BLOCKED      -> "Bloqueada"
+    SlotType.TASK_BLOCKED -> "Por tarea"
 }
 
 fun RecurrenceType.shortLabel(): String = when (this) {
