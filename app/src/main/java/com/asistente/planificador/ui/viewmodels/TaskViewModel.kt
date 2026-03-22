@@ -232,6 +232,7 @@ class TaskViewModel @Inject constructor(
                     .first { it.isNotEmpty() }
                     .find { it.id == task.parentCalendarId }
 
+
                 _uiState.update {
                     it.copy(
                         id = task.id,
@@ -244,7 +245,13 @@ class TaskViewModel @Inject constructor(
                         category = category,
                         blockTimeSlot = task.blockTimeSlot,
                         previouslyBlockedTimeSlot = task.blockTimeSlot,
-                        isEditMode = true
+                        isEditMode = true,
+                        alerts = task.alerts                                    // ← añadir esto
+                            ?.map { timestamp ->
+                                ((task.init_date?.time ?: 0L) - timestamp) / 60_000L
+                            }
+                            ?.filter { it > 0 }
+                            ?: emptyList()
                     )
                 }
             }
