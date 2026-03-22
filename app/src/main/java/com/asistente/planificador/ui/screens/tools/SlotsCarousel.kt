@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -67,6 +66,7 @@ import com.asistente.planificador.ui.screens.dotColor
 import com.asistente.planificador.ui.screens.label
 import com.asistente.planificador.ui.screens.shortLabel
 import com.asistente.planificador.ui.viewmodels.toTimeString
+
 
 @Composable
 fun SlotsCarousel(
@@ -448,31 +448,5 @@ private fun EmptySlotState(onAdd: () -> Unit) {
             Spacer(Modifier.width(8.dp))
             Text("Nueva franja", fontWeight = FontWeight.Bold, fontSize = 14.sp)
         }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ESTADOS VACÍOS
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun EmptyFilterState() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier.size(56.dp).background(Color(0xFFF0F0F0), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.SearchOff, null, tint = Terciario, modifier = Modifier.size(26.dp))
-        }
-        Spacer(Modifier.height(10.dp))
-        Text("Sin resultados", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Prueba con otro nombre o cambia el filtro.",
-            fontSize = 13.sp, color = Terciario, textAlign = TextAlign.Center
-        )
     }
 }

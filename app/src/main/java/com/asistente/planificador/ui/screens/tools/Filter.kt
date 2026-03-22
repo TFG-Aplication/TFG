@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -462,5 +463,31 @@ private fun FilterBottomSheet(
                 Text("Aplicar", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTADOS VACÍOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+public fun EmptyFilterState() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier.size(56.dp).background(Color(0xFFF0F0F0), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.SearchOff, null, tint = Terciario, modifier = Modifier.size(26.dp))
+        }
+        Spacer(Modifier.height(10.dp))
+        Text("Sin resultados", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Prueba con otro nombre o cambia el filtro.",
+            fontSize = 13.sp, color = Terciario, textAlign = TextAlign.Center
+        )
     }
 }
