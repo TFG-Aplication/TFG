@@ -44,6 +44,9 @@ interface TimeSlotDao {
     @Query("DELETE FROM time_slots WHERE id = :id")
     suspend fun deleteTimeSlotById(id: String)
 
+    @Query("SELECT * FROM time_slots WHERE taskId = :taskId AND syncStatus != 2 LIMIT 1")
+    suspend fun getTimeSlotByTaskId(taskId: String): TimeSlot?
+
     // ── SINCRONIZACIÓN ────────────────────────────────────────────────────
 
     @Query("SELECT * FROM time_slots WHERE syncStatus = 0 AND parentCalendarId = :calendarId")
@@ -51,12 +54,4 @@ interface TimeSlotDao {
 
     @Query("SELECT * FROM time_slots WHERE syncStatus = :status AND parentCalendarId = :calendarId")
     suspend fun getTimeSlotBySyncStatus(status: Int, calendarId: String): List<TimeSlot>
-
-    // ── Consultas específicas del planificador ────────────────────────────
-
-    @Query("SELECT * FROM time_slots WHERE parentCalendarId = :calendarId AND slotType = 'BLOCKED' AND isActive = 1 AND syncStatus != 2")
-    suspend fun getBlockedSlots(calendarId: String): List<TimeSlot>
-
-    @Query("SELECT * FROM time_slots WHERE parentCalendarId = :calendarId AND slotType = 'PREFERRED' AND isActive = 1 AND syncStatus != 2")
-    suspend fun getPreferredSlots(calendarId: String): List<TimeSlot>
 }

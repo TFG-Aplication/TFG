@@ -186,13 +186,6 @@ fun TimeSlotForm(
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(thickness = 0.5.dp)
 
-            // ── Tipo de franja ─────────────────────────────────────────────
-            SectionLabel("Tipo de franja", Icons.Default.Category)
-            SlotTypeSelector(
-                selected = state.slotType,
-                onSelected = { viewModel.onSlotTypeChanged(it) }
-            )
-
             Spacer(Modifier.height(16.dp))
 
             // ── Error ──────────────────────────────────────────────────────
@@ -506,53 +499,6 @@ private fun TimePickerBox(label: String, time: String, onClick: () -> Unit, modi
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(label.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Terciario, letterSpacing = 0.5.sp)
             Text(time, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Primario)
-        }
-    }
-}
-
-// ── Selector tipo de franja ────────────────────────────────────────────────────
-
-@Composable
-private fun SlotTypeSelector(selected: SlotType, onSelected: (SlotType) -> Unit) {
-    val options = listOf(
-        Triple(SlotType.BLOCKED,   "🚫", "Bloqueada\nSin actividades"),
-        Triple(SlotType.PREFERRED, "⭐", "Preferida\nSe prioriza aquí"),
-        Triple(SlotType.AVAILABLE, "🔓", "Disponible\nSi no hay hueco")
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { (type, emoji, text) ->
-            val isSelected = selected == type
-            val lines = text.split("\n")
-            val (bgColor, borderColor) = when {
-                !isSelected -> Pair(Color(0xFFF9F9F9), Color(0xFFEEEEEE))
-                type == SlotType.BLOCKED   -> Pair(Color(0xFFFFEBEE), Color(0xFFE53935))
-                type == SlotType.PREFERRED -> Pair(Color(0xFFFFF3E0), Color(0xFFFB8C00))
-                else                       -> Pair(Color(0xFFE8F5E9), Color(0xFF43A047))
-            }
-            val textColor = when {
-                !isSelected -> Color.Black
-                type == SlotType.BLOCKED   -> Color(0xFFE53935)
-                type == SlotType.PREFERRED -> Color(0xFFFB8C00)
-                else                       -> Color(0xFF43A047)
-            }
-            Surface(
-                modifier = Modifier.weight(1f).clickable { onSelected(type) },
-                shape = RoundedCornerShape(14.dp),
-                color = bgColor,
-                border = androidx.compose.foundation.BorderStroke(
-                    if (isSelected) 1.5.dp else 1.dp, borderColor
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(emoji, fontSize = 22.sp)
-                    Text(lines[0], fontSize = 11.sp, fontWeight = FontWeight.Bold, color = textColor, textAlign = TextAlign.Center)
-                    Text(lines[1], fontSize = 9.sp,  color = Terciario, textAlign = TextAlign.Center)
-                }
-            }
         }
     }
 }

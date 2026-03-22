@@ -44,5 +44,6 @@ data class TimeSlot(
     val slotType: SlotType = SlotType.BLOCKED,
 
     //  Estado 
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val taskId: String? = null
 )

@@ -75,7 +75,8 @@ class TimeSlotRemoteServices @Inject constructor(
             "daysOfWeek"         to ts.daysOfWeek,
             "recurrenceType"     to ts.recurrenceType.name,
             "slotType"           to ts.slotType.name,
-            "isActive"           to ts.isActive
+            "isActive"           to ts.isActive,
+            "taskId"             to ts.taskId
         )
         ts.rangeStart?.let  { map["rangeStart"]  = it }
         ts.rangeEnd?.let    { map["rangeEnd"]    = it }

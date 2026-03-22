@@ -47,11 +47,13 @@ class TimeSlotRepository @Inject constructor(
         }
     }
 
-    override suspend fun getBlockedSlots(calendarId: String): List<TimeSlot> =
-        timeSlotDao.getBlockedSlots(calendarId)
-
-    override suspend fun getPreferredSlots(calendarId: String): List<TimeSlot> =
-        timeSlotDao.getPreferredSlots(calendarId)
+    override suspend fun deleteTimeSlotByTaskId(taskId: String, isShared: Boolean) {
+        val slot = timeSlotDao.getTimeSlotByTaskId(taskId)
+        slot?.let {
+            timeSlotDao.insertTimeSlot(it.copy(syncStatus = 2))
+            enqueueSyncWorker(it.parentCalendarId)
+        }
+    }
 
     private fun enqueueSyncWorker(calendarId: String) {
         val constraints = Constraints.Builder()

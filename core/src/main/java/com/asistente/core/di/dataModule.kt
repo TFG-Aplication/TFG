@@ -36,6 +36,7 @@ import com.asistente.core.domain.ropositories.interfaz.UserRepositoryInterface
 import com.asistente.core.domain.usecase.alerts.Alerts
 import com.asistente.core.domain.usecase.calendar.CreateCalendar
 import com.asistente.core.domain.usecase.task.CreateTask
+import com.asistente.core.domain.usecase.timeslot.CreateTimeSlot
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
@@ -196,8 +197,9 @@ object dataModule {
     @Provides
     fun provideCreateTaskUseCase(
         repo: TaskRepositoryInterface,
-        scheduleTaskAlerts: Alerts
+        scheduleTaskAlerts: Alerts,
+        timeSlotCreate: CreateTimeSlot
     ): CreateTask {
-        return CreateTask(repo, scheduleTaskAlerts)
+        return CreateTask(repo, scheduleTaskAlerts, timeSlotCreate)
     }
 }

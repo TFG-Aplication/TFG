@@ -2,12 +2,10 @@ package com.asistente.core.domain.models
 
 /**
  * Tipo de franja:
- * BLOCKED   → el algoritmo no colocará actividades aquí
- * PREFERRED → el algoritmo priorizará colocar actividades aquí
- * AVAILABLE → el algoritmo puede usar esta franja si no hay hueco mejor
+ * BLOCKED       → el algoritmo no colocará actividades aquí (creada manualmente por el usuario)
+ * TASK_BLOCKED  → igual que BLOCKED pero generada automáticamente por una tarea
  */
 enum class SlotType {
     BLOCKED,
-    PREFERRED,
-    AVAILABLE
+    TASK_BLOCKED
 }
