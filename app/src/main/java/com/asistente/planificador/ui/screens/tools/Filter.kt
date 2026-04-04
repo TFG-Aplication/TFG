@@ -56,11 +56,8 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.room.jarjarred.org.antlr.v4.codegen.model.Sync
 import com.asistente.core.domain.models.RecurrenceType
 import com.asistente.core.domain.models.SlotType
-import com.asistente.planificador.ui.screens.Primario
-import com.asistente.planificador.ui.screens.Terciario
 import com.asistente.planificador.ui.screens.shortLabel
 import kotlin.collections.forEach
 

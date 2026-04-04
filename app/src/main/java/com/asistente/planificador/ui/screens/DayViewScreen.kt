@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,15 +24,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.domain.models.Task
 import com.asistente.core.ui.viewmodels.CalendarViewModel
-import com.asistente.planificador.ui.components.CalendarView
-import com.asistente.planificador.ui.components.FootPage
-import com.asistente.planificador.ui.components.HeaderPage
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Secundario
+import com.asistente.planificador.ui.screens.tools.Terciario
 import com.asistente.planificador.ui.screens.tools.darkenColor
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Locale
 

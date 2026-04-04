@@ -15,7 +15,7 @@ import com.asistente.core.domain.usecase.task.CreateTask
 import com.asistente.core.domain.usecase.task.DeleteTask
 import com.asistente.core.domain.usecase.task.GetSpecificTask
 import com.asistente.core.domain.usecase.task.UpdateTask
-import com.asistente.planificador.ui.screens.colorCuarto
+import com.asistente.planificador.ui.screens.tools.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.domain.models.Task
 import com.asistente.core.ui.viewmodels.CalendarViewModel
+import com.asistente.planificador.ui.screens.tools.colorCuarto
 import com.asistente.planificador.ui.screens.tools.darkenColor
 import formatTime
 import java.time.Duration

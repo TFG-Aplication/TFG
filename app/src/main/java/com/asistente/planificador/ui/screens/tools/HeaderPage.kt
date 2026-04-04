@@ -38,9 +38,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.core.domain.models.Calendar
 import com.asistente.core.ui.viewmodels.CalendarViewModel
-import com.asistente.planificador.ui.screens.ColorPrimario
-import com.asistente.planificador.ui.screens.Primario
 import com.asistente.planificador.ui.screens.tools.CalendarSelector
+import com.asistente.planificador.ui.screens.tools.Primario
 
 
 // Definimos un enum para gestionar las vistas
@@ -271,7 +270,7 @@ fun MonthYearPickerDialog(
                 val newMonth = YearMonth.of(años[selectedYearIndex].toInt(), selectedMonthIndex + 1)
                 onConfirm(newMonth)
             }) {
-                Text("Confirmar", color = ColorPrimario, fontWeight = FontWeight.Bold)
+                Text("Confirmar", color = Primario, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

@@ -19,6 +19,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.domain.models.Task
 import com.asistente.core.ui.viewmodels.CalendarViewModel
+import com.asistente.planificador.ui.screens.tools.ColorGrisFondo
+import com.asistente.planificador.ui.screens.tools.ColorGrisOscuro
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Terciario
 import com.asistente.planificador.ui.screens.tools.darkenColor
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -29,11 +33,6 @@ import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.LocalDate
 import java.time.YearMonth
 
-
-// Colores del diseño
-val ColorPrimario = Color(0xFFAC5343)
-val ColorGrisFondo = Color(0xFFEFEFEF)
-val ColorGrisOscuro = Color(0xFF555555)
 
 @Composable
 fun CalendarScreen(
@@ -125,7 +124,7 @@ fun Day(
             // Número del día
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(32.dp)) {
                 if(day.date == LocalDate.now()){
-                    Box(modifier = Modifier.size(24.dp).background(ColorPrimario, CircleShape))
+                    Box(modifier = Modifier.size(24.dp).background(Primario, CircleShape))
                 }
                 Text(
                     text = day.date.dayOfMonth.toString(),
@@ -243,7 +242,7 @@ fun DaysOfWeekTitle() {
                 textAlign = TextAlign.Center,
                 text = day,
                 fontWeight = FontWeight.Bold,
-                color = if (day == "S" || day == "D") ColorGrisOscuro else ColorPrimario,
+                color = if (day == "S" || day == "D") ColorGrisOscuro else Primario,
                 fontSize = 12.sp
             )
         }

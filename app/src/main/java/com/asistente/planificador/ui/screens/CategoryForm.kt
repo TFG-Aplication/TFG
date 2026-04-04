@@ -27,6 +27,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.planificador.ui.screens.tools.CalendarField
 import com.asistente.planificador.ui.screens.tools.CalendarSelector
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Secundario
+import com.asistente.planificador.ui.screens.tools.Terciario
 import com.asistente.planificador.ui.viewmodels.CategoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

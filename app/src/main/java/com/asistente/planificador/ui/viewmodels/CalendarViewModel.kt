@@ -9,7 +9,7 @@ import com.asistente.core.domain.ropositories.interfaz.CalendarRepositoryInterfa
 import com.asistente.core.domain.usecase.calendar.CreateCalendar
 import com.asistente.core.domain.usecase.category.GetSpecificCategory
 import com.asistente.core.domain.usecase.task.GetListTask
-import com.asistente.planificador.ui.screens.colorCuarto
+import com.asistente.planificador.ui.screens.tools.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

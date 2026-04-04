@@ -28,11 +28,12 @@ import com.asistente.planificador.ui.screens.tools.CalendarField
 import com.asistente.planificador.ui.screens.tools.CalendarSelector
 import com.asistente.planificador.ui.screens.tools.CategoryField
 import com.asistente.planificador.ui.screens.tools.CategorySelector
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Secundario
+import com.asistente.planificador.ui.screens.tools.Terciario
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
 
-val Primario = Color(0xFFAC5343)
-val Secundario = Color(0xFFEFEFEF)
-val Terciario = Color(0xFFA6A6A6)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

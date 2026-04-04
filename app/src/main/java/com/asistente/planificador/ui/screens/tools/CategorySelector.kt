@@ -21,10 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.graphics.ColorUtils
 import com.asistente.core.domain.models.Category
-import com.asistente.planificador.ui.screens.Primario
-import com.asistente.planificador.ui.screens.Terciario
 
 @Composable
 fun CategoryField(
@@ -162,18 +159,6 @@ fun CategorySelector(
             }
         }
     )
-}
-
-fun darkenColor(color: Color): Color {
-    val hsl = FloatArray(3)
-    ColorUtils.RGBToHSL(
-        (color.red * 255).toInt(),
-        (color.green * 255).toInt(),
-        (color.blue * 255).toInt(),
-        hsl
-    )
-    hsl[2] = (hsl[2] * 0.45f).coerceIn(0f, 1f)
-    return Color(ColorUtils.HSLToColor(hsl))
 }
 
 @Composable

@@ -27,11 +27,12 @@ import com.asistente.core.ui.viewmodels.CalendarViewModel
 import com.asistente.planificador.ui.components.CalendarView
 import com.asistente.planificador.ui.components.FootPage
 import com.asistente.planificador.ui.components.HeaderPage
+import com.asistente.planificador.ui.screens.tools.Secundario
+import com.asistente.planificador.ui.screens.tools.colorCuarto
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import java.time.LocalDate
 import java.time.YearMonth
 
-val colorCuarto = Color(0xFFF3E5E2)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

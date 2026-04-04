@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.ui.viewmodels.CalendarViewModel
+import com.asistente.planificador.ui.screens.tools.ColorGrisFondo
+import com.asistente.planificador.ui.screens.tools.Primario
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
@@ -218,14 +220,14 @@ fun WeeklyTimeGrid(startOfWeek: LocalDate) {
                                     .offset(x = startPadding)
                                     .width(colWidth),
                                 thickness = 2.dp,
-                                color = ColorPrimario
+                                color = Primario
                             )
 
                             Surface(
                                 modifier = Modifier
                                     .offset(x = startPadding - 5.dp)
                                     .size(10.dp),
-                                color = ColorPrimario,
+                                color = Primario,
                                 shape = CircleShape
                             ) {}
                         }

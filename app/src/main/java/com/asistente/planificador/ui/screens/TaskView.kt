@@ -14,28 +14,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.asistente.core.domain.models.Category
 import com.asistente.core.domain.models.Task
+import com.asistente.planificador.ui.screens.tools.IconAlarma
+import com.asistente.planificador.ui.screens.tools.IconFecha
+import com.asistente.planificador.ui.screens.tools.IconFranja
+import com.asistente.planificador.ui.screens.tools.IconNotas
+import com.asistente.planificador.ui.screens.tools.IconRepeticion
+import com.asistente.planificador.ui.screens.tools.IosRow
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Secundario
+import com.asistente.planificador.ui.screens.tools.Terciario
 import com.asistente.planificador.ui.screens.tools.darkenColor
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
 import formatDate
 import formatTime
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 
 private val IosDestructive = Color(0xFFFF3B30)
 
-// Colores de iconos temáticos de la app
-private val IconFecha      = Color(0xFF38B6FF)          // Primario — fechas
-private val IconAlarma     = Color(0xFFFF914D)          // Terracota cálido — alarma
-private val IconRepeticion = Color(0xFF7ED957)          // Ciruela suave — repetición
-private val IconFranja     = Color(0xFFFF5757)          // Teal apagado — franja
-private val IconNotas      = Color(0xFFF8CEC4)          // Verde salvia — notas
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -325,8 +326,8 @@ fun TaskView(
                             disabledCheckedTrackColor = IconFranja,
                             disabledUncheckedThumbColor = Color.White,
                             disabledUncheckedTrackColor = Secundario,
-                            disabledUncheckedBorderColor = Color.Transparent, // ← añadir esto
-                            disabledCheckedBorderColor = Color.Transparent    // ← y esto
+                            disabledUncheckedBorderColor = Color.Transparent,
+                            disabledCheckedBorderColor = Color.Transparent
                         )
                     )
                 }
@@ -385,41 +386,3 @@ private fun IosDivider() {
     )
 }
 
-@Composable
-private fun IosRow(
-    icon: ImageVector,
-    iconTint: Color,
-    label: String,
-    trailingContent: (@Composable () -> Unit)? = {}
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(30.dp)
-                .clip(RoundedCornerShape(7.dp))
-                .background(iconTint.copy(alpha = 0.5f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = darkenColor(iconTint), // ← símbolo oscuro del mismo color
-                modifier = Modifier.size(17.dp),
-                )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.Black,
-            modifier = Modifier.weight(1f)
-        )
-        trailingContent?.invoke()
-    }
-}

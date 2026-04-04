@@ -37,8 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.asistente.core.domain.models.Calendar
-import com.asistente.planificador.ui.screens.Primario
-import com.asistente.planificador.ui.screens.Terciario
 
 
 @Composable

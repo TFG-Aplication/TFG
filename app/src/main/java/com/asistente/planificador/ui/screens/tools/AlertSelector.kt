@@ -23,10 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import java.util.Date
 
-// ─── Colores del proyecto ───────────────────────────────────────────────────
-private val Primario  = Color(0xFFAC5343)
-private val Secundario = Color(0xFFEFEFEF)
-private val Terciario  = Color(0xFFA6A6A6)
+
 
 // ─── Opciones predefinidas ───────────────────────────────────────────────────
 private data class AlertOption(val label: String, val minutes: Long)

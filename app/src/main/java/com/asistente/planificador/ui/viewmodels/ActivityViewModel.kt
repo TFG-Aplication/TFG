@@ -12,7 +12,7 @@ import com.asistente.core.domain.usecase.category.GetListCategory
 import com.asistente.core.domain.usecase.calendar.GetListCalendars
 import com.asistente.core.domain.usecase.category.GetSpecificCategory
 import com.asistente.core.domain.usecases.GetListActivity
-import com.asistente.planificador.ui.screens.colorCuarto
+import com.asistente.planificador.ui.screens.tools.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

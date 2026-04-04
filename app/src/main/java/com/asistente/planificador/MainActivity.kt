@@ -20,10 +20,11 @@ import com.asistente.planificador.ui.screens.MainCalendar
 import com.asistente.planificador.ui.screens.TaskForm
 import com.asistente.planificador.ui.screens.TaskView
 import com.asistente.planificador.ui.screens.TimeSlotForm
-import com.asistente.planificador.ui.screens.TimeSlotListScreen
 import com.asistente.planificador.ui.theme.TrabajoFinDeGradoTheme
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import com.asistente.planificador.ui.screens.TimeSlotListScreen
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -131,7 +132,7 @@ class MainActivity : ComponentActivity() {
                         CategoryForm(categoryId = categoryId, onBack = { navController.popBackStack() })
                     }
 
-                    // ── Lista de franjas ──────────────────────────────────────
+                    // ── Lista de franjas ──────────────────────────────────────────────────
                     composable(
                         route = "timeslot_list/{calendarId}/{calendarName}",
                         arguments = listOf(
@@ -148,6 +149,9 @@ class MainActivity : ComponentActivity() {
                                     ?.savedStateHandle
                                     ?.set("editSlot", existingSlot)
                                 navController.navigate("timeslot_form/$calendarId")
+                            },
+                            onNavigateToEditTask = { taskId ->
+                                navController.navigate("edit_task/$taskId")
                             },
                             onBack = { navController.popBackStack() }
                         )
