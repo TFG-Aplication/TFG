@@ -10,84 +10,78 @@ import javax.inject.Inject
 class UpdateTimeSlot @Inject constructor(
     private val repository: TimeSlotRepositoryInterface
 ) {
-    suspend operator fun invoke(timeSlot: TimeSlot, isSharedCalendar: Boolean = false) {
-
-        // ── Nombre ───────────────────────────────────────────────────────────
-        require(timeSlot.name.isNotBlank()) {
-            "El nombre de la franja no puede estar vacío"
-        }
-        require(timeSlot.name.trim().length >= 3) {
-            "El nombre debe tener al menos 3 caracteres"
-        }
-
-        // ── Horas ────────────────────────────────────────────────────────────
-        require(timeSlot.startMinuteOfDay < timeSlot.endMinuteOfDay) {
-            "La hora de inicio debe ser anterior a la de fin"
-        }
-
-        // ── Días seleccionados ───────────────────────────────────────────────
-        require(
-            timeSlot.daysOfWeek.isNotEmpty() ||
-                    timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY
-        ) {
-            "Debes seleccionar al menos un día"
-        }
-
-        // ── Fechas de rango ──────────────────────────────────────────────────
-        if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE ||
-            timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY
-        ) {
-            requireNotNull(timeSlot.rangeStart) {
-                "Se requiere fecha de inicio para este tipo de recurrencia"
+    suspend operator fun invoke(
+        timeSlot: TimeSlot,
+        isSharedCalendar: Boolean = false
+    ): Result<List<String>> {
+        return try {
+            // ── TASK_BLOCKED se actualiza solo desde UpdateTask ──────────────
+            require(timeSlot.slotType != SlotType.TASK_BLOCKED) {
+                "Las franjas TASK_BLOCKED se actualizan editando la tarea asociada"
             }
-        }
-        if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE) {
-            requireNotNull(timeSlot.rangeEnd) {
-                "Se requiere fecha de fin para rango de fechas"
+
+            // ── Nombre ───────────────────────────────────────────────────────
+            require(timeSlot.name.isNotBlank()) { "El nombre no puede estar vacío" }
+            require(timeSlot.name.trim().length >= 3) { "El nombre debe tener al menos 3 caracteres" }
+
+            // ── Horas ────────────────────────────────────────────────────────
+            require(timeSlot.startMinuteOfDay < timeSlot.endMinuteOfDay) {
+                "La hora de inicio debe ser anterior a la de fin"
             }
-            require(timeSlot.rangeEnd!!.after(timeSlot.rangeStart)) {
-                "La fecha de fin debe ser posterior a la de inicio"
-            }
-        }
 
-        // ── Obtener franjas existentes excluyendo la actual ──────────────────
-        val existing: List<TimeSlot> = repository
-            .getAllTimeSlotsByCalendarId(timeSlot.parentCalendarId)
-            .first()
-            .filter { it.id != timeSlot.id } // ← excluir la propia franja
+            // ── Días seleccionados ───────────────────────────────────────────
+            require(
+                timeSlot.daysOfWeek.isNotEmpty() ||
+                        timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY
+            ) { "Debes seleccionar al menos un día" }
 
-        // ── Validación de solapamiento ────────────────────────────────────────
-        val overlapping = existing.filter { overlaps(timeSlot, it) }
-
-        if (overlapping.isNotEmpty()) {
-            when (timeSlot.slotType) {
-                SlotType.BLOCKED -> {
-                    val conflicting = overlapping.filter { it.slotType == SlotType.BLOCKED }
-                    require(conflicting.isEmpty()) {
-                        val names = conflicting.joinToString { "\"${it.name}\"" }
-                        "La franja se solapa con otra franja manual: $names"
-                    }
-                }
-
-                //verificar
-                SlotType.TASK_BLOCKED -> {
-                    val conflicting = overlapping.filter { it.slotType == SlotType.TASK_BLOCKED }
-                    require(conflicting.isEmpty()) {
-                        val names = conflicting.joinToString { "\"${it.name}\"" }
-                        "La tarea se solapa con otra tarea bloqueante: $names"
-                    }
+            // ── Fechas de rango ──────────────────────────────────────────────
+            if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE ||
+                timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY
+            ) {
+                requireNotNull(timeSlot.rangeStart) {
+                    "Se requiere fecha de inicio para este tipo de recurrencia"
                 }
             }
-        }
+            if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE) {
+                requireNotNull(timeSlot.rangeEnd) { "Se requiere fecha de fin para rango de fechas" }
+                require(timeSlot.rangeEnd!!.after(timeSlot.rangeStart)) {
+                    "La fecha de fin debe ser posterior a la de inicio"
+                }
+            }
 
-        repository.updateTimeSlot(timeSlot)
+            // ── Franjas existentes excluyendo la actual ──────────────────────
+            val existing = repository
+                .getAllTimeSlotsByCalendarId(timeSlot.parentCalendarId)
+                .first()
+                .filter { it.id != timeSlot.id }
+
+            val overlapping = existing.filter { overlaps(timeSlot, it) }
+            val warnings = mutableListOf<String>()
+
+            // BLOCKED puede solaparse con todo, solo warnings
+            val withManual = overlapping.filter { it.slotType == SlotType.BLOCKED }
+            if (withManual.isNotEmpty()) {
+                warnings += "La franja se solapa con otras franjas manuales: " +
+                        withManual.joinToString { "\"${it.name}\"" }
+            }
+            val withTaskBlocked = overlapping.filter { it.slotType == SlotType.TASK_BLOCKED }
+            if (withTaskBlocked.isNotEmpty()) {
+                warnings += "La franja se solapa con tareas bloqueantes: " +
+                        withTaskBlocked.joinToString { "\"${it.name}\"" }
+            }
+
+            repository.updateTimeSlot(timeSlot)
+            Result.success(warnings)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     private fun overlaps(a: TimeSlot, b: TimeSlot): Boolean {
-        val timesOverlap =
-            a.startMinuteOfDay < b.endMinuteOfDay &&
-                    a.endMinuteOfDay > b.startMinuteOfDay
-
+        val timesOverlap = a.startMinuteOfDay < b.endMinuteOfDay &&
+                a.endMinuteOfDay > b.startMinuteOfDay
         if (!timesOverlap) return false
 
         return when {
@@ -97,11 +91,9 @@ class UpdateTimeSlot @Inject constructor(
 
             a.recurrenceType == RecurrenceType.DATE_RANGE &&
                     b.recurrenceType == RecurrenceType.DATE_RANGE -> {
-                val rangesOverlap =
-                    a.rangeStart != null && b.rangeStart != null &&
-                            a.rangeEnd != null && b.rangeEnd != null &&
-                            a.rangeStart.before(b.rangeEnd) &&
-                            a.rangeEnd.after(b.rangeStart)
+                val rangesOverlap = a.rangeStart != null && b.rangeStart != null &&
+                        a.rangeEnd != null && b.rangeEnd != null &&
+                        a.rangeStart.before(b.rangeEnd) && a.rangeEnd.after(b.rangeStart)
                 rangesOverlap && a.daysOfWeek.any { it in b.daysOfWeek }
             }
 
