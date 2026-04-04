@@ -29,9 +29,8 @@ data class TimeSlot(
     val startMinuteOfDay: Int = 480,    // 08:00 por defecto
     val endMinuteOfDay: Int = 840,      // 14:00 por defecto
 
-    //  Días de la semana activos 
-    // Lista de ints: 1=Lunes … 7=Domingo
-    val daysOfWeek: List<Int> = listOf(1, 2, 3, 4, 5),
+    //  Días de la semana activos
+    val daysOfWeek: List<Int> = emptyList(),
 
     //  Tipo de recurrencia 
     val recurrenceType: RecurrenceType = RecurrenceType.WEEKLY,

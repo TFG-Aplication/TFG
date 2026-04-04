@@ -153,6 +153,9 @@ class MainActivity : ComponentActivity() {
                             onNavigateToEditTask = { taskId ->
                                 navController.navigate("edit_task/$taskId")
                             },
+                            onNavigateToViewTask = { taskId ->
+                                navController.navigate("task_detail/$taskId")
+                            },
                             onBack = { navController.popBackStack() }
                         )
                     }
