@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -15,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,9 +29,6 @@ import com.asistente.planificador.ui.viewmodels.TimeSlotDetailState
 import com.asistente.planificador.ui.viewmodels.toTimeString
 import java.text.SimpleDateFormat
 import java.util.Locale
-
-private val IosDestructive = Color(0xFFFF3B30)
-
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,7 +69,7 @@ fun TimeSlotDetailSheet(
                 onEditTask = { state.slot.taskId?.let { onEditTask(it) }; onDismiss() }
             )
 
-            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
+            SectionDivider()
 
             Column(
                 modifier = Modifier
@@ -95,9 +90,7 @@ fun TimeSlotDetailSheet(
                 }
 
                 if (state.slot.slotType == SlotType.TASK_BLOCKED && state.associatedTask != null) {
-                    Spacer(Modifier.height(20.dp))
-                    HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
-                    Spacer(Modifier.height(20.dp))
+                    SectionSpacer()
                     AssociatedTaskSection(
                         task       = state.associatedTask,
                         onViewTask = { onViewTask(state.associatedTask.id) }
@@ -105,9 +98,7 @@ fun TimeSlotDetailSheet(
                 }
 
                 if (state.overlappingSlots.isNotEmpty()) {
-                    Spacer(Modifier.height(20.dp))
-                    HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
-                    Spacer(Modifier.height(20.dp))
+                    SectionSpacer()
                     OverlappingSlotsSection(
                         overlapping = state.overlappingSlots,
                         onSlotClick = { onDismiss(); onOverlappingSlotClick(it) }
@@ -116,50 +107,21 @@ fun TimeSlotDetailSheet(
 
                 if (state.slot.slotType == SlotType.TASK_BLOCKED) {
                     Spacer(Modifier.height(12.dp))
-                    Surface(
-                        shape    = RoundedCornerShape(10.dp),
-                        color    = Color(0xFFFFF8E1),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier              = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(Icons.Default.Info, null,
-                                tint = Color(0xFFF57F17), modifier = Modifier.size(14.dp))
-                            Text(
-                                "Esta franja se gestiona desde su tarea asociada.",
-                                fontSize = 14.sp, color = Color(0xFF5D4037)
-                            )
-                        }
-                    }
-                }
-            }
-
-            HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFEEEEEE))
-            Box(
-                modifier         = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .navigationBarsPadding(),
-                contentAlignment = Alignment.Center
-            ) {
-                TextButton(
-                    onClick  = { onDelete(state.slot); onDismiss() },
-                    modifier = Modifier.fillMaxWidth().height(52.dp)
-                ) {
-                    Text(
-                        text = when (state.slot.slotType) {
-                            SlotType.BLOCKED      -> "Eliminar franja"
-                            SlotType.TASK_BLOCKED -> "Eliminar bloqueo de tarea"
-                        },
-                        color      = IosDestructive,
-                        fontSize   = 17.sp,
-                        fontWeight = FontWeight.Normal
+                    AppBanner(
+                        text  = "Esta franja se gestiona desde su tarea asociada.",
+                        style = BannerStyle.INFO
                     )
                 }
             }
+
+            SectionDivider()
+            DestructiveFooterButton(
+                label   = when (state.slot.slotType) {
+                    SlotType.BLOCKED      -> "Eliminar franja"
+                    SlotType.TASK_BLOCKED -> "Eliminar bloqueo de tarea"
+                },
+                onClick = { onDelete(state.slot); onDismiss() }
+            )
         }
     }
 }
@@ -174,17 +136,7 @@ private fun SheetHeader(slot: TimeSlot, onEdit: () -> Unit, onEditTask: () -> Un
     val badgeColor = slot.slotType.badgeColors()
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier         = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFFDDDDDD))
-            )
-        }
+        SheetDragHandle()
 
         Row(
             modifier              = Modifier
@@ -194,49 +146,32 @@ private fun SheetHeader(slot: TimeSlot, onEdit: () -> Unit, onEditTask: () -> Un
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(11.dp))
-                    .background(dotColor.copy(alpha = 0.18f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = when (slot.slotType) {
-                        SlotType.BLOCKED      -> Icons.Default.Block
-                        SlotType.TASK_BLOCKED -> Icons.Default.CheckCircle
-                    },
-                    contentDescription = null,
-                    tint     = darkenColor(dotColor),
-                    modifier = Modifier.size(22.dp)
-                )
-            }
+            // Icono grande con fondo (44 dp, corner 11 dp)
+            TintedIconBox(
+                icon         = when (slot.slotType) {
+                    SlotType.BLOCKED      -> Icons.Default.Block
+                    SlotType.TASK_BLOCKED -> Icons.Default.CheckCircle
+                },
+                tint         = dotColor,
+                boxSize      = 44.dp,
+                iconSize     = 22.dp,
+                cornerRadius = 11.dp
+            )
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     slot.slotType.label(),
-                    fontSize   = 14.sp, fontWeight = FontWeight.Bold,
+                    fontSize   = 14.sp,
+                    fontWeight = FontWeight.Bold,
                     color      = badgeColor.second
                 )
                 Spacer(Modifier.height(2.dp))
-                Text(
-                    slot.name,
-                    fontSize   = 22.sp, fontWeight = FontWeight.Bold,
-                    color      = Color.Black, maxLines = 2,
-                    overflow   = TextOverflow.Ellipsis
-                )
+                ItemTitle(text = slot.name)
             }
 
-            TextButton(
-                onClick        = if (slot.slotType == SlotType.BLOCKED) onEdit else onEditTask,
-                contentPadding = PaddingValues(horizontal = 4.dp)
-            ) {
-                Text(
-                    text = "Editar",
-                    color = Color(0xFF38B6FF),
-                    fontSize = 17.sp
-                )
-            }
+            EditActionButton(
+                onClick = if (slot.slotType == SlotType.BLOCKED) onEdit else onEditTask
+            )
         }
     }
 }
@@ -274,8 +209,6 @@ private fun DetailInfoSection(slot: TimeSlot) {
         else -> Unit
     }
 
-    // Días: siempre visible para ambos tipos.
-    // Para SINGLE_DAY se deduce el día desde rangeStart; para el resto se usa daysOfWeek.
     val daysToShow: List<Int> = when (slot.recurrenceType) {
         RecurrenceType.SINGLE_DAY -> {
             slot.rangeStart?.let {
@@ -296,36 +229,31 @@ private fun DetailInfoSection(slot: TimeSlot) {
     }
 }
 
+// ── Fila de un campo de detalle (icono + label + valor) ──────────────────────
 @Composable
-private fun DetailInfoRow(icon: ImageVector, tint: Color, label: String, value: String) {
+private fun DetailInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color, label: String, value: String) {
     Row(
         modifier              = Modifier.fillMaxWidth(),
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp).clip(RoundedCornerShape(8.dp))
-                .background(tint.copy(alpha = 0.18f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, null, tint = darkenColor(tint), modifier = Modifier.size(17.dp))
-        }
+        TintedIconBox(icon = icon, tint = tint)
         Column {
-            Text(label, fontSize = 14.sp, color = Terciario, fontWeight = FontWeight.Medium)
-            Text(value, fontSize = 16.sp, color = Color.Black, fontWeight = FontWeight.SemiBold)
+            DetailLabel(label)
+            DetailValue(value)
         }
     }
 }
 
+// ── Grid de días ─────────────────────────────────────────────────────────────
 @Composable
 private fun DetailDaysRow(daysOfWeek: List<Int>, dotColor: Color, isActive: Boolean = true) {
-    val days      = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
-    val alpha     = if (isActive) 1f else 0.45f
+    val days       = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
+    val alpha      = if (isActive) 1f else 0.45f
     val bgInactive = Color(0xFFF2F2F2)
 
     Column {
-        Text("Días activos", fontSize = 14.sp, color = Terciario, fontWeight = FontWeight.Medium)
+        DetailLabel("Días activos")
         Spacer(Modifier.height(8.dp))
         Row(
             modifier              = Modifier.fillMaxWidth(),
@@ -375,26 +303,28 @@ private fun ActiveToggleRow(slot: TimeSlot, onToggleActive: () -> Unit) {
             modifier = Modifier
                 .size(32.dp).clip(RoundedCornerShape(8.dp))
                 .background(
-                    if (slot.isActive) Color(0xFF43A047).copy(alpha = 0.12f)
+                    if (slot.isActive) ColorActivo.copy(alpha = 0.12f)
                     else Terciario.copy(alpha = 0.10f)
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.PowerSettingsNew, null,
-                tint = if (slot.isActive) Color(0xFF43A047) else Terciario,
-                modifier = Modifier.size(17.dp))
+            Icon(
+                Icons.Default.PowerSettingsNew, null,
+                tint     = if (slot.isActive) ColorActivo else Terciario,
+                modifier = Modifier.size(17.dp)
+            )
         }
         Text(
             if (slot.isActive) "Franja activa" else "Franja inactiva",
             fontSize   = 16.sp, fontWeight = FontWeight.SemiBold,
-            color      = if (slot.isActive) Color(0xFF43A047) else Terciario,
+            color      = if (slot.isActive) ColorActivo else Terciario,
             modifier   = Modifier.weight(1f)
         )
         Switch(
             checked         = slot.isActive,
             onCheckedChange = { onToggleActive() },
             colors          = SwitchDefaults.colors(
-                checkedTrackColor    = Color(0xFF43A047),
+                checkedTrackColor    = ColorActivo,
                 checkedThumbColor    = Color.White,
                 uncheckedTrackColor  = Terciario.copy(alpha = 0.3f),
                 uncheckedThumbColor  = Color.White,
@@ -411,41 +341,17 @@ private fun ActiveToggleRow(slot: TimeSlot, onToggleActive: () -> Unit) {
 
 @Composable
 private fun AssociatedTaskSection(task: Task, onViewTask: () -> Unit) {
-    val fmtShort    = SimpleDateFormat("d MMM yyyy", Locale("es", "ES"))
-    val accentColor = Color(0xFF38B6FF)
+    val fmtShort = SimpleDateFormat("d MMM yyyy", Locale("es", "ES"))
 
     SectionTitle("Tarea asociada")
     Spacer(Modifier.height(10.dp))
 
-    Row(
-        modifier          = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFF8F8F8))
-            .clickable { onViewTask() }
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 3.dp, height = 36.dp)
-                .background(accentColor, RoundedCornerShape(2.dp))
-        )
+    ClickableItemCard(onClick = onViewTask) {
+        ColorAccentBar(color = Primario)
         Spacer(Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Row(
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Icon(Icons.Default.CheckCircle, null,
-                    tint = darkenColor(accentColor), modifier = Modifier.size(11.dp))
-                Text(
-                    "TAREA BLOQUEANTE",
-                    fontSize = 9.sp, fontWeight = FontWeight.Bold,
-                    color = darkenColor(accentColor), letterSpacing = 0.8.sp
-                )
-            }
+            InlineTypeLabel(Icons.Default.CheckCircle, "Tarea bloqueante", Primario)
             Spacer(Modifier.height(1.dp))
             Row(
                 modifier          = Modifier.fillMaxWidth(),
@@ -453,24 +359,17 @@ private fun AssociatedTaskSection(task: Task, onViewTask: () -> Unit) {
             ) {
                 Text(
                     task.name,
-                    fontSize   = 15.sp, fontWeight = FontWeight.Bold,
-                    color      = Color.Black,
+                    fontSize   = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black,
                     maxLines   = 1, overflow = TextOverflow.Ellipsis,
                     modifier   = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(8.dp))
-                Text(
-                    "${fmtShort.format(task.init_date)} – ${fmtShort.format(task.finish_date)}",
-                    fontSize   = 12.sp, fontWeight = FontWeight.Medium,
-                    color      = Terciario,
-                    maxLines   = 1
-                )
+                MetaText("${fmtShort.format(task.init_date)} – ${fmtShort.format(task.finish_date)}")
             }
         }
 
         Spacer(Modifier.width(6.dp))
-        Icon(Icons.Default.ChevronRight, null,
-            tint = Terciario, modifier = Modifier.size(18.dp))
+        Icon(Icons.Default.ChevronRight, null, tint = Terciario, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -487,41 +386,17 @@ private fun OverlappingSlotsSection(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("Franjas solapadas", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-            color = Terciario, letterSpacing = 0.3.sp)
-        Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFFFF8E1)) {
-            Row(
-                modifier              = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Icon(Icons.Default.Warning, null,
-                    tint = Color(0xFFF57F17), modifier = Modifier.size(11.dp))
-                Text("${overlapping.size}", fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold, color = Color(0xFFF57F17))
-            }
-        }
+        SectionTitle("Franjas solapadas")
+        WarningCountChip(overlapping.size)
     }
 
     Spacer(Modifier.height(10.dp))
 
-    Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFFFF8E1),
-        modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier              = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment     = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(Icons.Default.Warning, null,
-                tint = Color(0xFFF57F17),
-                modifier = Modifier.size(16.dp).padding(top = 1.dp))
-            Text(
-                "En zonas de solapamiento las franjas de tarea tienen prioridad visual. " +
-                        "Las franjas manuales siguen activas pero pueden no verse en el calendario.",
-                fontSize = 14.sp, color = Color(0xFF5D4037), lineHeight = 20.sp
-            )
-        }
-    }
+    AppBanner(
+        text  = "En zonas de solapamiento las franjas de tarea tienen prioridad visual. " +
+                "Las franjas manuales siguen activas pero pueden no verse en el calendario.",
+        style = BannerStyle.WARNING
+    )
 
     Spacer(Modifier.height(10.dp))
 
@@ -537,82 +412,32 @@ private fun OverlappingSlotsSection(
 private fun OverlappingSlotRow(slot: TimeSlot, onClick: () -> Unit) {
     val dotColor = slot.slotType.dotColor()
 
-    Row(
-        modifier          = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFF8F8F8))
-            .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Barra lateral de color
-        Box(
-            modifier = Modifier
-                .size(width = 3.dp, height = 36.dp)
-                .background(dotColor, RoundedCornerShape(2.dp))
-        )
+    ClickableItemCard(onClick = onClick) {
+        ColorAccentBar(color = dotColor)
         Spacer(Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            // Etiqueta de tipo
-            Row(
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Icon(Icons.Default.CheckCircle, null,
-                    tint = darkenColor(dotColor), modifier = Modifier.size(11.dp))
-                Text(
-                    slot.slotType.label().uppercase(),
-                    fontSize = 9.sp, fontWeight = FontWeight.Bold,
-                    color = darkenColor(dotColor), letterSpacing = 0.8.sp
-                )
-            }
+            InlineTypeLabel(Icons.Default.CheckCircle, slot.slotType.label(), dotColor)
             Spacer(Modifier.height(1.dp))
-            // Nombre · hora · recurrencia en la misma línea
             Row(
                 modifier          = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     slot.name,
-                    fontSize   = 15.sp, fontWeight = FontWeight.Bold,
-                    color      = Color.Black,
+                    fontSize   = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black,
                     maxLines   = 1, overflow = TextOverflow.Ellipsis,
                     modifier   = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(8.dp))
-                Text(
+                MetaText(
                     "${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()} · ${slot.recurrenceType.shortLabel()}",
-                    fontSize   = 12.sp, fontWeight = FontWeight.Medium,
-                    color      = Terciario, maxLines   = 1,
-                    softWrap   = false
+                    modifier = Modifier  // softWrap false si lo necesitas
                 )
             }
         }
 
         Spacer(Modifier.width(6.dp))
-        Icon(Icons.Default.ChevronRight, null,
-            tint = Terciario, modifier = Modifier.size(18.dp))
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun SectionTitle(text: String, badge: String? = null) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text, fontSize = 14.sp, fontWeight = FontWeight.Bold,
-            color = Terciario, letterSpacing = 0.3.sp)
-        if (badge != null) {
-            Box(
-                modifier = Modifier.size(18.dp).clip(CircleShape).background(Color(0xFFFFEBEE)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(badge, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Primario)
-            }
-        }
+        Icon(Icons.Default.ChevronRight, null, tint = Terciario, modifier = Modifier.size(18.dp))
     }
 }
