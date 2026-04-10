@@ -347,7 +347,6 @@ class TaskViewModel @Inject constructor(
                     isSharedCalendar = actualCalendar.isShared,
                     alerts = mappedAlerts,
                     blockTimeSlot = actual.blockTimeSlot,
-                    previouslyBlockedTimeSlot = actual.previouslyBlockedTimeSlot
                 )
                 onSuccess()
             } catch (e: Exception) {

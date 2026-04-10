@@ -13,14 +13,17 @@ interface TimeSlotDao {
 
     // ── Reactivas para UI ─────────────────────────────────────────────────
 
-    @Query("SELECT * FROM time_slots WHERE parentCalendarId = :calendarId AND syncStatus != 2 AND isActive = 1")
+    @Query("SELECT * FROM time_slots WHERE parentCalendarId = :calendarId AND syncStatus != 2 ")
     fun getAllTimeSlotsByCalendarIdFlow(calendarId: String): Flow<List<TimeSlot>>
 
-    @Query("SELECT * FROM time_slots WHERE (owners LIKE '%\"' || :userId || '\"%' OR owners LIKE '%' || :userId || '%') AND syncStatus != 2 AND isActive = 1")
+    @Query("SELECT * FROM time_slots WHERE (owners LIKE '%\"' || :userId || '\"%' OR owners LIKE '%' || :userId || '%') AND syncStatus != 2 ")
     fun getAllTimeSlotsByUserIdFlow(userId: String): Flow<List<TimeSlot>>
 
     @Query("SELECT * FROM time_slots WHERE id = :slotId")
     fun getTimeSlotByIdFlow(slotId: String): Flow<TimeSlot?>
+
+    @Query("SELECT * FROM time_slots WHERE taskId = :taskId AND syncStatus != 2 LIMIT 1")
+    fun getTimeSlotByTaskId(taskId: String): TimeSlot?
 
     // ── Suspendidas para lógica interna / sync ────────────────────────────
 
@@ -43,9 +46,6 @@ interface TimeSlotDao {
 
     @Query("DELETE FROM time_slots WHERE id = :id")
     suspend fun deleteTimeSlotById(id: String)
-
-    @Query("SELECT * FROM time_slots WHERE taskId = :taskId AND syncStatus != 2 LIMIT 1")
-    suspend fun getTimeSlotByTaskId(taskId: String): TimeSlot?
 
     // ── SINCRONIZACIÓN ────────────────────────────────────────────────────
 

@@ -35,15 +35,15 @@ import kotlinx.coroutines.flow.collectLatest
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeSlotForm(
-    existingSlot: TimeSlot? = null,
+    editSlotId: String? = null,
     viewModel   : TimeSlotViewModel = hiltViewModel(),
     onBack      : () -> Unit
 ) {
     val state         by viewModel.formState.collectAsStateWithLifecycle()
     val selectionDate  = remember { SelectionDate() }
 
-    LaunchedEffect(existingSlot) {
-        if (existingSlot != null) viewModel.loadForEdit(existingSlot)
+    LaunchedEffect(editSlotId) {
+        if (editSlotId != null) viewModel.loadForEdit(editSlotId)
         else viewModel.resetForm()
     }
 

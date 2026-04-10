@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class UpdateTimeSlot @Inject constructor(
-    private val repository: TimeSlotRepositoryInterface
+    private val repository: TimeSlotRepositoryInterface,
 ) {
     suspend operator fun invoke(
         timeSlot: TimeSlot,
@@ -45,7 +45,7 @@ class UpdateTimeSlot @Inject constructor(
             }
             if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE) {
                 requireNotNull(timeSlot.rangeEnd) { "Se requiere fecha de fin para rango de fechas" }
-                require(timeSlot.rangeEnd!!.after(timeSlot.rangeStart)) {
+                require(timeSlot.rangeEnd!!.after(timeSlot.rangeStart) || timeSlot.rangeEnd == timeSlot.rangeStart ) {
                     "La fecha de fin debe ser posterior a la de inicio"
                 }
             }
@@ -56,7 +56,10 @@ class UpdateTimeSlot @Inject constructor(
                 .first()
                 .filter { it.id != timeSlot.id }
 
-            val overlapping = existing.filter { overlaps(timeSlot, it) }
+            val overlapping = TimeSlotOverlapChecker.findOverlaps(
+                candidate = timeSlot,
+                existingSlots = existing
+            )
             val warnings = mutableListOf<String>()
 
             // BLOCKED puede solaparse con todo, solo warnings
@@ -76,32 +79,6 @@ class UpdateTimeSlot @Inject constructor(
 
         } catch (e: Exception) {
             Result.failure(e)
-        }
-    }
-
-    private fun overlaps(a: TimeSlot, b: TimeSlot): Boolean {
-        val timesOverlap = a.startMinuteOfDay < b.endMinuteOfDay &&
-                a.endMinuteOfDay > b.startMinuteOfDay
-        if (!timesOverlap) return false
-
-        return when {
-            a.recurrenceType == RecurrenceType.WEEKLY &&
-                    b.recurrenceType == RecurrenceType.WEEKLY ->
-                a.daysOfWeek.any { it in b.daysOfWeek }
-
-            a.recurrenceType == RecurrenceType.DATE_RANGE &&
-                    b.recurrenceType == RecurrenceType.DATE_RANGE -> {
-                val rangesOverlap = a.rangeStart != null && b.rangeStart != null &&
-                        a.rangeEnd != null && b.rangeEnd != null &&
-                        a.rangeStart.before(b.rangeEnd) && a.rangeEnd.after(b.rangeStart)
-                rangesOverlap && a.daysOfWeek.any { it in b.daysOfWeek }
-            }
-
-            a.recurrenceType == RecurrenceType.SINGLE_DAY &&
-                    b.recurrenceType == RecurrenceType.SINGLE_DAY ->
-                a.rangeStart != null && a.rangeStart == b.rangeStart
-
-            else -> true
         }
     }
 }
