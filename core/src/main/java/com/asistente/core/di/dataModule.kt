@@ -198,8 +198,9 @@ object dataModule {
     fun provideCreateTaskUseCase(
         repo: TaskRepositoryInterface,
         scheduleTaskAlerts: Alerts,
-        timeSlotCreate: CreateTimeSlot
+        timeSlotCreate: CreateTimeSlot,
+        repositoryTimeSlot: TimeSlotRepositoryInterface
     ): CreateTask {
-        return CreateTask(repo, scheduleTaskAlerts, timeSlotCreate)
+        return CreateTask(repo, repositoryTimeSlot,scheduleTaskAlerts, timeSlotCreate)
     }
 }
