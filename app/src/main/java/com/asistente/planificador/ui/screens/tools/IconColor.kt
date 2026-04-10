@@ -106,3 +106,9 @@ fun SlotType.badgeColors(): Pair<Color, Color> = when (this) {
     SlotType.BLOCKED      -> Pair(Color(0xFFFF5757).copy(alpha = 0.5f), darkenColor(Color(0xFFFF5757)))
     SlotType.TASK_BLOCKED -> Pair(Color(0xFF38B6FF).copy(alpha = 0.5f), darkenColor(Color(0xFF38B6FF)))
 }
+
+val ColorActivo   = Color(0xFF43A047)
+val ColorWarning  = Color(0xFFF57F17)
+val ColorDestructive = Color(0xFFFF3B30)
+
+val ColorEdit =Color(0xFF38B6FF)

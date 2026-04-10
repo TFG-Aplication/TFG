@@ -349,7 +349,7 @@ private fun FilterBottomSheet(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
                     true  to Triple("Activas",   Icons.Default.PlayArrow, ColorActivo),
-                    false to Triple("Inactivas", Icons.Default.Pause,     ColorWarning)
+                    false to Triple("Inactivas", Icons.Default.Pause,     IconAlarma)
                 ).forEach { (status, triple) ->
                     val (label, icon, accent) = triple
                     val selected = activeStatusFilter == status
