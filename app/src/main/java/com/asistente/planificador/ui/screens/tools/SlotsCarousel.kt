@@ -69,7 +69,7 @@ fun SlotsCarousel(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
-                    Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFE8F5E9)) {
+                    Surface(shape = RoundedCornerShape(6.dp), color = Color(0xFFE8F5E9)) {
                         Text(
                             "$activeCount activas",
                             fontSize = 9.sp, fontWeight = FontWeight.Bold,

@@ -1,19 +1,13 @@
 package com.asistente.planificador.ui.screens
 
-
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.Close
@@ -22,14 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,15 +29,24 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.core.domain.models.RecurrenceType
 import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.TimeSlot
+import com.asistente.planificador.ui.screens.tools.ColorGrisFondo
+import com.asistente.planificador.ui.screens.tools.IconNotas
+import com.asistente.planificador.ui.screens.tools.Primario
 import com.asistente.planificador.ui.screens.tools.SearchAndFilterBar
 import com.asistente.planificador.ui.screens.tools.SlotsCarousel
+import com.asistente.planificador.ui.screens.tools.Terciario
+import com.asistente.planificador.ui.screens.tools.TimeSlotDetailSheet
+import com.asistente.planificador.ui.screens.tools.dotColor
+import com.asistente.planificador.ui.viewmodels.TimeSlotEvent
 import com.asistente.planificador.ui.viewmodels.TimeSlotViewModel
-import com.asistente.planificador.ui.viewmodels.toTimeString
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Locale
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
@@ -57,30 +58,58 @@ fun TimeSlotListScreen(
     calendarName: String,
     viewModel: TimeSlotViewModel = hiltViewModel(),
     onNavigateToForm: (TimeSlot?) -> Unit,
+    onNavigateToEditTask: (taskId: String) -> Unit,
+    onNavigateToViewTask: (taskId: String) -> Unit,
     onBack: () -> Unit
 ) {
-    val slots by viewModel.timeSlotList.collectAsStateWithLifecycle()
+    val slots       by viewModel.timeSlotList.collectAsStateWithLifecycle()
     val planningEnabled by viewModel.planningEnabled.collectAsStateWithLifecycle()
+    val detailState by viewModel.detailState.collectAsStateWithLifecycle()
 
-    var searchQuery by remember { mutableStateOf("") }
-    var activeTypeFilters by remember { mutableStateOf(emptySet<SlotType>()) }
+    var searchQuery            by remember { mutableStateOf("") }
+    var activeTypeFilters      by remember { mutableStateOf(emptySet<SlotType>()) }
     var activeRecurrenceFilters by remember { mutableStateOf(emptySet<RecurrenceType>()) }
-    var activeStatusFilter by remember { mutableStateOf<Boolean?>(null) } // null=todos, true=activas, false=desactivas
+    var activeStatusFilter     by remember { mutableStateOf<Boolean?>(null) }
+    val categoryByTaskId by viewModel.categoryByTaskId.collectAsStateWithLifecycle()
+
+    // ── Dialog de warnings ────────────────────────────────────────────────────
+    var pendingWarnings by remember { mutableStateOf<List<String>?>(null) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    // ── Consumir eventos one-shot del ViewModel ───────────────────────────────
+    LaunchedEffect(Unit) {
+        viewModel.events.collectLatest { event ->
+            when (event) {
+                is TimeSlotEvent.SaveSuccess -> { /* navegación ya hecha en el form */ }
+                is TimeSlotEvent.SaveWithWarnings -> pendingWarnings = event.warnings
+                is TimeSlotEvent.Error -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message  = event.message,
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     val filteredSlots = remember(slots, searchQuery, activeTypeFilters, activeRecurrenceFilters, activeStatusFilter) {
         slots.filter { slot ->
-            val matchesName = searchQuery.isBlank() || slot.name.contains(searchQuery, ignoreCase = true)
-            val matchesType = activeTypeFilters.isEmpty() || slot.slotType in activeTypeFilters
+            val matchesName       = searchQuery.isBlank() || slot.name.contains(searchQuery, ignoreCase = true)
+            val matchesType       = activeTypeFilters.isEmpty() || slot.slotType in activeTypeFilters
             val matchesRecurrence = activeRecurrenceFilters.isEmpty() || slot.recurrenceType in activeRecurrenceFilters
-            val matchesStatus = activeStatusFilter == null || slot.isActive == activeStatusFilter
+            val matchesStatus     = activeStatusFilter == null || slot.isActive == activeStatusFilter
             matchesName && matchesType && matchesRecurrence && matchesStatus
         }
     }
 
     Scaffold(
-        containerColor = Color(0xFFF9F9F9),
+        containerColor   = ColorGrisFondo,
+        snackbarHost     = { SnackbarHost(snackbarHostState) },
         topBar = {
-            // Header personalizado, más grande
             Surface(color = Color.White, shadowElevation = 2.dp) {
                 Column(
                     modifier = Modifier
@@ -93,32 +122,16 @@ fun TimeSlotListScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.Rounded.Close,
-                                contentDescription = "Cerrar",
-                                tint = Terciario,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            Icon(Icons.Rounded.Close, null, tint = Terciario, modifier = Modifier.size(24.dp))
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Franjas horarias",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 22.sp,
-                                color = Color.Black,
-                                lineHeight = 24.sp
-                            )
-                            Text(
-                                calendarName,
-                                fontSize = 13.sp,
-                                color = Terciario,
-                                fontWeight = FontWeight.Normal
-                            )
+                            Text("Franjas horarias", fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color.Black)
+                            Text(calendarName, fontSize = 13.sp, color = Terciario)
                         }
                         Button(
                             onClick = { onNavigateToForm(null) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Primario),
-                            shape = RoundedCornerShape(20.dp),
+                            colors  = ButtonDefaults.buttonColors(containerColor = Primario),
+                            shape   = RoundedCornerShape(6.dp),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
@@ -132,13 +145,9 @@ fun TimeSlotListScreen(
         }
     ) { pad ->
         LazyColumn(
-            modifier = Modifier
-                .padding(pad)
-                .fillMaxSize(),
+            modifier = Modifier.padding(pad).fillMaxSize(),
             contentPadding = PaddingValues(bottom = 40.dp)
         ) {
-
-            // ── Buscador + filtros ────────────────────────────────────
             item {
                 SearchAndFilterBar(
                     query = searchQuery,
@@ -155,66 +164,171 @@ fun TimeSlotListScreen(
                     },
                     activeStatusFilter = activeStatusFilter,
                     onStatusFilterChange = { activeStatusFilter = if (activeStatusFilter == it) null else it },
-                    onClearAll = { activeTypeFilters = emptySet(); activeRecurrenceFilters = emptySet(); activeStatusFilter = null },
+                    onClearAll = {
+                        activeTypeFilters = emptySet()
+                        activeRecurrenceFilters = emptySet()
+                        activeStatusFilter = null
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp).padding(top = 14.dp, bottom = 6.dp)
                 )
             }
-
-            // ── Banner asistente ──────────────────────────────────────
             item {
                 PlanningToggleBanner(
-                    enabled = planningEnabled,
+                    enabled  = planningEnabled,
                     onToggle = { viewModel.togglePlanning() },
                     modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 8.dp)
                 )
             }
-
-            // ── Carrusel de franjas ───────────────────────────────────
             item {
                 SlotsCarousel(
-                    filteredSlots = filteredSlots,
-                    allSlots = slots,
-                    onEdit = { onNavigateToForm(it) },
-                    onDelete = { viewModel.deleteTimeSlot(it.id) },
+                    filteredSlots  = filteredSlots,
+                    allSlots       = slots,
+                    onEdit         = { onNavigateToForm(it) },
+                    onEditTask     = { taskId -> onNavigateToEditTask(taskId) },
+                    onDelete       = { viewModel.deleteTimeSlot(it.id) },
                     onToggleActive = { viewModel.toggleTimeSlotActive(it.id) },
-                    onAdd = { onNavigateToForm(null) },
-                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                    onCardClick    = { viewModel.openDetail(it) },
+                    onAdd          = { onNavigateToForm(null) },
+                    categoryByTaskId = categoryByTaskId,
+                    modifier       = Modifier.padding(top = 4.dp, bottom = 4.dp)
                 )
             }
-
-            // ── Calendario semanal ────────────────────────────────────
             item {
                 WeekHeatmap(
-                    slots = slots,
+                    slots    = slots,
+                    onSlotClick = { viewModel.openDetail(it) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
         }
     }
+
+    // ── Detail bottom sheet ───────────────────────────────────────────────────
+    detailState?.let { detail ->
+        TimeSlotDetailSheet(
+            state    = detail,
+            onDismiss = { viewModel.closeDetail() },
+            onEdit = { slot ->
+                onNavigateToForm(slot)
+            },
+            onEditTask = { taskId ->
+                onNavigateToEditTask(taskId)
+                viewModel.closeDetail()
+            },
+            onViewTask = { taskId -> onNavigateToViewTask(taskId) },
+            onDelete = { viewModel.deleteTimeSlot(it.id) },
+            onToggleActive = { viewModel.toggleTimeSlotActive(it.id) },
+            onOverlappingSlotClick = { viewModel.openDetail(it) }
+        )
+    }
+
+    // ── Dialog de warnings de solapamiento ────────────────────────────────────
+    pendingWarnings?.let { warnings ->
+        WarningDialog(
+            warnings  = warnings,
+            onDismiss = { pendingWarnings = null }
+        )
+    }
 }
 
-
-
 // ─────────────────────────────────────────────────────────────────────────────
-// HEATMAP SEMANAL NAVEGABLE
+// DIALOG DE WARNINGS
 // ─────────────────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun WeekHeatmap(slots: List<TimeSlot>, modifier: Modifier = Modifier) {
-    val today = LocalDate.now()
-    val weekFields = WeekFields.of(Locale("es", "ES"))
-    val initialPage = 500
+public fun WarningDialog(warnings: List<String>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor   = Color.White,
+        shape            = RoundedCornerShape(20.dp),
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFFFF8E1)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Warning, null,
+                    tint = Color(0xFFF57F17),
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                "Franja guardada con avisos",
+                fontWeight = FontWeight.Bold,
+                fontSize   = 17.sp,
+                textAlign  = TextAlign.Center
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "La franja se ha guardado, pero ten en cuenta lo siguiente:",
+                    fontSize  = 13.sp,
+                    color     = Terciario,
+                    textAlign = TextAlign.Center
+                )
+                warnings.forEach { warning ->
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFFFF8E1)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                Icons.Default.Warning, null,
+                                tint     = Color(0xFFF57F17),
+                                modifier = Modifier.size(13.dp).padding(top = 2.dp)
+                            )
+                            Text(warning, fontSize = 12.sp, color = Color(0xFF5D4037))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors  = ButtonDefaults.buttonColors(containerColor = Primario),
+                shape   = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Entendido", fontWeight = FontWeight.Bold)
+            }
+        }
+    )
+}
 
-    val pagerState = rememberPagerState(initialPage = initialPage) { 1000 }
-    val scope = rememberCoroutineScope()
+// ─────────────────────────────────────────────────────────────────────────────
+// HEATMAP — ahora con onSlotClick en celda
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun WeekHeatmap(
+    slots: List<TimeSlot>,
+    onSlotClick: (TimeSlot) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val today        = LocalDate.now()
+    val weekFields   = WeekFields.of(Locale("es", "ES"))
+    val initialPage  = 500
+    val pagerState   = rememberPagerState(initialPage = initialPage) { 1000 }
+    val scope        = rememberCoroutineScope()
     var showDatePicker by remember { mutableStateOf(false) }
 
     val currentWeekOffset = pagerState.currentPage - initialPage
     val mondayOfPage = remember(pagerState.currentPage) {
         today.with(WeekFields.ISO.dayOfWeek(), 1).plusWeeks(currentWeekOffset.toLong())
     }
-    val sundayOfPage = mondayOfPage.plusDays(6)
+    val sundayOfPage  = mondayOfPage.plusDays(6)
     val isCurrentWeek = currentWeekOffset == 0
     val weekLabel = remember(mondayOfPage) {
         val fmt = DateTimeFormatter.ofPattern("d MMM", Locale("es", "ES"))
@@ -223,32 +337,26 @@ fun WeekHeatmap(slots: List<TimeSlot>, modifier: Modifier = Modifier) {
     val weekNumber = mondayOfPage.get(weekFields.weekOfWeekBasedYear())
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // --- NUEVO TÍTULO SUPERIOR ---
         Text(
-            "VISTA SEMANAL",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Terciario,
-            letterSpacing = 0.8.sp,
+            "VISTA SEMANAL", fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+            color = Terciario, letterSpacing = 0.8.sp,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
         )
-
         Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            color = Color.White,
+            modifier  = Modifier.fillMaxWidth(),
+            shape     = RoundedCornerShape(18.dp),
+            color     = Color.White,
             tonalElevation = 1.dp,
-            border = BorderStroke(1.dp, Color(0xFFF0F0F0))
         ) {
-            Column(modifier = Modifier.padding(vertical = 14.dp)) { // Padding horizontal lo maneja el grid
+            Column(modifier = Modifier.padding(vertical = 14.dp)) {
 
-                // Cabecera de navegación
+                // Cabecera navegación
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
+                        onClick  = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(Icons.Default.ChevronLeft, null, tint = Terciario, modifier = Modifier.size(20.dp))
@@ -262,18 +370,14 @@ fun WeekHeatmap(slots: List<TimeSlot>, modifier: Modifier = Modifier) {
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                weekLabel,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
+                                weekLabel, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                                 color = if (isCurrentWeek) Primario else Color.Black
                             )
                             if (isCurrentWeek) {
-                                Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFF3E5E2)) {
+                                Surface(shape = RoundedCornerShape(6.dp), color = IconNotas.copy(alpha = 0.5f)) {
                                     Text(
-                                        "Esta semana",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Primario,
+                                        "Esta semana", fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold, color = Primario,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                     )
                                 }
@@ -282,7 +386,7 @@ fun WeekHeatmap(slots: List<TimeSlot>, modifier: Modifier = Modifier) {
                         Text("Semana $weekNumber", fontSize = 9.sp, color = Terciario)
                     }
                     IconButton(
-                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
+                        onClick  = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(Icons.Default.ChevronRight, null, tint = Terciario, modifier = Modifier.size(20.dp))
@@ -294,19 +398,24 @@ fun WeekHeatmap(slots: List<TimeSlot>, modifier: Modifier = Modifier) {
                 HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth()) { page ->
                     val weekOffset = page - initialPage
                     val monday = today.with(WeekFields.ISO.dayOfWeek(), 1).plusWeeks(weekOffset.toLong())
-                    // Pasamos un padding interno para centrar
-                    WeekGrid(slots = slots, weekMonday = monday)
+                    WeekGrid(
+                        slots       = slots,
+                        weekMonday  = monday,
+                        onSlotClick = onSlotClick
+                    )
                 }
 
                 Spacer(Modifier.height(14.dp))
+
+                // Leyenda
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
-                    horizontalArrangement = Arrangement.Center, // Centramos la leyenda
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LegendItem(Color(0xFFE53935).copy(alpha = 0.25f), "Bloqueada")
+                    LegendItem(Color(0xFFFF5757).copy(alpha = 0.25f), "Bloqueada Manualmente")
                     Spacer(Modifier.width(12.dp))
-                    LegendItem(Color(0xFF7B1FA2).copy(alpha = 0.25f), "Por tarea")
+                    LegendItem(Color(0xFF2894e3).copy(alpha = 0.25f), "Bloqueada por Tarea")
                     Spacer(Modifier.width(12.dp))
                     LegendItem(Color(0xFFF0F0F0), "Disponible")
                 }
@@ -342,30 +451,32 @@ fun WeekHeatmap(slots: List<TimeSlot>, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun WeekGrid(slots: List<TimeSlot>, weekMonday: LocalDate) {
-    val dayLabels = listOf("L", "M", "X", "J", "V", "S", "D")
-    val today = LocalDate.now()
-    val hourColumnWidth = 32.dp // Aumentado para mejor legibilidad
+// ─────────────────────────────────────────────────────────────────────────────
+// GRID SEMANAL — celdas clickables
+// ─────────────────────────────────────────────────────────────────────────────
 
-    Column(modifier = Modifier.padding(horizontal = 8.dp)) { // Margen pequeño en los bordes del Surface
-        // Fila de días
+@Composable
+private fun WeekGrid(
+    slots: List<TimeSlot>,
+    weekMonday: LocalDate,
+    onSlotClick: (TimeSlot) -> Unit
+) {
+    val dayLabels     = listOf("L", "M", "X", "J", "V", "S", "D")
+    val today         = LocalDate.now()
+    val hourColumnWidth = 32.dp
+
+    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+        // Cabecera días
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.width(hourColumnWidth)) // Espacio de la columna de horas
+            Spacer(Modifier.width(hourColumnWidth))
             dayLabels.forEachIndexed { index, day ->
-                val date = weekMonday.plusDays(index.toLong())
+                val date    = weekMonday.plusDays(index.toLong())
                 val isToday = date == today
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        day, fontSize = 9.sp, fontWeight = FontWeight.Bold,
-                        color = if (isToday) Primario else Terciario
-                    )
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(day, fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                        color = if (isToday) Primario else Terciario)
                     Box(
-                        modifier = Modifier
-                            .size(18.dp)
+                        modifier = Modifier.size(18.dp)
                             .background(if (isToday) Primario else Color.Transparent, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -375,9 +486,7 @@ private fun WeekGrid(slots: List<TimeSlot>, weekMonday: LocalDate) {
                             color = if (isToday) Color.White else Terciario,
                             textAlign = TextAlign.Center,
                             style = TextStyle(
-                                platformStyle = PlatformTextStyle(
-                                    includeFontPadding = false // Elimina el espacio extra que empuja el número hacia abajo
-                                ),
+                                platformStyle = PlatformTextStyle(includeFontPadding = false),
                                 lineHeightStyle = LineHeightStyle(
                                     alignment = LineHeightStyle.Alignment.Center,
                                     trim = LineHeightStyle.Trim.Both
@@ -387,68 +496,70 @@ private fun WeekGrid(slots: List<TimeSlot>, weekMonday: LocalDate) {
                     }
                 }
             }
-            // ESTE ES EL SECRETO: un spacer igual al de la izquierda para centrar los días
             Spacer(Modifier.width(4.dp))
         }
 
         Spacer(Modifier.height(8.dp))
 
-        // Grid de horas
+        // Filas de horas
         (0..23).forEach { hour ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Columna de hora
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "${hour}h",
-                    fontSize = 9.sp,
-                    color = Terciario.copy(alpha = 0.7f),
+                    "${hour}h", fontSize = 9.sp, color = Terciario.copy(alpha = 0.7f),
                     modifier = Modifier.width(hourColumnWidth).padding(end = 4.dp),
                     textAlign = TextAlign.End
                 )
-
-                // Celdas de días
                 Row(modifier = Modifier.weight(1f)) {
                     (1..7).forEach { dayNum ->
-                        val date = weekMonday.plusDays((dayNum - 1).toLong())
+                        val date       = weekMonday.plusDays((dayNum - 1).toLong())
+                        val matchSlot  = getSlotForCell(slots, dayNum, hour, date)
+                        val cellColor  = if (matchSlot != null)
+                            matchSlot.slotType.dotColor().copy(alpha = 0.5f)
+                        else Color(0xFFF0F0F0)
+
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(14.dp) // Aumentado de 11 a 14 para que las celdas sean más grandes
-                                .padding(horizontal = 1.dp, vertical = 1.dp) // Más aire entre celdas
-                                .clip(RoundedCornerShape(3.dp)) // Radio un poco más suave
-                                .background(getCellColor(slots, dayNum, hour, date))
+                                .height(14.dp)
+                                .padding(horizontal = 1.dp, vertical = 1.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(cellColor)
+                                .then(
+                                    if (matchSlot != null)
+                                        Modifier.clickable { onSlotClick(matchSlot) }
+                                    else Modifier
+                                )
                         )
                     }
                 }
-                // Compensación derecha para que las celdas no toquen el borde y queden centradas respecto a arriba
                 Spacer(Modifier.width(4.dp))
             }
         }
     }
 }
 
-@Composable
-private fun LegendItem(color: Color, label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box(modifier = Modifier.size(10.dp, 8.dp).clip(RoundedCornerShape(2.dp)).background(color))
-        Text(label, fontSize = 9.sp, color = Terciario, fontWeight = FontWeight.Medium)
-    }
-}
+// ── Devuelve el slot más prioritario para una celda (TASK_BLOCKED > BLOCKED) ──
 
-private fun getCellColor(slots: List<TimeSlot>, dayNum: Int, hour: Int, date: LocalDate): Color {
+private fun getSlotForCell(
+    slots: List<TimeSlot>,
+    dayNum: Int,
+    hour: Int,
+    date: LocalDate
+): TimeSlot? {
     val zone      = java.time.ZoneId.systemDefault()
     val hourStart = hour * 60
     val hourEnd   = hourStart + 60
-    val match = slots.firstOrNull { slot ->
-        if (!slot.isActive) return@firstOrNull false
+
+    val candidates = slots.filter { slot ->
+        if (!slot.isActive) return@filter false
         val hourMatches = hourStart < slot.endMinuteOfDay && hourEnd > slot.startMinuteOfDay
-        if (!hourMatches) return@firstOrNull false
+        if (!hourMatches) return@filter false
         when (slot.recurrenceType) {
             RecurrenceType.WEEKLY     -> slot.daysOfWeek.contains(dayNum)
-            RecurrenceType.EVEN_WEEKS -> slot.daysOfWeek.contains(dayNum) && date.get(WeekFields.ISO.weekOfWeekBasedYear()) % 2 == 0
-            RecurrenceType.ODD_WEEKS  -> slot.daysOfWeek.contains(dayNum) && date.get(WeekFields.ISO.weekOfWeekBasedYear()) % 2 != 0
+            RecurrenceType.EVEN_WEEKS -> slot.daysOfWeek.contains(dayNum) &&
+                    date.get(WeekFields.ISO.weekOfWeekBasedYear()) % 2 == 0
+            RecurrenceType.ODD_WEEKS  -> slot.daysOfWeek.contains(dayNum) &&
+                    date.get(WeekFields.ISO.weekOfWeekBasedYear()) % 2 != 0
             RecurrenceType.DATE_RANGE -> {
                 val start = slot.rangeStart?.toInstant()?.atZone(zone)?.toLocalDate()
                 val end   = slot.rangeEnd?.toInstant()?.atZone(zone)?.toLocalDate()
@@ -459,33 +570,32 @@ private fun getCellColor(slots: List<TimeSlot>, dayNum: Int, hour: Int, date: Lo
                 date == target
             }
         }
-    } ?: return Color(0xFFF0F0F0)
-    return when (match.slotType) {
-        SlotType.BLOCKED      -> Color(0xFFE53935).copy(alpha = 0.22f)
-        SlotType.TASK_BLOCKED -> Color(0xFF7B1FA2).copy(alpha = 0.22f)
     }
+
+    // TASK_BLOCKED tiene prioridad visual — se pinta primero, pero el click abre el de mayor prioridad
+    return candidates.maxByOrNull { if (it.slotType == SlotType.TASK_BLOCKED) 1 else 0 }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
-// BANNER ASISTENTE
+// RESTO DE COMPONENTES
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-fun PlanningToggleBanner(
-    enabled: Boolean,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val bgColor     = if (enabled) Color(0xFFF3E5E2) else Color(0xFFF0F0F0)
+private fun LegendItem(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(modifier = Modifier.size(10.dp, 8.dp).clip(RoundedCornerShape(2.dp)).background(color))
+        Text(label, fontSize = 9.sp, color = Terciario, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+fun PlanningToggleBanner(enabled: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     val textColor   = if (enabled) Primario else Terciario
-    val borderColor = if (enabled) Primario.copy(alpha = 0.35f) else Color.Transparent
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = bgColor,
-        border = BorderStroke(1.dp, borderColor)
+        shape    = RoundedCornerShape(16.dp),
+        color    = Color.White,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -493,74 +603,47 @@ fun PlanningToggleBanner(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
+                modifier = Modifier.size(40.dp)
                     .background(if (enabled) Primario else Terciario.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Extension, null,
+                Icon(Icons.Default.Extension, null,
                     tint = if (enabled) Color.White else Terciario,
-                    modifier = Modifier.size(22.dp)
-                )
+                    modifier = Modifier.size(22.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text("Asistente de planificación", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                 Text(
                     if (enabled) "Activo · aplica solo a franjas activas" else "Desactivado · no se usarán franjas",
-                    fontSize = 11.sp, color = textColor.copy(alpha = 0.7f)
+                    fontSize = 11.sp, color = textColor.copy(alpha = 0.9f)
                 )
             }
             Switch(
-                checked = enabled,
+                checked  = enabled,
                 onCheckedChange = { onToggle() },
-                colors = SwitchDefaults.colors(
+                colors   = SwitchDefaults.colors(
                     checkedThumbColor   = Color.White,
                     checkedTrackColor   = Primario,
                     uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Terciario.copy(alpha = 0.35f)
+                    uncheckedTrackColor = Terciario.copy(alpha = 0.35f),
+                    uncheckedBorderColor = Color.Transparent
                 )
             )
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EXTENSIONES SlotType
-// ─────────────────────────────────────────────────────────────────────────────
-
-fun SlotType.dotColor(): Color = when (this) {
-    SlotType.BLOCKED      -> Color(0xFFE53935)
-    SlotType.TASK_BLOCKED -> Color(0xFF7B1FA2)
-}
-
-fun SlotType.badgeColors(): Pair<Color, Color> = when (this) {
-    SlotType.BLOCKED      -> Pair(Color(0xFFFFEBEE), Color(0xFFE53935))
-    SlotType.TASK_BLOCKED -> Pair(Color(0xFFF3E5F5), Color(0xFF7B1FA2))
-}
+// ── Extensiones SlotType ──────────────────────────────────────────────────────
 
 fun SlotType.label(): String = when (this) {
-    SlotType.BLOCKED      -> "Bloqueada"
-    SlotType.TASK_BLOCKED -> "Por tarea"
+    SlotType.BLOCKED      -> "Bloqueada Manualmente"
+    SlotType.TASK_BLOCKED -> "Bloqueada por Tarea"
 }
 
 fun RecurrenceType.shortLabel(): String = when (this) {
     RecurrenceType.WEEKLY     -> "Semanal"
-    RecurrenceType.EVEN_WEEKS -> "S. pares"
-    RecurrenceType.ODD_WEEKS  -> "S. impares"
+    RecurrenceType.EVEN_WEEKS -> "Semanas pares"
+    RecurrenceType.ODD_WEEKS  -> "Semanas impares"
     RecurrenceType.DATE_RANGE -> "Rango"
     RecurrenceType.SINGLE_DAY -> "Día único"
 }
-
-private fun buildMetaText(slot: TimeSlot): String {
-    val time = "${slot.startMinuteOfDay.toTimeString()}–${slot.endMinuteOfDay.toTimeString()}"
-    val rec = when (slot.recurrenceType) {
-        RecurrenceType.WEEKLY     -> "Cada semana"
-        RecurrenceType.EVEN_WEEKS -> "Semanas pares"
-        RecurrenceType.ODD_WEEKS  -> "Semanas impares"
-        RecurrenceType.DATE_RANGE -> "Rango de fechas"
-        RecurrenceType.SINGLE_DAY -> "Día único"
-    }
-    return "$time · $rec"
-}
-

@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
                     composable(
                         route = "edit_task/{taskId}",
                         arguments = listOf(navArgument("taskId") { type = NavType.StringType })
-                    ) {entry ->
+                    ) { entry ->
                         val taskId = entry.arguments?.getString("taskId")
                         TaskForm(taskId = taskId, onBack = { navController.popBackStack() })
                     }
@@ -129,26 +129,29 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
                     ) { entry ->
                         val categoryId = entry.arguments?.getString("categoryId")
-                        CategoryForm(categoryId = categoryId, onBack = { navController.popBackStack() })
+                        CategoryForm(
+                            categoryId = categoryId,
+                            onBack = { navController.popBackStack() })
                     }
 
                     // ── Lista de franjas ──────────────────────────────────────────────────
                     composable(
                         route = "timeslot_list/{calendarId}/{calendarName}",
                         arguments = listOf(
-                            navArgument("calendarId")   { type = NavType.StringType },
+                            navArgument("calendarId") { type = NavType.StringType },
                             navArgument("calendarName") { type = NavType.StringType }
                         )
                     ) { backStackEntry ->
                         val calendarName = backStackEntry.arguments?.getString("calendarName") ?: ""
-                        val calendarId   = backStackEntry.arguments?.getString("calendarId")   ?: ""
+                        val calendarId = backStackEntry.arguments?.getString("calendarId") ?: ""
                         TimeSlotListScreen(
                             calendarName = calendarName,
                             onNavigateToForm = { existingSlot ->
-                                navController.currentBackStackEntry
-                                    ?.savedStateHandle
-                                    ?.set("editSlot", existingSlot)
-                                navController.navigate("timeslot_form/$calendarId")
+                                val route = if (existingSlot != null)
+                                    "timeslot_form/$calendarId?editSlotId=${existingSlot.id}"
+                                else
+                                    "timeslot_form/$calendarId"
+                                navController.navigate(route)
                             },
                             onNavigateToEditTask = { taskId ->
                                 navController.navigate("edit_task/$taskId")
@@ -162,22 +165,18 @@ class MainActivity : ComponentActivity() {
 
                     // ── Form de franja ────────────────────────────────────────
                     composable(
-                        route = "timeslot_form/{calendarId}",
+                        route = "timeslot_form/{calendarId}?editSlotId={editSlotId}",
                         arguments = listOf(
-                            navArgument("calendarId") { type = NavType.StringType }
-                        )
-                    ) {
-                        val editSlot = navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.get<com.asistente.core.domain.models.TimeSlot>("editSlot")
-                        TimeSlotForm(
-                            existingSlot = editSlot,
-                            onBack = {
-                                navController.previousBackStackEntry
-                                    ?.savedStateHandle
-                                    ?.remove<com.asistente.core.domain.models.TimeSlot>("editSlot")
-                                navController.popBackStack()
+                            navArgument("calendarId") { type = NavType.StringType },
+                            navArgument("editSlotId") {
+                                type = NavType.StringType; nullable = true; defaultValue = null
                             }
+                        )
+                    ) { backStackEntry ->
+                        val editSlotId = backStackEntry.arguments?.getString("editSlotId")
+                        TimeSlotForm(
+                            editSlotId = editSlotId,
+                            onBack = { navController.popBackStack() }
                         )
                     }
                 }

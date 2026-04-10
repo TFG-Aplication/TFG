@@ -174,7 +174,7 @@ fun SearchAndFilterBar(
                     activeStatusFilter?.let { active ->
                         ActiveFilterChip(
                             label     = if (active) "Activas" else "Inactivas",
-                            bg        = if (active) ColorActivo.copy(alpha = 0.35f)
+                            bg        = if (active) ColorActivo.copy(alpha = 0.25f)
                             else ColorWarning.copy(alpha = 0.35f),
                             textColor = if (active) darkenColor(ColorActivo) else ColorGrisOscuro,
                             onRemove  = { onStatusFilterChange(active) }
@@ -183,7 +183,7 @@ fun SearchAndFilterBar(
                 }
             } else {
                 Text("Sin filtros activos", fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                    color = Terciario.copy(alpha = 0.5f))
+                    color = Terciario.copy(alpha = 0.8f))
             }
         }
     }

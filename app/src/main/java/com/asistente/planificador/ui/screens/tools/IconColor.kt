@@ -99,12 +99,12 @@ fun darkenColor(color: Color): Color {
 
 fun SlotType.dotColor(): Color = when (this) {
     SlotType.BLOCKED      -> Color(0xFFFF5757)
-    SlotType.TASK_BLOCKED -> Color(0xFF38B6FF)
+    SlotType.TASK_BLOCKED -> Color(0xFF2894e3)
 }
 
 fun SlotType.badgeColors(): Pair<Color, Color> = when (this) {
     SlotType.BLOCKED      -> Pair(Color(0xFFFF5757).copy(alpha = 0.5f), darkenColor(Color(0xFFFF5757)))
-    SlotType.TASK_BLOCKED -> Pair(Color(0xFF38B6FF).copy(alpha = 0.5f), darkenColor(Color(0xFF38B6FF)))
+    SlotType.TASK_BLOCKED -> Pair(Color(0xFF2894e3).copy(alpha = 0.5f), darkenColor(Color(0xFF2894e3)))
 }
 
 val ColorActivo   = Color(0xFF43A047)
