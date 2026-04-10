@@ -5,8 +5,11 @@ import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.models.TimeSlot
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.TimeSlotRepositoryInterface
 import com.asistente.core.domain.usecase.alerts.Alerts
+import com.asistente.core.domain.usecase.timeslot.TimeSlotOverlapChecker
 import com.asistente.core.domain.usecase.timeslot.CreateTimeSlot
+import kotlinx.coroutines.flow.first
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -14,6 +17,7 @@ import javax.inject.Inject
 
 class CreateTask @Inject constructor(
     private val repository: TaskRepositoryInterface,
+    private val repositoryTimeSlot: TimeSlotRepositoryInterface,
     private val scheduleTaskAlerts: Alerts,
     private val createTimeSlot: CreateTimeSlot
 
@@ -72,11 +76,14 @@ class CreateTask @Inject constructor(
 
             )
 
-            repository.saveTask(task, isSharedCalendar)
-            scheduleTaskAlerts(task)
-
             // ── Crear franja bloqueada si se solicitó ─────────────────────────
             if (blockTimeSlot) {
+                val calInit = java.util.Calendar.getInstance().apply { time = initDate }
+                val calFin  = java.util.Calendar.getInstance().apply { time = finishDate }
+                val startMinute = calInit.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calInit.get(java.util.Calendar.MINUTE)
+                val endMinute   = calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
+
+
                 val timeSlot = TimeSlot(
                     name = name.trim(),
                     parentCalendarId = calendarId,
@@ -86,9 +93,31 @@ class CreateTask @Inject constructor(
                     recurrenceType = RecurrenceType.SINGLE_DAY,
                     rangeStart = initDate,
                     rangeEnd = finishDate,
+                    startMinuteOfDay = startMinute,
+                    endMinuteOfDay = endMinute,
                     isActive = true
                 )
-                createTimeSlot(timeSlot, isSharedCalendar)
+
+                val listTimeSlots = repositoryTimeSlot.getAllTimeSlotsByCalendarId(calendarId)
+
+                val overlapping = TimeSlotOverlapChecker.findOverlaps(
+                    candidate = timeSlot,
+                    existingSlots = listTimeSlots.first()
+                )
+
+                val conflicting = overlapping.filter { it.slotType == SlotType.TASK_BLOCKED }
+                if (conflicting.isNotEmpty()) {
+                    return Result.failure(IllegalArgumentException("No se puede crear la franja: se solapa con otras tarea bloqueante, desactiva el bloqueo"))
+                }
+                else {
+                    repository.saveTask(task, isSharedCalendar)
+                    scheduleTaskAlerts(task)
+                    createTimeSlot(timeSlot, isSharedCalendar)
+                }
+            }
+            else {
+                repository.saveTask(task, isSharedCalendar)
+                scheduleTaskAlerts(task)
             }
 
             Result.success(task)

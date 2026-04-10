@@ -31,4 +31,5 @@ class DeleteTimeSlot @Inject constructor(
             }
         }
     }
+
 }

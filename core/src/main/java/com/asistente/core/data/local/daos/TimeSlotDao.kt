@@ -23,7 +23,7 @@ interface TimeSlotDao {
     fun getTimeSlotByIdFlow(slotId: String): Flow<TimeSlot?>
 
     @Query("SELECT * FROM time_slots WHERE taskId = :taskId AND syncStatus != 2 LIMIT 1")
-    fun getTimeSlotByTaskId(taskId: String): TimeSlot?
+    suspend fun getTimeSlotByTaskId(taskId: String): TimeSlot?
 
     // ── Suspendidas para lógica interna / sync ────────────────────────────
 

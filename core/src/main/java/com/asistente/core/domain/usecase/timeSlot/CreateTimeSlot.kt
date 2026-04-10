@@ -23,6 +23,7 @@ class CreateTimeSlot @Inject constructor(
             // ── Nombre ───────────────────────────────────────────────────────
             require(timeSlot.name.isNotBlank()) { "El nombre no puede estar vacío" }
             require(timeSlot.name.trim().length >= 3) { "El nombre debe tener al menos 3 caracteres" }
+            require(timeSlot.name.trim().length <= 20) { "El nombre debe tener menos de 20 caracteres" }
 
             // ── Horas ────────────────────────────────────────────────────────
             require(timeSlot.startMinuteOfDay < timeSlot.endMinuteOfDay) {
@@ -62,7 +63,11 @@ class CreateTimeSlot @Inject constructor(
                 timeSlot
             }
 
-            val overlapping = existing.filter { overlaps(slotToSave, it) }
+            val overlapping = TimeSlotOverlapChecker.findOverlaps(
+                candidate = timeSlot,
+                existingSlots = existing
+            )
+
             val warnings = mutableListOf<String>()
 
             when (slotToSave.slotType) {
@@ -102,32 +107,6 @@ class CreateTimeSlot @Inject constructor(
 
         } catch (e: Exception) {
             Result.failure(e)
-        }
-    }
-
-    private fun overlaps(a: TimeSlot, b: TimeSlot): Boolean {
-        val timesOverlap = a.startMinuteOfDay < b.endMinuteOfDay &&
-                a.endMinuteOfDay > b.startMinuteOfDay
-        if (!timesOverlap) return false
-
-        return when {
-            a.recurrenceType == RecurrenceType.WEEKLY &&
-                    b.recurrenceType == RecurrenceType.WEEKLY ->
-                a.daysOfWeek.any { it in b.daysOfWeek }
-
-            a.recurrenceType == RecurrenceType.DATE_RANGE &&
-                    b.recurrenceType == RecurrenceType.DATE_RANGE -> {
-                val rangesOverlap = a.rangeStart != null && b.rangeStart != null &&
-                        a.rangeEnd != null && b.rangeEnd != null &&
-                        a.rangeStart.before(b.rangeEnd) && a.rangeEnd.after(b.rangeStart)
-                rangesOverlap && a.daysOfWeek.any { it in b.daysOfWeek }
-            }
-
-            a.recurrenceType == RecurrenceType.SINGLE_DAY &&
-                    b.recurrenceType == RecurrenceType.SINGLE_DAY ->
-                a.rangeStart != null && a.rangeStart == b.rangeStart
-
-            else -> true
         }
     }
 }

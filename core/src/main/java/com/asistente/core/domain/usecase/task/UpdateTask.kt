@@ -5,17 +5,17 @@ import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.models.TimeSlot
 import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
+import com.asistente.core.domain.ropositories.interfaz.TimeSlotRepositoryInterface
 import com.asistente.core.domain.usecase.alerts.Alerts
-import com.asistente.core.domain.usecase.timeslot.DeleteTimeSlot  // era "timeSlot"
-import com.asistente.core.domain.usecase.timeslot.CreateTimeSlot  // ya estaba bien
+import com.asistente.core.domain.usecase.timeslot.CreateTimeSlot
 import java.util.Date
 import javax.inject.Inject
 
 class UpdateTask @Inject constructor(
     private val repository: TaskRepositoryInterface,
+    private val repositoryTimeSlot: TimeSlotRepositoryInterface,
     private val scheduleTaskAlerts: Alerts,
     private val createTimeSlot: CreateTimeSlot,
-    private val deleteTimeSlot: DeleteTimeSlot
 ) {
     suspend operator fun invoke(
         id: String,
@@ -30,7 +30,6 @@ class UpdateTask @Inject constructor(
         alerts: List<Long>? = null,
         isSharedCalendar: Boolean,
         blockTimeSlot: Boolean = false,
-        previouslyBlockedTimeSlot: Boolean = false
     ): Result<Task> {
         return try {
             // Validaciones
@@ -74,46 +73,60 @@ class UpdateTask @Inject constructor(
             repository.updateTask(task)
             scheduleTaskAlerts(task)
 
-            // ── Gestión de franja bloqueada ───────────────────────────────────
-            when {
-                // Se activó blockTimeSlot: crear franja nueva
-                blockTimeSlot && !previouslyBlockedTimeSlot -> {
-                    val timeSlot = TimeSlot(
-                        name = name.trim(),
-                        parentCalendarId = calendarId,
-                        owners = owners,
-                        slotType = SlotType.TASK_BLOCKED,
-                        taskId = id,
-                        recurrenceType = RecurrenceType.SINGLE_DAY,
-                        rangeStart = initDate,
-                        rangeEnd = finishDate,
-                        isActive = true
-                    )
-                    createTimeSlot(timeSlot, isSharedCalendar)
-                }
-                // Se desactivó blockTimeSlot: eliminar franja existente
-                !blockTimeSlot && previouslyBlockedTimeSlot -> {
-                    deleteTimeSlot(id, isSharedCalendar)
-                }
-                // Sigue activo: actualizar franja existente con nuevos datos
-                blockTimeSlot && previouslyBlockedTimeSlot -> {
-                    deleteTimeSlot(id, isSharedCalendar)
-                    val timeSlot = TimeSlot(
-                        name = name.trim(),
-                        parentCalendarId = calendarId,
-                        owners = owners,
-                        slotType = SlotType.TASK_BLOCKED,
-                        taskId = id,
-                        recurrenceType = RecurrenceType.SINGLE_DAY,
-                        rangeStart = initDate,
-                        rangeEnd = finishDate,
-                        isActive = true
-                    )
-                    createTimeSlot(timeSlot, isSharedCalendar)
-                }
-                // Sigue desactivado: no hacer nada
-            }
+            if(blockTimeSlot){
+                // busca franja
+                val timeSlot = repositoryTimeSlot.getTimeSlotByTaskId(id)
+                if (timeSlot == null) {
+                    val calInit = java.util.Calendar.getInstance().apply { time = initDate }
+                    val calFin  = java.util.Calendar.getInstance().apply { time = finishDate }
+                    val startMinute = calInit.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calInit.get(java.util.Calendar.MINUTE)
+                    val endMinute   = calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
 
+                    val timeSlotNew = TimeSlot(
+                        name = name.trim(),
+                        parentCalendarId = calendarId,
+                        owners = owners,
+                        slotType = SlotType.TASK_BLOCKED,
+                        taskId = id,
+                        recurrenceType = RecurrenceType.SINGLE_DAY,
+                        rangeStart = initDate,
+                        rangeEnd = finishDate,
+                        startMinuteOfDay = startMinute,
+                        endMinuteOfDay = endMinute,
+                        isActive = true
+                    )
+                    createTimeSlot(timeSlotNew, isSharedCalendar)
+                }
+                else{
+                    val calInit = java.util.Calendar.getInstance().apply { time = initDate }
+                    val calFin  = java.util.Calendar.getInstance().apply { time = finishDate }
+                    val startMinute = calInit.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calInit.get(java.util.Calendar.MINUTE)
+                    val endMinute   = calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
+
+                    val timeSlotUpdated = timeSlot.copy(
+                            name = name.trim(),
+                            parentCalendarId = calendarId,
+                            owners = owners,
+                            slotType = SlotType.TASK_BLOCKED,
+                            taskId = id,
+                            recurrenceType = RecurrenceType.SINGLE_DAY,
+                            rangeStart = initDate,
+                            rangeEnd = finishDate,
+                            startMinuteOfDay = startMinute,
+                            endMinuteOfDay = endMinute,
+                            isActive = true
+                        )
+                        repositoryTimeSlot.updateTimeSlot(timeSlotUpdated)
+
+
+                }
+            }
+            else {
+                val timeSlot = repositoryTimeSlot.getTimeSlotByTaskId(id)
+                if (timeSlot != null) {
+                    repositoryTimeSlot.deleteTimeSlotByTaskId(id, isSharedCalendar)
+                }
+            }
             Result.success(task)
         } catch (e: Exception) {
             Result.failure(e)

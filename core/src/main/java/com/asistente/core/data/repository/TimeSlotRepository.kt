@@ -29,7 +29,7 @@ class TimeSlotRepository @Inject constructor(
     override fun getAllTimeSlotsByUserId(userId: String): Flow<List<TimeSlot>> =
         timeSlotDao.getAllTimeSlotsByUserIdFlow(userId)
 
-    override fun getTimeSlotByTaskId(taskId: String):  TimeSlot? =
+    override suspend fun getTimeSlotByTaskId(taskId: String):  TimeSlot? =
         timeSlotDao.getTimeSlotByTaskId(taskId)
 
     override suspend fun saveTimeSlot(timeSlot: TimeSlot, isSharedCalendar: Boolean) {
