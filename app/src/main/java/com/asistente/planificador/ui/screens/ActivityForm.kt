@@ -1,6 +1,7 @@
 package com.asistente.planificador.ui.screens
 
-import DateTimeSelector
+import CalendarField
+import CalendarSelector
 import SelectionDate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,12 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.asistente.planificador.ui.viewmodels.ActivityViewModel
-import com.asistente.planificador.ui.screens.tools.AlertSelector
-import com.asistente.planificador.ui.screens.tools.CalendarField
-import com.asistente.planificador.ui.screens.tools.CalendarSelector
 import com.asistente.planificador.ui.screens.tools.CategoryField
 import com.asistente.planificador.ui.screens.tools.CategorySelector
+import com.asistente.planificador.ui.viewmodels.ActivityViewModel
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Secundario
+import com.asistente.planificador.ui.screens.tools.Terciario
 import formatDate
 import formatTime
 

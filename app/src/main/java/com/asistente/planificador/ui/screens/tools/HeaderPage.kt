@@ -1,5 +1,6 @@
 package com.asistente.planificador.ui.components
 
+import CalendarSelector
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -38,7 +39,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.core.domain.models.Calendar
 import com.asistente.core.ui.viewmodels.CalendarViewModel
-import com.asistente.planificador.ui.screens.tools.CalendarSelector
 import com.asistente.planificador.ui.screens.tools.Primario
 
 

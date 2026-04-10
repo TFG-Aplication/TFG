@@ -1,5 +1,3 @@
-package com.asistente.planificador.ui.screens.tools
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,11 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,127 +32,89 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.asistente.core.domain.models.Calendar
+import com.asistente.planificador.ui.screens.tools.IconFecha
+import com.asistente.planificador.ui.screens.tools.IosRow
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Terciario
+import com.asistente.planificador.ui.screens.tools.TintedIconBox
 
+// ── CalendarField ─────────────────────────────────────────────────────────────
 
 @Composable
-fun CalendarField(
-    selectedCalendar: Calendar?,
-    onClick: () -> Unit
-
-){
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(47.dp) // Altura similar a un TextField
-            .padding(horizontal = 10.dp) // Alinea el inicio con el TextField de arriba
-            .clickable { onClick() },
-        verticalAlignment = Alignment.CenterVertically
+fun CalendarField(selectedCalendar: Calendar?, onClick: () -> Unit) {
+    IosRow(
+        icon     = Icons.Default.CalendarMonth,
+        iconTint = IconFecha,
+        label    = "Calendario"
     ) {
-        Icon(
-            imageVector = Icons.Default.CalendarMonth,
-            contentDescription = null,
-            tint = Primario,
-            modifier = Modifier.size(26.dp)
-        )
-
-        Spacer(modifier = Modifier.width(16.dp)) // Espacio estándar entre icono y texto
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier          = Modifier.clickable { onClick() }
         ) {
             Text(
-                text = "Calendario",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.Black,
-                lineHeight = 10.sp
+                text     = selectedCalendar?.name ?: "Seleccionar",
+                fontSize = 15.sp,
+                color    = if (selectedCalendar != null) Primario else Terciario
             )
-            Text(
-                text = selectedCalendar?.name ?: "Seleccionar calendario",
-                fontSize = 16.sp,
-                color = Terciario
-            )
+            Icon(Icons.Default.ChevronRight, null, tint = Terciario, modifier = Modifier.size(18.dp))
         }
-
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = Terciario,
-            modifier = Modifier.size(24.dp)
-        )
     }
-
 }
 
+// ── CalendarSelector ──────────────────────────────────────────────────────────
 
 @Composable
-fun CalendarSelector (
-    calendars: List<Calendar>,
-    selectedCalendar: Calendar?,
+fun CalendarSelector(
+    calendars        : List<Calendar>,
+    selectedCalendar : Calendar?,
     onCalendarChanged: (Calendar) -> Unit,
-    onDismiss: () -> Unit,
-
-
+    onDismiss        : () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = { onDismiss },
-        properties = DialogProperties(usePlatformDefaultWidth = false), // Para que pueda ser casi pantalla completa
-        modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.7f), // Tamaño superpuesto
-        containerColor = Color.White,
-        shape = RoundedCornerShape(28.dp),
+        onDismissRequest = onDismiss,
+        properties       = DialogProperties(usePlatformDefaultWidth = false),
+        modifier         = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.7f),
+        containerColor   = Color.White,
+        shape            = RoundedCornerShape(20.dp),
         title = {
-            Text(
-                "Mis Calendarios",
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+            Text("Mis Calendarios", fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         },
         text = {
             Column {
                 HorizontalDivider(thickness = 0.5.dp, color = Terciario.copy(alpha = 0.3f))
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 12.dp)
+                    modifier        = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    contentPadding  = PaddingValues(vertical = 8.dp)
                 ) {
                     if (calendars.isEmpty()) {
-                        item {
-                            Text("No hay calendarios disponibles",
-                                modifier = Modifier.padding(16.dp), color = Terciario
-                            )
-                        }
+                        item { Text("No hay calendarios disponibles", modifier = Modifier.padding(16.dp), color = Terciario) }
                     } else {
                         items(calendars) { cal ->
-                            ListItem(
-                                modifier = Modifier
+                            Row(
+                                modifier          = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
-                                        onCalendarChanged(cal)
-                                        onDismiss()
-                                    },
-                                headlineContent = { Text(cal.name, fontWeight = FontWeight.Medium) },
-                                leadingContent = {
-                                    Icon(Icons.Default.Circle, null,
-                                        tint = Primario, modifier = Modifier.size(12.dp))
-                                },
-                                trailingContent = {
-                                    if (selectedCalendar?.id == cal.id) {
-                                        Icon(Icons.Default.Check, null, tint = Primario)
-                                    }
+                                    .clickable { onCalendarChanged(cal); onDismiss() }
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TintedIconBox(icon = Icons.Default.CalendarMonth, tint = IconFecha, boxSize = 32.dp, iconSize = 16.dp)
+                                Spacer(Modifier.width(12.dp))
+                                Text(cal.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                                if (selectedCalendar?.id == cal.id) {
+                                    Icon(Icons.Default.Check, null, tint = Primario, modifier = Modifier.size(18.dp))
                                 }
-                            )
+                            }
+                            HorizontalDivider(thickness = 0.5.dp, color = Terciario.copy(alpha = 0.15f))
                         }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onDismiss() }) {
+            TextButton(onClick = onDismiss) {
                 Text("CERRAR", color = Primario, fontWeight = FontWeight.Bold)
             }
         }
     )
 }
-
