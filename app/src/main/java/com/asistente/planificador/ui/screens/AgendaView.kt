@@ -64,7 +64,7 @@ fun AgendaView(    viewModel: CalendarViewModel = hiltViewModel(),onNavigateToDe
             fontSize = 22.sp,
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(top = 8.dp),
-            color = Color.Black // Tu marrón característico
+            color = Color.Black
         )
 
         Spacer(modifier = Modifier.height(3.dp))

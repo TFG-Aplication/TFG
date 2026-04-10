@@ -54,6 +54,8 @@ fun darkenColor(color: Color): Color {
  val IconRepeticion = Color(0xFF7ED957)
  val IconFranja     = Color(0xFFFF5757)
  val IconNotas      = Color(0xFFF8CEC4)
+val IconCategory = Color(0xFFe485ff)
+val IconDiary = Color(0xFFffde59)
 
 
 @Composable

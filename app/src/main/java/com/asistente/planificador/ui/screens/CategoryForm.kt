@@ -1,5 +1,7 @@
 package com.asistente.planificador.ui.screens
 
+import CalendarField
+import CalendarSelector
 import android.graphics.Color.parseColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,21 +27,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.asistente.planificador.ui.screens.tools.CalendarField
-import com.asistente.planificador.ui.screens.tools.CalendarSelector
-import com.asistente.planificador.ui.screens.tools.Primario
-import com.asistente.planificador.ui.screens.tools.Secundario
-import com.asistente.planificador.ui.screens.tools.Terciario
+import com.asistente.planificador.ui.screens.tools.*
 import com.asistente.planificador.ui.viewmodels.CategoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryForm(
     categoryId: String? = null,
-    viewModel: CategoryViewModel = hiltViewModel(),
-    onBack: () -> Unit
+    viewModel  : CategoryViewModel = hiltViewModel(),
+    onBack     : () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState   by viewModel.uiState.collectAsState()
     val calendars by viewModel.calendarsList.collectAsStateWithLifecycle()
 
     val isEditMode = uiState.isEditMode
@@ -60,216 +58,133 @@ fun CategoryForm(
                 title = {
                     Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
                         Text(
-                            text = if (isEditMode) "Editar Categoría" else "Nueva Categoría",
+                            text       = if (isEditMode) "Editar Categoría" else "Nueva Categoría",
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            fontSize = 20.sp
+                            color      = Color.Black,
+                            fontSize   = 20.sp
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = onBack,
+                        onClick  = onBack,
                         modifier = Modifier.fillMaxHeight().padding(start = 14.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Cerrar",
-                            modifier = Modifier.size(30.dp),
-                            tint = Terciario
-                        )
+                        Icon(Icons.Rounded.Close, null, modifier = Modifier.size(30.dp), tint = Terciario)
                     }
                 },
                 actions = {
                     if (isEditMode) {
                         IconButton(
-                            onClick = {
-                                viewModel.deleteCategory(onSuccess = onBack)
-                            },
+                            onClick  = { viewModel.deleteCategory(onSuccess = onBack) },
                             modifier = Modifier.padding(end = 8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Delete,
-                                contentDescription = "Eliminar",
-                                tint = Color.Red.copy(alpha = 0.7f),
-                                modifier = Modifier.size(26.dp)
-                            )
+                            Icon(Icons.Rounded.Delete, null, tint = ColorDestructive.copy(alpha = 0.7f), modifier = Modifier.size(26.dp))
                         }
                     }
-
                     Button(
-                        onClick = {
-                            if (isEditMode) viewModel.updateCategory(onSuccess = onBack)
-                            else viewModel.saveCategory(onSuccess = onBack)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Primario,
-                            contentColor = Color.White
-                        ),
+                        onClick        = { if (isEditMode) viewModel.updateCategory(onSuccess = onBack) else viewModel.saveCategory(onSuccess = onBack) },
+                        colors         = ButtonDefaults.buttonColors(containerColor = Primario, contentColor = Color.White),
                         contentPadding = PaddingValues(horizontal = 15.dp, vertical = 0.dp),
-                        modifier = Modifier
-                            .padding(end = 21.dp)
-                            .height(28.dp)
-                            .align(Alignment.CenterVertically)
+                        modifier       = Modifier.padding(end = 21.dp).height(28.dp).align(Alignment.CenterVertically)
                     ) {
                         Text(
-                            text = "Guardar",
+                            "Guardar",
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            style = LocalTextStyle.current.copy(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            )
+                            fontSize   = 14.sp,
+                            style      = LocalTextStyle.current.copy(platformStyle = PlatformTextStyle(includeFontPadding = false))
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Terciario,
-                    navigationIconContentColor = Terciario
-                ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }
     ) { pad ->
         Column(
-            modifier = Modifier
+            modifier            = Modifier
                 .padding(pad)
                 .padding(horizontal = 18.dp, vertical = 10.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // ── Nombre ────────────────────────────────────────────────────────
             OutlinedTextField(
-                value = uiState.name,
+                value         = uiState.name,
                 onValueChange = { viewModel.onNameChanged(it) },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Bookmarks,
-                        contentDescription = null,
-                        tint = Primario,
-                        modifier = Modifier.size(30.dp)
-                    )
-                },
-                placeholder = {
-                    Text(
-                        text = "Agregar nombre",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Terciario.copy(alpha = 0.6f)
-                    )
-                },
-                textStyle = LocalTextStyle.current.copy(
-                    color = Terciario,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Medium
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 60.dp),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Secundario,
+                leadingIcon   = { Icon(Icons.Default.Bookmarks, null, tint = Primario, modifier = Modifier.size(26.dp)) },
+                placeholder   = { Text("Agregar nombre", fontSize = 30.sp, fontWeight = FontWeight.Medium, color = Terciario.copy(alpha = 0.6f)) },
+                textStyle     = LocalTextStyle.current.copy(color = Terciario, fontSize = 30.sp, fontWeight = FontWeight.Medium),
+                modifier      = Modifier.fillMaxWidth().heightIn(min = 60.dp),
+                shape         = RoundedCornerShape(12.dp),
+                singleLine    = true,
+                colors        = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor   = Secundario,
                     unfocusedContainerColor = Secundario,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    cursorColor = Terciario,
-                    focusedTextColor = Terciario,
-                    unfocusedTextColor = Terciario
+                    focusedBorderColor      = Color.Transparent,
+                    unfocusedBorderColor    = Color.Transparent,
+                    cursorColor             = Terciario,
+                    focusedTextColor        = Terciario,
+                    unfocusedTextColor      = Terciario
                 )
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp), thickness = 0.5.dp)
+            HorizontalDivider(thickness = 0.5.dp)
 
-            CalendarField(
-                selectedCalendar = uiState.calendar,
-                onClick = { expandedCalendarSelector = true }
-            )
+            // ── Calendario ────────────────────────────────────────────────────
+            CalendarField(selectedCalendar = uiState.calendar, onClick = { expandedCalendarSelector = true })
 
-            HorizontalDivider(
-                modifier = Modifier.padding(top = 0.dp, bottom = 2.dp),
-                thickness = 0.5.dp
-            )
+            HorizontalDivider(thickness = 0.5.dp)
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(47.dp)
-                    .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Palette,
-                    contentDescription = null,
-                    tint = Primario,
-                    modifier = Modifier.size(30.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Text(
-                    text = "Color de categoría",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
-            }
+            // ── Color ─────────────────────────────────────────────────────────
+            IosRow(icon = Icons.Default.Palette, iconTint = IconAlarma, label = "Color de categoría", trailingContent = null)
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
+                modifier            = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 categoryColors.chunked(6).forEach { rowColors ->
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         rowColors.forEach { colorItem ->
                             val isSelected = uiState.color == colorItem
-
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(color = Color(parseColor(colorItem)))
+                                    .background(Color(parseColor(colorItem)))
                                     .border(
                                         width = if (isSelected) 3.dp else 0.dp,
                                         color = if (isSelected) Color.Black.copy(alpha = 0.5f) else Color.Transparent,
                                         shape = CircleShape
                                     )
-                                    .clickable {
-                                        viewModel.onColorChanged(colorItem)
-                                    },
+                                    .clickable { viewModel.onColorChanged(colorItem) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Seleccionado",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
                     }
                 }
             }
+
+            if (uiState.error != null) {
+                AppBanner(text = uiState.error!!, style = BannerStyle.WARNING)
+            }
+
+            Spacer(Modifier.height(16.dp))
         }
 
         if (expandedCalendarSelector) {
             CalendarSelector(
-                calendars = calendars,
-                onCalendarChanged = {
-                    viewModel.onCalendarChanged(it)
-                    expandedCalendarSelector = false
-                },
-                onDismiss = { expandedCalendarSelector = false },
-                selectedCalendar = uiState.calendar
+                calendars         = calendars,
+                onCalendarChanged = { viewModel.onCalendarChanged(it); expandedCalendarSelector = false },
+                onDismiss         = { expandedCalendarSelector = false },
+                selectedCalendar  = uiState.calendar
             )
-        }
-
-        if (uiState.error != null) {
-            Snackbar { Text(uiState.error!!) }
         }
     }
 }
