@@ -8,6 +8,8 @@ import com.asistente.core.domain.ropositories.interfaz.TaskRepositoryInterface
 import com.asistente.core.domain.ropositories.interfaz.TimeSlotRepositoryInterface
 import com.asistente.core.domain.usecase.alerts.Alerts
 import com.asistente.core.domain.usecase.timeslot.CreateTimeSlot
+import com.asistente.core.domain.usecase.timeslot.TimeSlotOverlapChecker
+import kotlinx.coroutines.flow.first
 import java.util.Date
 import javax.inject.Inject
 
@@ -70,9 +72,6 @@ class UpdateTask @Inject constructor(
                 blockTimeSlot = blockTimeSlot
             )
 
-            repository.updateTask(task)
-            scheduleTaskAlerts(task)
-
             if(blockTimeSlot){
                 // busca franja
                 val timeSlot = repositoryTimeSlot.getTimeSlotByTaskId(id)
@@ -95,7 +94,25 @@ class UpdateTask @Inject constructor(
                         endMinuteOfDay = endMinute,
                         isActive = true
                     )
-                    createTimeSlot(timeSlotNew, isSharedCalendar)
+
+                    val listTimeSlots = repositoryTimeSlot.getAllTimeSlotsByCalendarId(calendarId)
+
+                    val overlapping = TimeSlotOverlapChecker.findOverlaps(
+                        candidate = timeSlotNew,
+                        existingSlots = listTimeSlots.first()
+                    )
+
+                    val conflicting = overlapping.filter { it.slotType == SlotType.TASK_BLOCKED }
+                    if (conflicting.isNotEmpty()) {
+                        return Result.failure(IllegalArgumentException("No se puede crear la franja: se solapa con otras tarea bloqueante, desactiva el bloqueo"))
+                    }
+                    else {
+                        repository.updateTask(task)
+                        scheduleTaskAlerts(task)
+                        createTimeSlot(timeSlotNew, isSharedCalendar)
+
+                    }
+
                 }
                 else{
                     val calInit = java.util.Calendar.getInstance().apply { time = initDate }
@@ -117,7 +134,8 @@ class UpdateTask @Inject constructor(
                             isActive = true
                         )
                         repositoryTimeSlot.updateTimeSlot(timeSlotUpdated)
-
+                        repository.updateTask(task)
+                        scheduleTaskAlerts(task)
 
                 }
             }
@@ -126,6 +144,9 @@ class UpdateTask @Inject constructor(
                 if (timeSlot != null) {
                     repositoryTimeSlot.deleteTimeSlotByTaskId(id, isSharedCalendar)
                 }
+                scheduleTaskAlerts(task)
+                repository.updateTask(task)
+
             }
             Result.success(task)
         } catch (e: Exception) {
