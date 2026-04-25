@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,121 +50,169 @@ fun CategoryForm(
     )
 
     var expandedCalendarSelector by remember { mutableStateOf(false) }
+    var showDeleteConfirm        by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = Color.White,
+        containerColor = Secundario,
         topBar = {
-            TopAppBar(
-                modifier = Modifier.padding(vertical = 10.dp).height(72.dp),
-                title = {
-                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
-                        Text(
-                            text       = if (isEditMode) "Editar Categoría" else "Nueva Categoría",
-                            fontWeight = FontWeight.Bold,
-                            color      = Color.Black,
-                            fontSize   = 20.sp
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .statusBarsPadding()
+            ) {
+                // ── Nav bar ───────────────────────────────────────────────────
+                Row(
+                    modifier          = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Rounded.Close, null, tint = Terciario, modifier = Modifier.size(22.dp))
                     }
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick  = onBack,
-                        modifier = Modifier.fillMaxHeight().padding(start = 14.dp)
-                    ) {
-                        Icon(Icons.Rounded.Close, null, modifier = Modifier.size(30.dp), tint = Terciario)
-                    }
-                },
-                actions = {
+
+                    Text(
+                        text       = if (isEditMode) "Editar categoría" else "Nueva categoría",
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 17.sp,
+                        color      = Color.Black,
+                        modifier   = Modifier.weight(1f),
+                        textAlign  = TextAlign.Center
+                    )
+
                     if (isEditMode) {
-                        IconButton(
-                            onClick  = { viewModel.deleteCategory(onSuccess = onBack) },
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            Icon(Icons.Rounded.Delete, null, tint = ColorDestructive.copy(alpha = 0.7f), modifier = Modifier.size(26.dp))
+                        IconButton(onClick = { showDeleteConfirm = true }) {
+                            Icon(
+                                Icons.Rounded.Delete, null,
+                                tint     = ColorDestructive.copy(alpha = 0.7f),
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
+                    } else {
+                        Spacer(Modifier.size(48.dp))
                     }
-                    Button(
-                        onClick        = { if (isEditMode) viewModel.updateCategory(onSuccess = onBack) else viewModel.saveCategory(onSuccess = onBack) },
-                        colors         = ButtonDefaults.buttonColors(containerColor = Primario, contentColor = Color.White),
-                        contentPadding = PaddingValues(horizontal = 15.dp, vertical = 0.dp),
-                        modifier       = Modifier.padding(end = 21.dp).height(28.dp).align(Alignment.CenterVertically)
+
+                    TextButton(
+                        onClick        = {
+                            if (isEditMode) viewModel.updateCategory(onSuccess = onBack)
+                            else viewModel.saveCategory(onSuccess = onBack)
+                        },
+                        contentPadding = PaddingValues(end = 12.dp)
                     ) {
                         Text(
                             "Guardar",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize   = 14.sp,
-                            style      = LocalTextStyle.current.copy(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                            color      = Primario,
+                            fontSize   = 17.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+                }
+
+                // ── Cabecera expandida ────────────────────────────────────────
+                Column(
+                    modifier            = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    OutlinedTextField(
+                        value         = uiState.name,
+                        onValueChange = { viewModel.onNameChanged(it) },
+                        placeholder   = {
+                            Text(
+                                "Nombre de la categoría",
+                                fontSize   = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color      = Terciario.copy(alpha = 0.5f)
+                            )
+                        },
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize   = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = Color.Black
+                        ),
+                        modifier   = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors     = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor   = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedBorderColor      = Color.Transparent,
+                            unfocusedBorderColor    = Color.Transparent,
+                            cursorColor             = Primario
+                        )
+                    )
+                    if (uiState.calendar != null) {
+                        Row(
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(Icons.Default.CalendarMonth, null, tint = Terciario, modifier = Modifier.size(12.dp))
+                            Text(uiState.calendar!!.name, fontSize = 12.sp, color = Terciario)
+                        }
+                    }
+                }
+            }
         }
     ) { pad ->
         Column(
             modifier            = Modifier
                 .padding(pad)
-                .padding(horizontal = 18.dp, vertical = 10.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // ── Nombre ────────────────────────────────────────────────────────
-            OutlinedTextField(
-                value         = uiState.name,
-                onValueChange = { viewModel.onNameChanged(it) },
-                leadingIcon   = { Icon(Icons.Default.Bookmarks, null, tint = Primario, modifier = Modifier.size(26.dp)) },
-                placeholder   = { Text("Agregar nombre", fontSize = 30.sp, fontWeight = FontWeight.Medium, color = Terciario.copy(alpha = 0.6f)) },
-                textStyle     = LocalTextStyle.current.copy(color = Terciario, fontSize = 30.sp, fontWeight = FontWeight.Medium),
-                modifier      = Modifier.fillMaxWidth().heightIn(min = 60.dp),
-                shape         = RoundedCornerShape(12.dp),
-                singleLine    = true,
-                colors        = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor   = Secundario,
-                    unfocusedContainerColor = Secundario,
-                    focusedBorderColor      = Color.Transparent,
-                    unfocusedBorderColor    = Color.Transparent,
-                    cursorColor             = Terciario,
-                    focusedTextColor        = Terciario,
-                    unfocusedTextColor      = Terciario
-                )
-            )
-
-            HorizontalDivider(thickness = 0.5.dp)
+            // ── Error ─────────────────────────────────────────────────────────
+            if (uiState.error != null) {
+                AppBanner(text = uiState.error!!, style = BannerStyle.WARNING)
+            }
 
             // ── Calendario ────────────────────────────────────────────────────
-            CalendarField(selectedCalendar = uiState.calendar, onClick = { expandedCalendarSelector = true })
-
-            HorizontalDivider(thickness = 0.5.dp)
+            IosGroupCard {
+                CalendarField(
+                    selectedCalendar = uiState.calendar,
+                    onClick          = { expandedCalendarSelector = true }
+                )
+            }
 
             // ── Color ─────────────────────────────────────────────────────────
-            IosRow(icon = Icons.Default.Palette, iconTint = IconAlarma, label = "Color de categoría", trailingContent = null)
-
-            Column(
-                modifier            = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                categoryColors.chunked(6).forEach { rowColors ->
-                    Row(
-                        modifier              = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        rowColors.forEach { colorItem ->
-                            val isSelected = uiState.color == colorItem
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(parseColor(colorItem)))
-                                    .border(
-                                        width = if (isSelected) 3.dp else 0.dp,
-                                        color = if (isSelected) Color.Black.copy(alpha = 0.5f) else Color.Transparent,
-                                        shape = CircleShape
-                                    )
-                                    .clickable { viewModel.onColorChanged(colorItem) },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isSelected) {
-                                    Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            IosGroupCard {
+                IosRow(
+                    icon            = Icons.Default.Palette,
+                    iconTint        = IconAlarma,
+                    label           = "Color de categoría",
+                    trailingContent = null
+                )
+                IosDivider()
+                Column(
+                    modifier            = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    categoryColors.chunked(6).forEach { rowColors ->
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            rowColors.forEach { colorItem ->
+                                val isSelected = uiState.color == colorItem
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(parseColor(colorItem)))
+                                        .border(
+                                            width = if (isSelected) 3.dp else 0.dp,
+                                            color = if (isSelected) Color.Black.copy(alpha = 0.5f) else Color.Transparent,
+                                            shape = CircleShape
+                                        )
+                                        .clickable { viewModel.onColorChanged(colorItem) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isSelected) {
+                                        Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                    }
                                 }
                             }
                         }
@@ -171,19 +220,23 @@ fun CategoryForm(
                 }
             }
 
-            if (uiState.error != null) {
-                AppBanner(text = uiState.error!!, style = BannerStyle.WARNING)
-            }
-
             Spacer(Modifier.height(16.dp))
         }
 
+        // ── Selectores ────────────────────────────────────────────────────────
         if (expandedCalendarSelector) {
             CalendarSelector(
                 calendars         = calendars,
                 onCalendarChanged = { viewModel.onCalendarChanged(it); expandedCalendarSelector = false },
                 onDismiss         = { expandedCalendarSelector = false },
                 selectedCalendar  = uiState.calendar
+            )
+        }
+        if (showDeleteConfirm) {
+            DeleteConfirmDialog(
+                title     = "¿Eliminar categoría?",
+                onConfirm = { viewModel.deleteCategory(onSuccess = onBack) },
+                onDismiss = { showDeleteConfirm = false }
             )
         }
     }
