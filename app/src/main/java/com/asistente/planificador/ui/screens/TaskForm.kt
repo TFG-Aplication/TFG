@@ -165,6 +165,11 @@ fun TaskForm(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
+            // ── Error ─────────────────────────────────────────────────────────
+            if (uiState.error != null) {
+                AppBanner(text = uiState.error!!, style = BannerStyle.WARNING)
+            }
+
             // ── Calendario ────────────────────────────────────────────────────
             IosGroupCard {
                 CalendarField(
@@ -292,10 +297,7 @@ fun TaskForm(
                 )
             }
 
-            // ── Error ─────────────────────────────────────────────────────────
-            if (uiState.error != null) {
-                AppBanner(text = uiState.error!!, style = BannerStyle.WARNING)
-            }
+
 
             Spacer(Modifier.height(16.dp))
         }

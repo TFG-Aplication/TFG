@@ -135,7 +135,8 @@ class TaskViewModel @Inject constructor(
     // ACTUALIZACIÓN DE FECHA (Día/Mes/Año)
     fun onDateChanged(millis: Long, isStart: Boolean) {
         val calendarHelper = Calendar.getInstance()
-        val currentSelectedDate = if (isStart) _uiState.value.initDate else _uiState.value.finishDate
+        val currentSelectedDate =
+            if (isStart) _uiState.value.initDate else _uiState.value.finishDate
 
         // Tomamos la hora actual
         calendarHelper.time = currentSelectedDate
@@ -155,7 +156,7 @@ class TaskViewModel @Inject constructor(
             try {
                 deleteTaskUseCase(
                     taskId = uiState.value.id,
-                    isShared = uiState.value.calendar?.isShared?: false
+                    isShared = uiState.value.calendar?.isShared ?: false
                 )
                 onSuccess()
             } catch (e: Exception) {
@@ -202,6 +203,7 @@ class TaskViewModel @Inject constructor(
             }
         }
     }
+
     suspend fun getExpecificTask(id: String?): Task? {
         return getExpecificTaskUseCase(id ?: "")
     }
@@ -210,8 +212,8 @@ class TaskViewModel @Inject constructor(
         return getExpecificCategory(categoryId ?: "")
     }
 
-    suspend fun  getCategoryColor(categoryId: String?): Color {
-        val color = getExpecificCategory(categoryId?: "")?.color
+    suspend fun getCategoryColor(categoryId: String?): Color {
+        val color = getExpecificCategory(categoryId ?: "")?.color
         return if (color != null) {
             Color(parseColor(color))
         } else {
@@ -294,9 +296,10 @@ class TaskViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val actualCalenda = actual.calendar ?: throw Exception("Error al vincular con el calendario")
+                val actualCalenda =
+                    actual.calendar ?: throw Exception("Error al vincular con el calendario")
 
-                createTaskUseCase(
+                val result = createTaskUseCase(
                     name = actual.name,
                     notes = actual.notes,
                     place = null,
@@ -311,7 +314,11 @@ class TaskViewModel @Inject constructor(
                     },
                     blockTimeSlot = actual.blockTimeSlot,
                 )
-                onSuccess()
+
+                result.fold(
+                    onSuccess = { onSuccess() },
+                    onFailure = { e -> _uiState.update { it.copy(error = e.message) } }
+                )
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error al guardar: ${e.message}") }
             }
@@ -330,11 +337,7 @@ class TaskViewModel @Inject constructor(
                 val actualCalendar = actual.calendar
                     ?: throw IllegalStateException("El calendario no puede ser nulo al actualizar")
 
-                val mappedAlerts = actual.alerts.map { offsetMinutes ->
-                    actual.initDate.time - (offsetMinutes * 60_000L)
-                }
-
-                updateTaskUseCase(
+                val result = updateTaskUseCase(
                     id = actual.id,
                     name = actual.name,
                     notes = actual.notes,
@@ -345,10 +348,16 @@ class TaskViewModel @Inject constructor(
                     owners = actual.owners,
                     categoryId = actual.category?.id,
                     isSharedCalendar = actualCalendar.isShared,
-                    alerts = mappedAlerts,
+                    alerts = actual.alerts.map { offsetMinutes ->
+                        actual.initDate.time - (offsetMinutes * 60_000L)
+                    },
                     blockTimeSlot = actual.blockTimeSlot,
                 )
-                onSuccess()
+
+                result.fold(
+                    onSuccess = { onSuccess() },
+                    onFailure = { e -> _uiState.update { it.copy(error = e.message) } }
+                )
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "No se pudo actualizar: ${e.message}") }
             }
