@@ -10,6 +10,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +54,7 @@ fun TimeSlotDetailSheet(
     val sheetState     = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight   = LocalConfiguration.current.screenHeightDp.dp
     val maxSheetHeight = screenHeight * 0.75f
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -114,13 +119,24 @@ fun TimeSlotDetailSheet(
                 }
             }
 
+            if (showDeleteConfirm) {
+                DeleteConfirmDialog(
+                    title     = when (state.slot.slotType) {
+                        SlotType.BLOCKED      -> "¿Eliminar franja?"
+                        SlotType.TASK_BLOCKED -> "¿Eliminar bloqueo de tarea?"
+                    },
+                    onConfirm = { onDelete(state.slot); onDismiss() },
+                    onDismiss = { showDeleteConfirm = false }
+                )
+            }
+
             SectionDivider()
             DestructiveFooterButton(
                 label   = when (state.slot.slotType) {
                     SlotType.BLOCKED      -> "Eliminar franja"
                     SlotType.TASK_BLOCKED -> "Eliminar bloqueo de tarea"
                 },
-                onClick = { onDelete(state.slot); onDismiss() }
+                onClick = { showDeleteConfirm = true }   // ← antes era onDelete + onDismiss directamente
             )
         }
     }

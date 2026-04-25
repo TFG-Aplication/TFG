@@ -32,7 +32,8 @@ import java.util.Locale
 fun TaskForm(
     taskId   : String? = null,
     viewModel: TaskViewModel = hiltViewModel(),
-    onBack   : () -> Unit
+    onBack   : () -> Unit,
+    onDelete : () -> Unit = onBack
 ) {
     val uiState   by viewModel.uiState.collectAsState()
     val calendars by viewModel.calendarsList.collectAsStateWithLifecycle()
@@ -44,6 +45,7 @@ fun TaskForm(
     var expandedCalendarSelector by remember { mutableStateOf(false) }
     var showStartDatePicker      by remember { mutableStateOf(false) }
     var showEndDatePicker        by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val isEditMode    = uiState.isEditMode
     val selectionDate = remember { SelectionDate() }
@@ -82,7 +84,7 @@ fun TaskForm(
 
                     Spacer(Modifier.weight(1f))
                     if (isEditMode) {
-                        IconButton(onClick = { viewModel.deleteTask(onSuccess = onBack) }) {
+                        IconButton(onClick = { showDeleteConfirm = true }) {
                             Icon(Icons.Rounded.Delete, null, tint = ColorDestructive.copy(alpha = 0.7f), modifier = Modifier.size(22.dp))
                         }
                         EditActionButton(
@@ -352,6 +354,13 @@ fun TaskForm(
                 initialMinute = cal.get(java.util.Calendar.MINUTE),
                 onDismiss     = { showEndTimePicker = false },
                 onConfirm     = { h, m -> viewModel.onTimeChanged(h, m, false); showEndTimePicker = false }
+            )
+        }
+        if (showDeleteConfirm) {
+            DeleteConfirmDialog(
+                title     = "¿Eliminar tarea?",
+                onConfirm = { viewModel.deleteTask(onSuccess = onDelete) },
+                onDismiss = { showDeleteConfirm = false }
             )
         }
     }

@@ -56,6 +56,9 @@ fun TaskView(
         value = viewModel.getCategoryColor(task?.categoryId)
     }
 
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+
     Scaffold(
         containerColor = Secundario,
         topBar = {
@@ -129,7 +132,7 @@ fun TaskView(
         bottomBar = {
             DestructiveFooterButton(
                 label   = "Eliminar tarea",
-                onClick = { viewModel.deleteTask(onDelete) }
+                onClick = { showDeleteConfirm = true }
             )
         }
     ) { pad ->
@@ -275,5 +278,14 @@ fun TaskView(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+
+        if (showDeleteConfirm) {
+            DeleteConfirmDialog(
+                title     = "¿Eliminar tarea?",
+                onConfirm = { viewModel.deleteTask(onSuccess = onDelete) },
+                onDismiss = { showDeleteConfirm = false }
+            )
+        }
     }
+
 }
