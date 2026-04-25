@@ -210,9 +210,19 @@ class TimeSlotViewModel @Inject constructor(
         }
     }
 
-    fun onRangeStartChanged(millis: Long) =
-        _formState.update { it.copy(rangeStart = Date(millis)) }
+    fun onRangeStartChanged(millis: Long) {
+        val date = Date(millis)
+        val derivedDay: List<Int> = if (_formState.value.recurrenceType == RecurrenceType.SINGLE_DAY) {
+            val cal = java.util.Calendar.getInstance().apply { time = date }
+            val javaDow = cal.get(java.util.Calendar.DAY_OF_WEEK)
+            val mapped = if (javaDow == java.util.Calendar.SUNDAY) 7 else javaDow - 1
+            listOf(mapped)
+        } else {
+            _formState.value.daysOfWeek
+        }
+        _formState.update { it.copy(rangeStart = date, daysOfWeek = derivedDay) }
 
+    }
     fun onRangeEndChanged(millis: Long) =
         _formState.update { it.copy(rangeEnd = Date(millis)) }
 
@@ -247,25 +257,6 @@ class TimeSlotViewModel @Inject constructor(
     fun saveTimeSlot() {
         val state = _formState.value
 
-        val localError = when {
-            state.name.isBlank()             -> "El nombre es obligatorio"
-            state.name.trim().length < 3     -> "El nombre debe tener al menos 3 caracteres"
-            state.name.trim().length > 20    -> "El nombre no puede tener más de 20 caracteres"
-            state.startMinuteOfDay >= state.endMinuteOfDay ->
-                "La hora de inicio debe ser anterior a la de fin"
-            state.daysOfWeek.isEmpty() &&
-                    state.recurrenceType != RecurrenceType.SINGLE_DAY ->
-                "Selecciona al menos un día"
-            (state.recurrenceType == RecurrenceType.DATE_RANGE ||
-                    state.recurrenceType == RecurrenceType.SINGLE_DAY) &&
-                    state.rangeStart == null -> "Selecciona la fecha de inicio"
-            else -> null
-        }
-        if (localError != null) {
-            _formState.update { it.copy(error = localError) }
-            return
-        }
-
         val slot = TimeSlot(
             id               = state.id,
             name             = state.name.trim(),
@@ -291,7 +282,6 @@ class TimeSlotViewModel @Inject constructor(
                 },
                 onFailure = { e ->
                     _formState.update { it.copy(error = e.message) }
-                    _events.emit(TimeSlotEvent.Error(e.message ?: "Error desconocido"))
                 }
             )
         }

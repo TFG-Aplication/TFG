@@ -143,6 +143,12 @@ fun TimeSlotForm(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
+            // ── Error ─────────────────────────────────────────────────────────
+            if (state.error != null) {
+                AppBanner(text = state.error!!, style = BannerStyle.WARNING)
+            }
+
+
             // ── Tipo de recurrencia ───────────────────────────────────────────
             IosGroupCard {
                 IosRow(
@@ -240,6 +246,31 @@ fun TimeSlotForm(
                         )
                     }
                 }
+            } else {
+                val dayLabels = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
+                val derivedDay: Int? = state.rangeStart?.let { date ->
+                    val cal = java.util.Calendar.getInstance().apply { time = date }
+                    // Calendar.DAY_OF_WEEK: 1=Dom,2=Lun...7=Sab → convertimos a tu esquema (1=Lun...7=Dom)
+                    val javaDow = cal.get(java.util.Calendar.DAY_OF_WEEK)
+                    if (javaDow == java.util.Calendar.SUNDAY) 7 else javaDow - 1
+                }
+                IosGroupCard {
+                    IosRow(
+                        icon            = Icons.Default.ViewWeek,
+                        iconTint        = IconFecha,
+                        label           = "Días de la semana",
+                        trailingContent = null
+                    )
+                    IosDivider()
+
+                    Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        DayOfWeekSelector(
+                            activeDays   = if (derivedDay != null) listOf(derivedDay) else emptyList(),
+                            hasError     = false,
+                            onDayToggled = { /* solo lectura en SINGLE_DAY */ }
+                        )
+                    }
+                }
             }
 
             // ── Horario ───────────────────────────────────────────────────────
@@ -260,11 +291,6 @@ fun TimeSlotForm(
                         onEndClick   = { showEndTimePicker = true }
                     )
                 }
-            }
-
-            // ── Error ─────────────────────────────────────────────────────────
-            if (state.error != null) {
-                AppBanner(text = state.error!!, style = BannerStyle.WARNING)
             }
 
             Spacer(Modifier.height(16.dp))
