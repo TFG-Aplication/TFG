@@ -110,8 +110,11 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("taskId") { type = NavType.StringType })
                     ) { entry ->
                         val taskId = entry.arguments?.getString("taskId")
-                        TaskForm(taskId = taskId, onBack = { navController.popBackStack() })
-                    }
+                        TaskForm(
+                            taskId   = taskId,
+                            onBack   = { navController.popBackStack() },
+                            onDelete = { navController.popBackStack("main_calendar", inclusive = false) }
+                        )                    }
 
                     // ── Actividad ─────────────────────────────────────────────
                     composable("activity_form") {
