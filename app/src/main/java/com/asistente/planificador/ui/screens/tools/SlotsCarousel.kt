@@ -38,7 +38,7 @@ fun SlotsCarousel(
     categoryByTaskId: Map<String, SlotCategoryInfo?> = emptyMap()
 ) {
     val sortedSlots = remember(filteredSlots) {
-        filteredSlots.sortedWith(compareByDescending { it.isActive })
+        filteredSlots.sortedWith(compareByDescending { it.enable })
     }
 
     var expanded     by remember(sortedSlots) { mutableStateOf(false) }
@@ -64,7 +64,7 @@ fun SlotsCarousel(
                 modifier      = Modifier.weight(1f)
             )
             if (allSlots.isNotEmpty()) {
-                val activeCount = allSlots.count { it.isActive }
+                val activeCount = allSlots.count { it.enable }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment     = Alignment.CenterVertically

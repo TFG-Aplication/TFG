@@ -47,7 +47,7 @@ data class TimeSlotFormState(
     val rangeStart: Date? = null,
     val rangeEnd: Date? = null,
     val slotType: SlotType = SlotType.BLOCKED,
-    val isActive: Boolean = true,
+    val enable: Boolean = true,
     val error: String? = null,
     val isEditing: Boolean = false
 )
@@ -244,7 +244,7 @@ class TimeSlotViewModel @Inject constructor(
                 rangeStart       = timeSlot.rangeStart,
                 rangeEnd         = timeSlot.rangeEnd,
                 slotType         = timeSlot.slotType,
-                isActive         = timeSlot.isActive,
+                enable         = timeSlot.enable,
                 isEditing        = true
             )
         }
@@ -269,7 +269,7 @@ class TimeSlotViewModel @Inject constructor(
             rangeStart       = state.rangeStart,
             rangeEnd         = state.rangeEnd,
             slotType         = state.slotType,
-            isActive         = state.isActive
+            enable         = state.enable
         )
 
         viewModelScope.launch {
@@ -293,7 +293,7 @@ class TimeSlotViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 val slot = timeSlotRepository.getTimeSlotById(timeSlotId) ?: return@launch
-                timeSlotRepository.updateTimeSlot(slot.copy(isActive = !slot.isActive))
+                timeSlotRepository.updateTimeSlot(slot.copy(enable = !slot.enable))
             }.onFailure { e ->
                 _events.emit(TimeSlotEvent.Error("Error al actualizar: ${e.message}"))
             }

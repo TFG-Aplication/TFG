@@ -92,7 +92,7 @@ class UpdateTask @Inject constructor(
                         rangeEnd = finishDate,
                         startMinuteOfDay = startMinute,
                         endMinuteOfDay = endMinute,
-                        isActive = true
+                        enable = true
                     )
 
                     val listTimeSlots = repositoryTimeSlot.getAllTimeSlotsByCalendarId(calendarId)
@@ -131,7 +131,7 @@ class UpdateTask @Inject constructor(
                             rangeEnd = finishDate,
                             startMinuteOfDay = startMinute,
                             endMinuteOfDay = endMinute,
-                            isActive = true
+                        enable = true
                         )
                         repositoryTimeSlot.updateTimeSlot(timeSlotUpdated)
                         repository.updateTask(task)

@@ -65,13 +65,14 @@ private fun BlockedSlotCard(
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isActive   = slot.isActive
-    val dotColor   = if (isActive) slot.slotType.dotColor() else Color(0xFFCCCCCC)
+    val enable   = slot.enable
+    val dotColor   = if (enable) slot.slotType.dotColor() else Color(0xFFCCCCCC)
     val badgeColor = slot.slotType.badgeColors()
-    val alpha      = if (isActive) 1f else 0.45f
+    val alpha      = if (enable) 1f else 0.45f
     var showMenu   by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    SlotCardContainer(isActive = isActive, onClick = onCardClick, modifier = modifier) {
+    SlotCardContainer(enable = enable, onClick = onCardClick, modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -98,9 +99,9 @@ private fun BlockedSlotCard(
                     onDismiss  = { showMenu = false },
                     menuItems  = listOf(
                         SlotMenuItem(
-                            label   = if (isActive) "Desactivar" else "Activar",
+                            label   = if (enable) "Desactivar" else "Activar",
                             icon    = Icons.Default.PowerSettingsNew,
-                            tint    = if (isActive) Terciario else Primario,
+                            tint    = if (enable) Terciario else Primario,
                             onClick = { showMenu = false; onToggleActive() }
                         ),
                         SlotMenuItem(
@@ -113,7 +114,7 @@ private fun BlockedSlotCard(
                             label         = "Eliminar",
                             icon          = Icons.Default.Delete,
                             tint          = Color(0xFFE53935),
-                            onClick       = { showMenu = false; onDelete() },
+                            onClick       = { showMenu = false; showDeleteConfirm = true },
                             isDestructive = true
                         )
                     )
@@ -128,7 +129,7 @@ private fun BlockedSlotCard(
                 fontWeight = FontWeight.Bold,
                 fontSize   = 20.sp,
                 lineHeight = 22.sp,
-                color      = if (isActive) Color(0xFF1A1A1A) else Color(0xFFAAAAAA),
+                color      = if (enable) Color(0xFF1A1A1A) else Color(0xFFAAAAAA),
                 maxLines   = 1,
                 overflow   = TextOverflow.Ellipsis
             )
@@ -143,14 +144,14 @@ private fun BlockedSlotCard(
             ) {
                 Icon(
                     Icons.Default.PowerSettingsNew, null,
-                    tint = if (isActive) Color(0xFF86cf66) else Terciario.copy(alpha = 0.6f),
+                    tint = if (enable) Color(0xFF86cf66) else Terciario.copy(alpha = 0.6f),
                     modifier = Modifier.size(13.dp).offset(y = -0.7.dp)
                 )
                 Text(
-                    if (isActive) "ACTIVA" else "INACTIVA",
+                    if (enable) "ACTIVA" else "INACTIVA",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isActive) Color(0xFF86cf66) else Terciario.copy(alpha = 0.6f)
+                    color = if (enable) Color(0xFF86cf66) else Terciario.copy(alpha = 0.6f)
                 )
             }
             Spacer(Modifier.height(4.dp))
@@ -161,7 +162,7 @@ private fun BlockedSlotCard(
             Spacer(Modifier.height(3.dp))
 
             // 5 ── Recurrencia ─────────────────────────────────────────
-            SlotRecurrenceRow(slot = slot, isActive = isActive, alpha = alpha)
+            SlotRecurrenceRow(slot = slot, enable = enable, alpha = alpha)
 
             Spacer(Modifier.weight(1f))
 
@@ -171,8 +172,16 @@ private fun BlockedSlotCard(
             Spacer(Modifier.height(4.dp))
 
             // 7 ── Días ────────────────────────────────────────────────
-            SlotDaysRow(slot = slot, dotColor = dotColor, isActive = isActive, alpha = alpha)
+            SlotDaysRow(slot = slot, dotColor = dotColor, enable = enable, alpha = alpha)
+            if (showDeleteConfirm) {
+                DeleteConfirmDialog(
+                    title     = "¿Eliminar tarea?",
+                    onConfirm = { onDelete() },
+                    onDismiss = { showDeleteConfirm = false }
+                )
+            }
         }
+
     }
 }
 
@@ -193,6 +202,7 @@ private fun TaskBlockedSlotCard(
     val dotColor   = slot.slotType.dotColor()
     val badgeColor = slot.slotType.badgeColors()
     var showMenu   by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val dayOfWeekForTask: Int? = remember(slot) {
         if (slot.recurrenceType == RecurrenceType.SINGLE_DAY) {
@@ -203,7 +213,7 @@ private fun TaskBlockedSlotCard(
         } else null
     }
 
-    SlotCardContainer(isActive = true, onClick = onCardClick, modifier = modifier) {
+    SlotCardContainer(enable = true, onClick = onCardClick, modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -239,7 +249,7 @@ private fun TaskBlockedSlotCard(
                             label         = "Eliminar bloqueo",
                             icon          = Icons.Default.LinkOff,
                             tint          = Color(0xFFE53935),
-                            onClick       = { showMenu = false; onDelete() },
+                            onClick       = { showMenu = false;  showDeleteConfirm = true },
                             isDestructive = true
                         )
                     )
@@ -295,7 +305,7 @@ private fun TaskBlockedSlotCard(
             Spacer(Modifier.height(3.dp))
 
             // 5 ── Recurrencia ─────────────────────────────────────────
-            SlotRecurrenceRow(slot = slot, isActive = true, alpha = 1f)
+            SlotRecurrenceRow(slot = slot, enable = true, alpha = 1f)
 
             Spacer(Modifier.weight(1f))
 
@@ -308,9 +318,16 @@ private fun TaskBlockedSlotCard(
             SlotDaysRow(
                 slot         = slot,
                 dotColor     = dotColor,
-                isActive     = true,
+                enable     = true,
                 alpha        = 1f,
                 highlightDay = dayOfWeekForTask
+            )
+        }
+        if (showDeleteConfirm) {
+            DeleteConfirmDialog(
+                title     = "¿Eliminar tarea?",
+                onConfirm = { onDelete() },
+                onDismiss = { showDeleteConfirm = false }
             )
         }
     }
@@ -322,7 +339,7 @@ private fun TaskBlockedSlotCard(
 
 @Composable
 private fun SlotCardContainer(
-    isActive: Boolean,
+    enable: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
@@ -334,7 +351,7 @@ private fun SlotCardContainer(
             .clickable { onClick() },
         shape     = RoundedCornerShape(16.dp),
         colors    = CardDefaults.cardColors(
-            containerColor = if (isActive) Color.White else Color(0xFFF7F7F7)
+            containerColor = if (enable) Color.White else Color(0xFFF7F7F7)
         )
     ) { content() }
 }
@@ -402,7 +419,7 @@ private fun SlotMenuButton(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun SlotRecurrenceRow(slot: TimeSlot, isActive: Boolean, alpha: Float) {
+private fun SlotRecurrenceRow(slot: TimeSlot, enable: Boolean, alpha: Float) {
     val fmtFull  = SimpleDateFormat("d MMM yyyy", Locale("es", "ES"))
     val fmtShort = SimpleDateFormat("d MMM",      Locale("es", "ES"))
 
@@ -418,7 +435,7 @@ private fun SlotRecurrenceRow(slot: TimeSlot, isActive: Boolean, alpha: Float) {
         RecurrenceType.WEEKLY     -> Icons.Default.Repeat to "Todas las semanas"
     }
 
-    val color = (if (isActive) Primario else Terciario).copy(alpha = alpha)
+    val color = (if (enable) Primario else Terciario).copy(alpha = alpha)
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(recIcon, null, tint = color, modifier = Modifier.size(13.dp).offset(y = -0.7.dp))
         Spacer(Modifier.width(4.dp))
@@ -471,7 +488,7 @@ private fun SlotTimeline(slot: TimeSlot, dotColor: Color, alpha: Float) {
 private fun SlotDaysRow(
     slot: TimeSlot,
     dotColor: Color,
-    isActive: Boolean,
+    enable: Boolean,
     alpha: Float,
     highlightDay: Int? = null
 ) {
@@ -489,7 +506,7 @@ private fun SlotDaysRow(
             val bgColor = when {
                 isHighlighted -> dotColor.copy(alpha = 0.5f)
                 isDimmed      -> Color(0xFFF2F2F2)
-                dayActive     -> dotColor.copy(alpha = if (isActive) 0.5f else 0.07f)
+                dayActive     -> dotColor.copy(alpha = if (enable) 0.5f else 0.07f)
                 else          -> Secundario
             }
             val textColor = when {

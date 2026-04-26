@@ -57,8 +57,8 @@ class CreateTimeSlot @Inject constructor(
                 .first()
 
             // ── Activa por defecto si no hay ninguna activa ──────────────────
-            val slotToSave = if (!timeSlot.isActive && existing.none { it.isActive }) {
-                timeSlot.copy(isActive = true)
+            val slotToSave = if (!timeSlot.enable && existing.none { it.enable }) {
+                timeSlot.copy(enable = true)
             } else {
                 timeSlot
             }

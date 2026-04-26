@@ -29,7 +29,7 @@ import com.asistente.core.domain.models.Activity
         Activity::class,
         TimeSlot::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

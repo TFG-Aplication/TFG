@@ -240,7 +240,7 @@ private fun DetailInfoSection(slot: TimeSlot) {
         DetailDaysRow(
             daysOfWeek = daysToShow,
             dotColor   = slot.slotType.dotColor(),
-            isActive   = slot.isActive
+            enable   = slot.enable
         )
     }
 }
@@ -263,9 +263,9 @@ private fun DetailInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector,
 
 // ── Grid de días ─────────────────────────────────────────────────────────────
 @Composable
-private fun DetailDaysRow(daysOfWeek: List<Int>, dotColor: Color, isActive: Boolean = true) {
+private fun DetailDaysRow(daysOfWeek: List<Int>, dotColor: Color, enable: Boolean = true) {
     val days       = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
-    val alpha      = if (isActive) 1f else 0.45f
+    val alpha      = if (enable) 1f else 0.45f
     val bgInactive = Color(0xFFF2F2F2)
 
     Column {
@@ -282,7 +282,7 @@ private fun DetailDaysRow(daysOfWeek: List<Int>, dotColor: Color, isActive: Bool
                         .weight(1f).aspectRatio(1f)
                         .clip(RoundedCornerShape(6.dp))
                         .background(
-                            if (dayActive) dotColor.copy(alpha = if (isActive) 0.5f else 0.07f)
+                            if (dayActive) dotColor.copy(alpha = if (enable) 0.5f else 0.07f)
                             else bgInactive
                         ),
                     contentAlignment = Alignment.Center
@@ -319,25 +319,25 @@ private fun ActiveToggleRow(slot: TimeSlot, onToggleActive: () -> Unit) {
             modifier = Modifier
                 .size(32.dp).clip(RoundedCornerShape(8.dp))
                 .background(
-                    if (slot.isActive) ColorActivo.copy(alpha = 0.12f)
+                    if (slot.enable) ColorActivo.copy(alpha = 0.12f)
                     else Terciario.copy(alpha = 0.10f)
                 ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.PowerSettingsNew, null,
-                tint     = if (slot.isActive) ColorActivo else Terciario,
+                tint     = if (slot.enable) ColorActivo else Terciario,
                 modifier = Modifier.size(17.dp)
             )
         }
         Text(
-            if (slot.isActive) "Franja activa" else "Franja inactiva",
+            if (slot.enable) "Franja activa" else "Franja inactiva",
             fontSize   = 16.sp, fontWeight = FontWeight.SemiBold,
-            color      = if (slot.isActive) ColorActivo else Terciario,
+            color      = if (slot.enable) ColorActivo else Terciario,
             modifier   = Modifier.weight(1f)
         )
         Switch(
-            checked         = slot.isActive,
+            checked         = slot.enable,
             onCheckedChange = { onToggleActive() },
             colors          = SwitchDefaults.colors(
                 checkedTrackColor    = ColorActivo,

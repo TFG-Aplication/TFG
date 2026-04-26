@@ -29,7 +29,7 @@ object TimeSlotOverlapChecker {
         if (candidateWindows.isEmpty()) return emptyList()
 
         return existingSlots.filter { existing ->
-            if (!existing.isActive) return@filter false
+            if (!existing.enable) return@filter false
             val existingWindows = resolveWindows(existing)
             existingWindows.any { eWin ->
                 candidateWindows.any { cWin -> windowsOverlap(cWin, eWin) }

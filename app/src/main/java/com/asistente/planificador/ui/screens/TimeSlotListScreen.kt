@@ -101,7 +101,7 @@ fun TimeSlotListScreen(
             val matchesName       = searchQuery.isBlank() || slot.name.contains(searchQuery, ignoreCase = true)
             val matchesType       = activeTypeFilters.isEmpty() || slot.slotType in activeTypeFilters
             val matchesRecurrence = activeRecurrenceFilters.isEmpty() || slot.recurrenceType in activeRecurrenceFilters
-            val matchesStatus     = activeStatusFilter == null || slot.isActive == activeStatusFilter
+            val matchesStatus     = activeStatusFilter == null || slot.enable == activeStatusFilter
             matchesName && matchesType && matchesRecurrence && matchesStatus
         }
     }
@@ -551,7 +551,7 @@ private fun getSlotForCell(
     val hourEnd   = hourStart + 60
 
     val candidates = slots.filter { slot ->
-        if (!slot.isActive) return@filter false
+        if (!slot.enable) return@filter false
         val hourMatches = hourStart < slot.endMinuteOfDay && hourEnd > slot.startMinuteOfDay
         if (!hourMatches) return@filter false
         when (slot.recurrenceType) {

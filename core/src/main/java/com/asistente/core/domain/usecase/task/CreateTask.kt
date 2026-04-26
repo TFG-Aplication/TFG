@@ -95,7 +95,7 @@ class CreateTask @Inject constructor(
                     rangeEnd = finishDate,
                     startMinuteOfDay = startMinute,
                     endMinuteOfDay = endMinute,
-                    isActive = true
+                    enable = true
                 )
 
                 val listTimeSlots = repositoryTimeSlot.getAllTimeSlotsByCalendarId(calendarId)

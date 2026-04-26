@@ -27,10 +27,10 @@ interface TimeSlotDao {
 
     // ── Suspendidas para lógica interna / sync ────────────────────────────
 
-    @Query("SELECT * FROM time_slots WHERE parentCalendarId = :calendarId AND syncStatus != 2 AND isActive = 1")
+    @Query("SELECT * FROM time_slots WHERE parentCalendarId = :calendarId AND syncStatus != 2 AND enable = 1")
     suspend fun getAllTimeSlotsByCalendarId(calendarId: String): List<TimeSlot>
 
-    @Query("SELECT * FROM time_slots WHERE (owners LIKE '%\"' || :userId || '\"%' OR owners LIKE '%' || :userId || '%') AND syncStatus != 2 AND isActive = 1")
+    @Query("SELECT * FROM time_slots WHERE (owners LIKE '%\"' || :userId || '\"%' OR owners LIKE '%' || :userId || '%') AND syncStatus != 2 AND enable = 1")
     suspend fun getAllTimeSlotsByUserId(userId: String): List<TimeSlot>
 
     @Query("SELECT * FROM time_slots WHERE id = :slotId")
