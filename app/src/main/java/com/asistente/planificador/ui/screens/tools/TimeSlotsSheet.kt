@@ -1,7 +1,6 @@
 package com.asistente.planificador.ui.screens.tools
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +31,7 @@ import com.asistente.planificador.ui.screens.shortLabel
 import com.asistente.planificador.ui.viewmodels.TimeSlotDetailState
 import com.asistente.planificador.ui.viewmodels.toTimeString
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
 
 
@@ -84,15 +84,12 @@ fun TimeSlotDetailSheet(
                     .padding(horizontal = 20.dp)
                     .padding(top = 20.dp, bottom = 8.dp)
             ) {
-                DetailInfoSection(slot = state.slot)
-
-                if (state.slot.slotType == SlotType.BLOCKED) {
-                    Spacer(Modifier.height(14.dp))
-                    ActiveToggleRow(
-                        slot           = state.slot,
-                        onToggleActive = { onToggleActive(state.slot) }
-                    )
-                }
+                DetailInfoSection(
+                    slot           = state.slot,
+                    onToggleActive = if (state.slot.slotType == SlotType.BLOCKED) {
+                        { onToggleActive(state.slot) }
+                    } else null
+                )
 
                 if (state.slot.slotType == SlotType.TASK_BLOCKED && state.associatedTask != null) {
                     SectionSpacer()
@@ -197,34 +194,85 @@ private fun SheetHeader(slot: TimeSlot, onEdit: () -> Unit, onEditTask: () -> Un
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun DetailInfoSection(slot: TimeSlot) {
+private fun DetailInfoSection(slot: TimeSlot, onToggleActive: (() -> Unit)? = null) {
     val fmtFull  = SimpleDateFormat("d 'de' MMMM, yyyy", Locale("es", "ES"))
-    val fmtShort = SimpleDateFormat("d MMM yyyy",         Locale("es", "ES"))
+    val fmtShort = SimpleDateFormat("d MMM yyyy", Locale("es", "ES"))
 
     SectionTitle("Información")
     Spacer(Modifier.height(12.dp))
 
-    DetailInfoRow(Icons.Default.AccessTime, IconFecha, "Horario",
-        "${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()}")
-    Spacer(Modifier.height(10.dp))
-    DetailInfoRow(Icons.Default.Repeat, IconRepeticion, "Recurrencia",
-        slot.recurrenceType.shortLabel())
+    IosGroupCard {
+        IosRow(
+            icon     = Icons.Default.AccessTime,
+            iconTint = IconFecha,
+            label    = "Horario"
+        ) {
+            TrailingText("${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()}")
+        }
 
-    when (slot.recurrenceType) {
-        RecurrenceType.SINGLE_DAY -> {
-            Spacer(Modifier.height(10.dp))
-            DetailInfoRow(Icons.Default.Event, IconFecha, "Fecha",
-                slot.rangeStart?.let { fmtFull.format(it) } ?: "—")
+        IosDivider()
+        IosRow(
+            icon     = Icons.Default.Repeat,
+            iconTint = IconRepeticion,
+            label    = "Recurrencia"
+        ) {
+            TrailingText(slot.recurrenceType.shortLabel())
         }
-        RecurrenceType.DATE_RANGE -> {
-            Spacer(Modifier.height(10.dp))
-            DetailInfoRow(Icons.Default.DateRange, IconFecha, "Período",
-                "${slot.rangeStart?.let { fmtShort.format(it) } ?: "?"} → " +
-                        (slot.rangeEnd?.let { fmtShort.format(it) } ?: "?"))
+
+        when (slot.recurrenceType) {
+            RecurrenceType.SINGLE_DAY -> {
+                IosDivider()
+                IosRow(
+                    icon     = Icons.Default.Event,
+                    iconTint = IconFecha,
+                    label    = "Fecha"
+                ) {
+                    TrailingText(slot.rangeStart?.let { fmtFull.format(it) } ?: "—")
+                }
+            }
+            RecurrenceType.DATE_RANGE -> {
+                IosDivider()
+                IosRow(
+                    icon     = Icons.Default.DateRange,
+                    iconTint = IconFecha,
+                    label    = "Período"
+                ) {
+                    TrailingText(
+                        "${slot.rangeStart?.let { fmtShort.format(it) } ?: "?"} → " +
+                                (slot.rangeEnd?.let { fmtShort.format(it) } ?: "?")
+                    )
+                }
+            }
+            else -> Unit
         }
-        else -> Unit
     }
-
+    SectionDivider()
+    if (onToggleActive != null) {
+        Spacer(Modifier.height(6.dp))
+        SectionTitle("Estado de franja")
+        Spacer(Modifier.height(2.dp))
+        IosGroupCard {
+            IosRow(
+                icon     = Icons.Default.PowerSettingsNew,
+                iconTint = if (slot.enable) ColorActivo else Terciario,
+                label    = if (slot.enable) "Franja activa" else "Franja inactiva"
+            ) {
+                Switch(
+                    checked         = slot.enable,
+                    onCheckedChange = { onToggleActive() },
+                    colors          = SwitchDefaults.colors(
+                        checkedTrackColor    = Primario,
+                        checkedThumbColor    = Color.White,
+                        uncheckedTrackColor  = Terciario.copy(alpha = 0.3f),
+                        uncheckedThumbColor  = Color.White,
+                        uncheckedBorderColor = Color.Transparent,
+                        checkedBorderColor   = Color.Transparent
+                    )
+                )
+            }
+        }
+    }
+    SectionDivider()
     val daysToShow: List<Int> = when (slot.recurrenceType) {
         RecurrenceType.SINGLE_DAY -> {
             slot.rangeStart?.let {
@@ -237,45 +285,33 @@ private fun DetailInfoSection(slot: TimeSlot) {
     }
     if (daysToShow.isNotEmpty()) {
         Spacer(Modifier.height(14.dp))
+        SectionTitle("Días activos")
+        Spacer(Modifier.height(8.dp))
         DetailDaysRow(
             daysOfWeek = daysToShow,
             dotColor   = slot.slotType.dotColor(),
-            enable   = slot.enable
+            enable     = slot.enable
         )
-    }
-}
-
-// ── Fila de un campo de detalle (icono + label + valor) ──────────────────────
-@Composable
-private fun DetailInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color, label: String, value: String) {
-    Row(
-        modifier              = Modifier.fillMaxWidth(),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        TintedIconBox(icon = icon, tint = tint)
-        Column {
-            DetailLabel(label)
-            DetailValue(value)
-        }
     }
 }
 
 // ── Grid de días ─────────────────────────────────────────────────────────────
 @Composable
-private fun DetailDaysRow(daysOfWeek: List<Int>, dotColor: Color, enable: Boolean = true) {
-    val days       = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
+private fun DetailDaysRow(
+    daysOfWeek: List<Int>,
+    dotColor: Color,
+    enable: Boolean = true,
+    modifier: Modifier = Modifier   // ← añadir
+) {
     val alpha      = if (enable) 1f else 0.45f
     val bgInactive = Color(0xFFF2F2F2)
 
-    Column {
-        DetailLabel("Días activos")
-        Spacer(Modifier.height(8.dp))
-        Row(
-            modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            days.forEach { (num, lbl) ->
+    Row(
+        modifier              = modifier.fillMaxWidth(),  // ← usar aquí
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        val days = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
+        days.forEach { (num, lbl) ->
                 val dayActive = daysOfWeek.contains(num)
                 Box(
                     modifier = Modifier
@@ -298,58 +334,8 @@ private fun DetailDaysRow(daysOfWeek: List<Int>, dotColor: Color, enable: Boolea
                 }
             }
         }
-    }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOGGLE ACTIVO
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ActiveToggleRow(slot: TimeSlot, onToggleActive: () -> Unit) {
-    Row(
-        modifier              = Modifier
-            .fillMaxWidth()
-            .clickable { onToggleActive() }
-            .padding(vertical = 4.dp),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp).clip(RoundedCornerShape(8.dp))
-                .background(
-                    if (slot.enable) ColorActivo.copy(alpha = 0.12f)
-                    else Terciario.copy(alpha = 0.10f)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.PowerSettingsNew, null,
-                tint     = if (slot.enable) ColorActivo else Terciario,
-                modifier = Modifier.size(17.dp)
-            )
-        }
-        Text(
-            if (slot.enable) "Franja activa" else "Franja inactiva",
-            fontSize   = 16.sp, fontWeight = FontWeight.SemiBold,
-            color      = if (slot.enable) ColorActivo else Terciario,
-            modifier   = Modifier.weight(1f)
-        )
-        Switch(
-            checked         = slot.enable,
-            onCheckedChange = { onToggleActive() },
-            colors          = SwitchDefaults.colors(
-                checkedTrackColor    = ColorActivo,
-                checkedThumbColor    = Color.White,
-                uncheckedTrackColor  = Terciario.copy(alpha = 0.3f),
-                uncheckedThumbColor  = Color.White,
-                uncheckedBorderColor = Color.Transparent,
-                checkedBorderColor   = Color.Transparent
-            )
-        )
-    }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TAREA ASOCIADA
