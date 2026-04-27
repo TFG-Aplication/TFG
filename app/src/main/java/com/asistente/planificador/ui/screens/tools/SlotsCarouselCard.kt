@@ -275,8 +275,7 @@ private fun TaskBlockedSlotCard(
             val hasCat     = categoryName != null
             val baseColor  = if (hasCat)   (categoryColor ?: darkenColor(colorCuarto)) else darkenColor(colorCuarto)
             val labelText  = (categoryName ?: "Sin categoría").uppercase()
-
-                Row(
+            Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {

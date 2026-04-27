@@ -29,13 +29,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.core.domain.models.RecurrenceType
 import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.TimeSlot
+import com.asistente.planificador.ui.screens.tools.AppBanner
+import com.asistente.planificador.ui.screens.tools.BannerStyle
+import com.asistente.planificador.ui.screens.tools.ColorActivo
+import com.asistente.planificador.ui.screens.tools.ColorEdit
 import com.asistente.planificador.ui.screens.tools.ColorGrisFondo
+import com.asistente.planificador.ui.screens.tools.ColorGrisOscuro
+import com.asistente.planificador.ui.screens.tools.IconAlarma
 import com.asistente.planificador.ui.screens.tools.IconNotas
 import com.asistente.planificador.ui.screens.tools.Primario
 import com.asistente.planificador.ui.screens.tools.SearchAndFilterBar
 import com.asistente.planificador.ui.screens.tools.SlotsCarousel
 import com.asistente.planificador.ui.screens.tools.Terciario
 import com.asistente.planificador.ui.screens.tools.TimeSlotDetailSheet
+import com.asistente.planificador.ui.screens.tools.WarningCountChip
+import com.asistente.planificador.ui.screens.tools.darkenColor
 import com.asistente.planificador.ui.screens.tools.dotColor
 import com.asistente.planificador.ui.viewmodels.TimeSlotEvent
 import com.asistente.planificador.ui.viewmodels.TimeSlotViewModel
@@ -174,9 +182,10 @@ fun TimeSlotListScreen(
             }
             item {
                 PlanningToggleBanner(
-                    enabled  = planningEnabled,
-                    onToggle = { viewModel.togglePlanning() },
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 8.dp)
+                    slots       = slots,
+                    onDisableAll = { viewModel.disableAllActiveSlots() },
+                    onEnableAll  = { viewModel.enableAllInactiveSlots() },
+                    modifier    = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 8.dp)
                 )
             }
             item {
@@ -589,47 +598,200 @@ private fun LegendItem(color: Color, label: String) {
 }
 
 @Composable
-fun PlanningToggleBanner(enabled: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
-    val textColor   = if (enabled) Primario else Terciario
+fun PlanningToggleBanner(
+    slots: List<TimeSlot>,
+    onDisableAll: () -> Unit,
+    onEnableAll: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val hasActive   = slots.any { it.enable && it.slotType == SlotType.BLOCKED }
+    val hasInactive = slots.any { !it.enable && it.slotType == SlotType.BLOCKED }
+
+    var confirmAction  by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var confirmMessage by remember { mutableStateOf("") }
+    var toastMessage   by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(toastMessage) {
+        if (toastMessage != null) {
+            kotlinx.coroutines.delay(4000)
+            toastMessage = null
+        }
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape    = RoundedCornerShape(16.dp),
         color    = Color.White,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier.size(40.dp)
-                    .background(if (enabled) Primario else Terciario.copy(alpha = 0.15f), CircleShape),
-                contentAlignment = Alignment.Center
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Default.Extension, null,
-                    tint = if (enabled) Color.White else Terciario,
-                    modifier = Modifier.size(22.dp))
+                // ── Icono ────────────────────────────────────────────────────
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            Primario ,
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Extension, null,
+                        tint     = Color.White ,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                // ── Texto + botones apilados ─────────────────────────────────
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Asistente de planificación",
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 16.sp,
+                        color      = Primario
+                    )
+                    Text(
+                        when {
+                            hasActive && hasInactive -> "Estado mixto · algunas franjas manuales están inactivas"
+                            hasActive                -> "Activo · todas las franjas manuales están activas"
+                            else                     -> "Desactivado · todas las franjas manuales están inactivas"
+                        },
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color    = if (hasActive) Primario.copy(alpha = 0.8f) else Terciario.copy(alpha = 0.8f)
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        // Desactivar todas
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (hasActive) IconAlarma.copy(alpha = 0.35f) else ColorGrisFondo
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .clickable {
+                                        if (hasActive) {
+                                            confirmMessage = "Se desactivarán todas las franjas manuales activas. El asistente dejará de tenerlas en cuenta al planificar."
+                                            confirmAction  = onDisableAll
+                                        } else {
+                                            toastMessage = "Todas las franjas ya están inactivas"
+                                        }
+                                    }
+                                    .padding(horizontal = 11.dp, vertical = 7.dp),
+                                verticalAlignment     = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.RemoveCircleOutline, null,
+                                    tint     = if (hasActive) darkenColor(IconAlarma) else ColorGrisOscuro,
+                                    modifier = Modifier.size(16.dp).offset(y = (-0.6).dp)
+                                )
+                                Text(
+                                    "Desactivar todas",
+                                    fontSize   = 12.sp,
+                                    color      = if (hasActive) darkenColor(IconAlarma) else ColorGrisOscuro,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Activar todas
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (hasInactive) ColorActivo.copy(alpha = 0.35f) else ColorGrisFondo
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .clickable {
+                                        if (hasInactive) {
+                                            confirmMessage = "Se activarán todas las franjas manuales inactivas. El asistente volverá a tenerlas en cuenta al planificar."
+                                            confirmAction  = onEnableAll
+                                        } else {
+                                            toastMessage = "Todas las franjas ya están activas"
+                                        }
+                                    }
+                                    .padding(horizontal = 11.dp, vertical = 7.dp),
+                                verticalAlignment     = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.AddCircleOutline, null,
+                                    tint     = if (hasInactive) darkenColor(ColorActivo) else ColorGrisOscuro,
+                                    modifier = Modifier.size(16.dp).offset(y = (-0.6).dp)
+                                )
+                                Text(
+                                    "Activar todas",
+                                    fontSize   = 12.sp,
+                                    color      = if (hasInactive) darkenColor(ColorActivo) else ColorGrisOscuro,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Asistente de planificación", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
-                Text(
-                    if (enabled) "Activo · aplica solo a franjas activas" else "Desactivado · no se usarán franjas",
-                    fontSize = 11.sp, color = textColor.copy(alpha = 0.9f)
-                )
+
+
+            // ── Toast inline ─────────────────────────────────────────────────
+            if (toastMessage != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Color.White,
+                            RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    AppBanner(
+                        text  = toastMessage.toString(),
+                        style = BannerStyle.WARNING
+                    )
+                }
             }
-            Switch(
-                checked  = enabled,
-                onCheckedChange = { onToggle() },
-                colors   = SwitchDefaults.colors(
-                    checkedThumbColor   = Color.White,
-                    checkedTrackColor   = Primario,
-                    uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Terciario.copy(alpha = 0.35f),
-                    uncheckedBorderColor = Color.Transparent
-                )
-            )
         }
+    }
+
+// ── Dialog de confirmación ────────────────────────────────────────────────
+confirmAction?.let { action ->
+        AlertDialog(
+            onDismissRequest = { confirmAction = null },
+            containerColor   = Color.White,
+            shape            = RoundedCornerShape(20.dp),
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFFF8E1)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Warning, null, tint = Color(0xFFF57F17), modifier = Modifier.size(26.dp))
+                }
+            },
+            title = { Text("¿Confirmar cambio?", fontWeight = FontWeight.Bold, fontSize = 17.sp, textAlign = TextAlign.Center) },
+            text  = { Text(confirmMessage, fontSize = 13.sp, color = Terciario, textAlign = TextAlign.Center) },
+            confirmButton = {
+                Button(
+                    onClick = { action(); confirmAction = null },
+                    colors  = ButtonDefaults.buttonColors(containerColor = Primario),
+                    shape   = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Confirmar", fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmAction = null }) {
+                    Text("Cancelar", color = ColorEdit, fontSize = 17.sp)
+                }
+            }
+        )
     }
 }
 

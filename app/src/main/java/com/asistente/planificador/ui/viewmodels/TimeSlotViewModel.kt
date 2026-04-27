@@ -300,6 +300,32 @@ class TimeSlotViewModel @Inject constructor(
         }
     }
 
+    // ── Activar/desactivar todas (solo BLOCKED, no TASK_BLOCKED) ─────────────────
+
+    fun disableAllActiveSlots() {
+        viewModelScope.launch {
+            runCatching {
+                timeSlotList.value
+                    .filter { it.enable && it.slotType == SlotType.BLOCKED }
+                    .forEach { timeSlotRepository.updateTimeSlot(it.copy(enable = false)) }
+            }.onFailure { e ->
+                _events.emit(TimeSlotEvent.Error("Error al desactivar: ${e.message}"))
+            }
+        }
+    }
+
+    fun enableAllInactiveSlots() {
+        viewModelScope.launch {
+            runCatching {
+                timeSlotList.value
+                    .filter { !it.enable && it.slotType == SlotType.BLOCKED }
+                    .forEach { timeSlotRepository.updateTimeSlot(it.copy(enable = true)) }
+            }.onFailure { e ->
+                _events.emit(TimeSlotEvent.Error("Error al activar: ${e.message}"))
+            }
+        }
+    }
+
     // ── Eliminar ──────────────────────────────────────────────────────────────
 
     fun deleteTimeSlot(timeSlotId: String) {

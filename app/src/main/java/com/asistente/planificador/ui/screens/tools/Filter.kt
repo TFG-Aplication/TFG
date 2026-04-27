@@ -175,8 +175,8 @@ fun SearchAndFilterBar(
                         ActiveFilterChip(
                             label     = if (active) "Activas" else "Inactivas",
                             bg        = if (active) ColorActivo.copy(alpha = 0.25f)
-                            else ColorWarning.copy(alpha = 0.35f),
-                            textColor = if (active) darkenColor(ColorActivo) else ColorGrisOscuro,
+                            else IconAlarma.copy(alpha = 0.35f),
+                            textColor = if (active) darkenColor(ColorActivo) else darkenColor(IconAlarma),
                             onRemove  = { onStatusFilterChange(active) }
                         )
                     }
