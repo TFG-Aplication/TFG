@@ -1,4 +1,4 @@
-package com.asistente.planificador.ui.screens.tools
+package com.asistente.planificador.ui.screens.timeSlots
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import com.asistente.planificador.ui.screens.label
+import com.asistente.planificador.ui.screens.shortLabel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,8 +28,34 @@ import com.asistente.core.domain.models.RecurrenceType
 import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.Task
 import com.asistente.core.domain.models.TimeSlot
-import com.asistente.planificador.ui.screens.label
-import com.asistente.planificador.ui.screens.shortLabel
+import com.asistente.planificador.ui.screens.tools.AppBanner
+import com.asistente.planificador.ui.screens.tools.BannerStyle
+import com.asistente.planificador.ui.screens.tools.ClickableItemCard
+import com.asistente.planificador.ui.screens.tools.ColorAccentBar
+import com.asistente.planificador.ui.screens.tools.ColorActivo
+import com.asistente.planificador.ui.screens.tools.DeleteConfirmDialog
+import com.asistente.planificador.ui.screens.tools.DestructiveFooterButton
+import com.asistente.planificador.ui.screens.tools.EditActionButton
+import com.asistente.planificador.ui.screens.tools.IconFecha
+import com.asistente.planificador.ui.screens.tools.IconRepeticion
+import com.asistente.planificador.ui.screens.tools.InlineTypeLabel
+import com.asistente.planificador.ui.screens.tools.IosDivider
+import com.asistente.planificador.ui.screens.tools.IosGroupCard
+import com.asistente.planificador.ui.screens.tools.IosRow
+import com.asistente.planificador.ui.screens.tools.ItemTitle
+import com.asistente.planificador.ui.screens.tools.MetaText
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.SectionDivider
+import com.asistente.planificador.ui.screens.tools.SectionSpacer
+import com.asistente.planificador.ui.screens.tools.SectionTitle
+import com.asistente.planificador.ui.screens.tools.SheetDragHandle
+import com.asistente.planificador.ui.screens.tools.Terciario
+import com.asistente.planificador.ui.screens.tools.TintedIconBox
+import com.asistente.planificador.ui.screens.tools.TrailingText
+import com.asistente.planificador.ui.screens.tools.WarningCountChip
+import com.asistente.planificador.ui.screens.tools.badgeColors
+import com.asistente.planificador.ui.screens.tools.darkenColor
+import com.asistente.planificador.ui.screens.tools.dotColor
 import com.asistente.planificador.ui.viewmodels.TimeSlotDetailState
 import com.asistente.planificador.ui.viewmodels.toTimeString
 import java.text.SimpleDateFormat
@@ -110,7 +138,7 @@ fun TimeSlotDetailSheet(
                 if (state.slot.slotType == SlotType.TASK_BLOCKED) {
                     Spacer(Modifier.height(12.dp))
                     AppBanner(
-                        text  = "Esta franja se gestiona desde su tarea asociada.",
+                        text = "Esta franja se gestiona desde su tarea asociada.",
                         style = BannerStyle.INFO
                     )
                 }
@@ -118,8 +146,8 @@ fun TimeSlotDetailSheet(
 
             if (showDeleteConfirm) {
                 DeleteConfirmDialog(
-                    title     = when (state.slot.slotType) {
-                        SlotType.BLOCKED      -> "¿Eliminar franja?"
+                    title = when (state.slot.slotType) {
+                        SlotType.BLOCKED -> "¿Eliminar franja?"
                         SlotType.TASK_BLOCKED -> "¿Eliminar bloqueo de tarea?"
                     },
                     onConfirm = { onDelete(state.slot); onDismiss() },
@@ -129,11 +157,13 @@ fun TimeSlotDetailSheet(
 
             SectionDivider()
             DestructiveFooterButton(
-                label   = when (state.slot.slotType) {
-                    SlotType.BLOCKED      -> "Eliminar franja"
+                label = when (state.slot.slotType) {
+                    SlotType.BLOCKED -> "Eliminar franja"
                     SlotType.TASK_BLOCKED -> "Eliminar bloqueo de tarea"
                 },
-                onClick = { showDeleteConfirm = true }   // ← antes era onDelete + onDismiss directamente
+                onClick = {
+                    showDeleteConfirm = true
+                }   // ← antes era onDelete + onDismiss directamente
             )
         }
     }
@@ -161,13 +191,13 @@ private fun SheetHeader(slot: TimeSlot, onEdit: () -> Unit, onEditTask: () -> Un
         ) {
             // Icono grande con fondo (44 dp, corner 11 dp)
             TintedIconBox(
-                icon         = when (slot.slotType) {
-                    SlotType.BLOCKED      -> Icons.Default.Block
+                icon = when (slot.slotType) {
+                    SlotType.BLOCKED -> Icons.Default.Block
                     SlotType.TASK_BLOCKED -> Icons.Default.CheckCircle
                 },
-                tint         = dotColor,
-                boxSize      = 44.dp,
-                iconSize     = 22.dp,
+                tint = dotColor,
+                boxSize = 44.dp,
+                iconSize = 22.dp,
                 cornerRadius = 11.dp
             )
 
@@ -203,18 +233,18 @@ private fun DetailInfoSection(slot: TimeSlot, onToggleActive: (() -> Unit)? = nu
 
     IosGroupCard {
         IosRow(
-            icon     = Icons.Default.AccessTime,
+            icon = Icons.Default.AccessTime,
             iconTint = IconFecha,
-            label    = "Horario"
+            label = "Horario"
         ) {
             TrailingText("${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()}")
         }
 
         IosDivider()
         IosRow(
-            icon     = Icons.Default.Repeat,
+            icon = Icons.Default.Repeat,
             iconTint = IconRepeticion,
-            label    = "Recurrencia"
+            label = "Recurrencia"
         ) {
             TrailingText(slot.recurrenceType.shortLabel())
         }
@@ -223,19 +253,20 @@ private fun DetailInfoSection(slot: TimeSlot, onToggleActive: (() -> Unit)? = nu
             RecurrenceType.SINGLE_DAY -> {
                 IosDivider()
                 IosRow(
-                    icon     = Icons.Default.Event,
+                    icon = Icons.Default.Event,
                     iconTint = IconFecha,
-                    label    = "Fecha"
+                    label = "Fecha"
                 ) {
                     TrailingText(slot.rangeStart?.let { fmtFull.format(it) } ?: "—")
                 }
             }
+
             RecurrenceType.DATE_RANGE -> {
                 IosDivider()
                 IosRow(
-                    icon     = Icons.Default.DateRange,
+                    icon = Icons.Default.DateRange,
                     iconTint = IconFecha,
-                    label    = "Período"
+                    label = "Período"
                 ) {
                     TrailingText(
                         "${slot.rangeStart?.let { fmtShort.format(it) } ?: "?"} → " +
@@ -243,6 +274,7 @@ private fun DetailInfoSection(slot: TimeSlot, onToggleActive: (() -> Unit)? = nu
                     )
                 }
             }
+
             else -> Unit
         }
     }
@@ -253,20 +285,20 @@ private fun DetailInfoSection(slot: TimeSlot, onToggleActive: (() -> Unit)? = nu
         Spacer(Modifier.height(2.dp))
         IosGroupCard {
             IosRow(
-                icon     = Icons.Default.PowerSettingsNew,
+                icon = Icons.Default.PowerSettingsNew,
                 iconTint = if (slot.enable) ColorActivo else Terciario,
-                label    = if (slot.enable) "Franja activa" else "Franja inactiva"
+                label = if (slot.enable) "Franja activa" else "Franja inactiva"
             ) {
                 Switch(
-                    checked         = slot.enable,
+                    checked = slot.enable,
                     onCheckedChange = { onToggleActive() },
-                    colors          = SwitchDefaults.colors(
-                        checkedTrackColor    = Primario,
-                        checkedThumbColor    = Color.White,
-                        uncheckedTrackColor  = Terciario.copy(alpha = 0.3f),
-                        uncheckedThumbColor  = Color.White,
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = Primario,
+                        checkedThumbColor = Color.White,
+                        uncheckedTrackColor = Terciario.copy(alpha = 0.3f),
+                        uncheckedThumbColor = Color.White,
                         uncheckedBorderColor = Color.Transparent,
-                        checkedBorderColor   = Color.Transparent
+                        checkedBorderColor = Color.Transparent
                     )
                 )
             }
@@ -276,9 +308,9 @@ private fun DetailInfoSection(slot: TimeSlot, onToggleActive: (() -> Unit)? = nu
     val daysToShow: List<Int> = when (slot.recurrenceType) {
         RecurrenceType.SINGLE_DAY -> {
             slot.rangeStart?.let {
-                val cal = java.util.Calendar.getInstance().apply { time = it }
-                val cd  = cal.get(java.util.Calendar.DAY_OF_WEEK)
-                listOf(if (cd == java.util.Calendar.SUNDAY) 7 else cd - 1)
+                val cal = Calendar.getInstance().apply { time = it }
+                val cd  = cal.get(Calendar.DAY_OF_WEEK)
+                listOf(if (cd == Calendar.SUNDAY) 7 else cd - 1)
             } ?: slot.daysOfWeek
         }
         else -> slot.daysOfWeek
@@ -356,14 +388,14 @@ private fun AssociatedTaskSection(task: Task, onViewTask: () -> Unit) {
             InlineTypeLabel(Icons.Default.CheckCircle, "Tarea bloqueante", Primario)
             Spacer(Modifier.height(1.dp))
             Row(
-                modifier          = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     task.name,
-                    fontSize   = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black,
-                    maxLines   = 1, overflow = TextOverflow.Ellipsis,
-                    modifier   = Modifier.weight(1f)
+                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(8.dp))
                 MetaText("${fmtShort.format(task.init_date)} – ${fmtShort.format(task.finish_date)}")
@@ -395,7 +427,7 @@ private fun OverlappingSlotsSection(
     Spacer(Modifier.height(10.dp))
 
     AppBanner(
-        text  = "En zonas de solapamiento las franjas de tarea tienen prioridad visual. " +
+        text = "En zonas de solapamiento las franjas de tarea tienen prioridad visual. " +
                 "Las franjas manuales siguen activas pero pueden no verse en el calendario.",
         style = BannerStyle.WARNING
     )
@@ -422,14 +454,14 @@ private fun OverlappingSlotRow(slot: TimeSlot, onClick: () -> Unit) {
             InlineTypeLabel(Icons.Default.CheckCircle, slot.slotType.label(), dotColor)
             Spacer(Modifier.height(1.dp))
             Row(
-                modifier          = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     slot.name,
-                    fontSize   = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black,
-                    maxLines   = 1, overflow = TextOverflow.Ellipsis,
-                    modifier   = Modifier.weight(1f)
+                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(8.dp))
                 MetaText(

@@ -1,4 +1,4 @@
-package com.asistente.planificador.ui.screens
+package com.asistente.planificador.ui.screens.timeSlots
 
 import SelectionDate
 import androidx.compose.foundation.background
@@ -16,7 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import android.R.attr.alpha
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,13 +25,17 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.core.domain.models.RecurrenceType
-import com.asistente.core.domain.models.TimeSlot
+import com.asistente.planificador.ui.screens.WarningDialog
 import com.asistente.planificador.ui.screens.tools.*
 import com.asistente.planificador.ui.viewmodels.TimeSlotEvent
 import com.asistente.planificador.ui.viewmodels.TimeSlotViewModel
 import com.asistente.planificador.ui.viewmodels.toHourMinute
 import com.asistente.planificador.ui.viewmodels.toTimeString
 import kotlinx.coroutines.flow.collectLatest
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -249,10 +254,10 @@ fun TimeSlotForm(
             } else {
                 val dayLabels = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
                 val derivedDay: Int? = state.rangeStart?.let { date ->
-                    val cal = java.util.Calendar.getInstance().apply { time = date }
+                    val cal = Calendar.getInstance().apply { time = date }
                     // Calendar.DAY_OF_WEEK: 1=Dom,2=Lun...7=Sab → convertimos a tu esquema (1=Lun...7=Dom)
-                    val javaDow = cal.get(java.util.Calendar.DAY_OF_WEEK)
-                    if (javaDow == java.util.Calendar.SUNDAY) 7 else javaDow - 1
+                    val javaDow = cal.get(Calendar.DAY_OF_WEEK)
+                    if (javaDow == Calendar.SUNDAY) 7 else javaDow - 1
                 }
                 IosGroupCard {
                     IosRow(
@@ -330,7 +335,7 @@ fun TimeSlotForm(
 
         pendingWarnings?.let { warnings ->
             WarningDialog(
-                warnings  = warnings,
+                warnings = warnings,
                 onDismiss = { pendingWarnings = null; onBack() }
             )
         }
@@ -348,10 +353,10 @@ private fun BasicNameField(
     onValueChange: (String) -> Unit,
     hasError     : Boolean
 ) {
-    androidx.compose.foundation.text.BasicTextField(
+    BasicTextField(
         value         = value,
         onValueChange = onValueChange,
-        textStyle     = androidx.compose.ui.text.TextStyle(
+        textStyle     = TextStyle(
             fontSize   = 22.sp,
             fontWeight = FontWeight.Bold,
             color      = Color.Black
@@ -464,13 +469,13 @@ private fun WeekParitySelector(selected: RecurrenceType, onSelected: (Recurrence
 
 @Composable
 private fun DateRangeSelector(
-    startDate   : java.util.Date?,
-    endDate     : java.util.Date?,
+    startDate   : Date?,
+    endDate     : Date?,
     hasError    : Boolean,
     onStartClick: () -> Unit,
     onEndClick  : () -> Unit
 ) {
-    val fmt = java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale("es", "ES"))
+    val fmt = SimpleDateFormat("d MMM yyyy", Locale("es", "ES"))
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
@@ -509,11 +514,11 @@ private fun DateRangeSelector(
 // ── Selector día único ────────────────────────────────────────────────────────
 @Composable
 private fun SingleDayPicker(
-    date    : java.util.Date?,
+    date    : Date?,
     hasError: Boolean,
     onClick : () -> Unit
 ) {
-    val fmt = java.text.SimpleDateFormat("d 'de' MMMM, yyyy", java.util.Locale("es", "ES"))
+    val fmt = SimpleDateFormat("d 'de' MMMM, yyyy", Locale("es", "ES"))
     DateBox(
         label       = "Día seleccionado",
         value       = date?.let { fmt.format(it) } ?: "Toca para seleccionar",

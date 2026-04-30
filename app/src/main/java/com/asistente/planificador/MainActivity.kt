@@ -19,11 +19,11 @@ import com.asistente.planificador.ui.screens.CategoryForm
 import com.asistente.planificador.ui.screens.MainCalendar
 import com.asistente.planificador.ui.screens.TaskForm
 import com.asistente.planificador.ui.screens.TaskView
-import com.asistente.planificador.ui.screens.TimeSlotForm
+import com.asistente.planificador.ui.screens.TimeSlotListScreen
+import com.asistente.planificador.ui.screens.timeSlots.TimeSlotForm
 import com.asistente.planificador.ui.theme.TrabajoFinDeGradoTheme
 import com.asistente.planificador.ui.viewmodels.ShowCategoriesViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import com.asistente.planificador.ui.screens.TimeSlotListScreen
 
 
 @AndroidEntryPoint

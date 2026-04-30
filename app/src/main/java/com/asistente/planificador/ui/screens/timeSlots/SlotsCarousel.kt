@@ -1,4 +1,4 @@
-package com.asistente.planificador.ui.screens.tools
+package com.asistente.planificador.ui.screens.timeSlots
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -60,7 +60,7 @@ fun SlotsCarousel(
             Text(
                 "FRANJAS CONFIGURADAS",
                 fontSize      = 11.sp, fontWeight = FontWeight.SemiBold,
-                color         = Terciario, letterSpacing = 0.8.sp,
+                color         = _root_ide_package_.com.asistente.planificador.ui.screens.tools.Terciario, letterSpacing = 0.8.sp,
                 modifier      = Modifier.weight(1f)
             )
             if (allSlots.isNotEmpty()) {
@@ -79,7 +79,7 @@ fun SlotsCarousel(
                     }
                     Text(
                         "${filteredSlots.size}/${allSlots.size}",
-                        fontSize = 10.sp, color = Terciario
+                        fontSize = 10.sp, color = _root_ide_package_.com.asistente.planificador.ui.screens.tools.Terciario
                     )
                 }
             }
@@ -88,7 +88,7 @@ fun SlotsCarousel(
         // ── Contenido ─────────────────────────────────────────────────
         when {
             allSlots.isEmpty()      -> EmptySlotState(onAdd = onAdd)
-            filteredSlots.isEmpty() -> EmptyFilterState()
+            filteredSlots.isEmpty() -> _root_ide_package_.com.asistente.planificador.ui.screens.tools.EmptyFilterState()
             else -> {
                 Row(
                     modifier = Modifier
@@ -102,26 +102,26 @@ fun SlotsCarousel(
                             slot.taskId?.let { categoryByTaskId[it] } else null
 
                         SlotCarouselCard(
-                            slot           = slot,
-                            onEdit         = {
+                            slot = slot,
+                            onEdit = {
                                 when (slot.slotType) {
-                                    SlotType.BLOCKED      -> onEdit(slot)
+                                    SlotType.BLOCKED -> onEdit(slot)
                                     SlotType.TASK_BLOCKED -> slot.taskId?.let { onEditTask(it) }
                                 }
                             },
-                            onDelete       = { onDelete(slot) },
+                            onDelete = { onDelete(slot) },
                             onToggleActive = { onToggleActive(slot) },
-                            onCardClick    = { onCardClick(slot) },
-                            categoryName   = catInfo?.name,
-                            categoryColor  = catInfo?.color
+                            onCardClick = { onCardClick(slot) },
+                            categoryName = catInfo?.name,
+                            categoryColor = catInfo?.color
                         )
                     }
 
                     if (hasMore) {
                         MoreSlotsCard(
                             remaining = sortedSlots.size - visibleCount,
-                            expanded  = false,
-                            onClick   = {
+                            expanded = false,
+                            onClick = {
                                 val next = visibleCount + PAGE_SIZE
                                 if (next >= sortedSlots.size) expanded = true
                                 else visibleCount = next
@@ -132,8 +132,8 @@ fun SlotsCarousel(
                     if (showLess) {
                         MoreSlotsCard(
                             remaining = 0,
-                            expanded  = true,
-                            onClick   = { expanded = false; visibleCount = PAGE_SIZE }
+                            expanded = true,
+                            onClick = { expanded = false; visibleCount = PAGE_SIZE }
                         )
                     }
                 }
@@ -159,12 +159,12 @@ private fun EmptySlotState(onAdd: () -> Unit) {
         Spacer(Modifier.height(6.dp))
         Text(
             "Añade franjas para que el asistente sepa cuándo puede planificar actividades.",
-            fontSize = 13.sp, color = Terciario, textAlign = TextAlign.Center
+            fontSize = 13.sp, color = _root_ide_package_.com.asistente.planificador.ui.screens.tools.Terciario, textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(18.dp))
         Button(
             onClick  = onAdd,
-            colors   = ButtonDefaults.buttonColors(containerColor = Primario),
+            colors   = ButtonDefaults.buttonColors(containerColor = _root_ide_package_.com.asistente.planificador.ui.screens.tools.Primario),
             shape    = RoundedCornerShape(14.dp),
             modifier = Modifier.height(46.dp)
         ) {

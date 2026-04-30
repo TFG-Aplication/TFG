@@ -1,4 +1,4 @@
-package com.asistente.planificador.ui.screens.tools
+package com.asistente.planificador.ui.screens.timeSlots
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,14 @@ import com.asistente.core.domain.models.RecurrenceType
 import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.TimeSlot
 import com.asistente.planificador.ui.screens.label
+import com.asistente.planificador.ui.screens.tools.DeleteConfirmDialog
+import com.asistente.planificador.ui.screens.tools.Primario
+import com.asistente.planificador.ui.screens.tools.Secundario
+import com.asistente.planificador.ui.screens.tools.Terciario
+import com.asistente.planificador.ui.screens.tools.badgeColors
+import com.asistente.planificador.ui.screens.tools.colorCuarto
+import com.asistente.planificador.ui.screens.tools.darkenColor
+import com.asistente.planificador.ui.screens.tools.dotColor
 import com.asistente.planificador.ui.viewmodels.toTimeString
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -175,7 +184,7 @@ private fun BlockedSlotCard(
             SlotDaysRow(slot = slot, dotColor = dotColor, enable = enable, alpha = alpha)
             if (showDeleteConfirm) {
                 DeleteConfirmDialog(
-                    title     = "¿Eliminar tarea?",
+                    title = "¿Eliminar tarea?",
                     onConfirm = { onDelete() },
                     onDismiss = { showDeleteConfirm = false }
                 )
@@ -273,7 +282,9 @@ private fun TaskBlockedSlotCard(
 
             // 3 ── Categoría como label ────────────────────────────────
             val hasCat     = categoryName != null
-            val baseColor  = if (hasCat)   (categoryColor ?: darkenColor(colorCuarto)) else darkenColor(colorCuarto)
+            val baseColor  = if (hasCat)   (categoryColor ?: darkenColor(colorCuarto)) else darkenColor(
+                colorCuarto
+            )
             val labelText  = (categoryName ?: "Sin categoría").uppercase()
             Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -324,7 +335,7 @@ private fun TaskBlockedSlotCard(
         }
         if (showDeleteConfirm) {
             DeleteConfirmDialog(
-                title     = "¿Eliminar tarea?",
+                title = "¿Eliminar tarea?",
                 onConfirm = { onDelete() },
                 onDismiss = { showDeleteConfirm = false }
             )
@@ -361,7 +372,7 @@ private fun SlotCardContainer(
 
 private data class SlotMenuItem(
     val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val icon: ImageVector,
     val tint: Color,
     val onClick: () -> Unit,
     val isDestructive: Boolean = false
