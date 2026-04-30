@@ -96,45 +96,47 @@ fun CellSlotsPickerSheet(
     onSelect: (TimeSlot) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val sheetState  = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Agrupamos por tipo para las secciones
     val taskBlocked = slots.filter { it.slotType == SlotType.TASK_BLOCKED }
-    val manual      = slots.filter { it.slotType == SlotType.BLOCKED }
+    val manual = slots.filter { it.slotType == SlotType.BLOCKED }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState       = sheetState,
-        containerColor   = Color.White,
-        shape            = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        dragHandle       = null
+        sheetState = sheetState,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        dragHandle = { SheetDragHandle() } // Usamos el componente de tools
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding()
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
         ) {
             PickerSheetHeader(slotCount = slots.size)
-            HorizontalDivider(color = Color(0xFFF0F0F0))
+
+            SectionDivider() // Usamos el de tools (#EEEEEE, 0.5dp)
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 16.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 if (taskBlocked.isNotEmpty()) {
                     PickerGroupSection(
-                        title    = "Bloqueadas por tarea",
-                        icon     = Icons.Default.CheckCircle,
-                        color    = Color(0xFF2894e3),
-                        slots    = taskBlocked,
+                        title = "Bloqueadas por tarea",
+                        slots = taskBlocked,
                         onSelect = onSelect
                     )
                 }
+
                 if (manual.isNotEmpty()) {
                     PickerGroupSection(
-                        title    = "Bloqueadas manualmente",
-                        icon     = Icons.Default.Block,
-                        color    = Color(0xFFFF5757),
-                        slots    = manual,
+                        title = "Bloqueadas manualmente",
+                        slots = manual,
                         onSelect = onSelect
                     )
                 }
@@ -147,31 +149,33 @@ fun CellSlotsPickerSheet(
 
 @Composable
 private fun PickerSheetHeader(slotCount: Int) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 36.dp, height = 4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(Color(0xFFDDDDDD))
-        )
-    }
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Box(
-            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(Primario.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Layers, null, tint = Primario, modifier = Modifier.size(22.dp))
-        }
+        // Usamos TintedIconBox definido en tools para consistencia
+        TintedIconBox(
+            icon = Icons.Default.Layers,
+            tint = IconNotas,
+            boxSize = 40.dp,
+            iconSize = 22.dp,
+            cornerRadius = 10.dp
+        )
         Column {
-            Text("Varias franjas", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.Black)
-            Text("$slotCount franjas en este bloque horario", fontSize = 13.sp, color = Terciario)
+            Text(
+                "Varias franjas",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Color.Black
+            )
+            Text(
+                "$slotCount franjas en este bloque",
+                fontSize = 13.sp,
+                color = Terciario
+            )
         }
     }
 }
@@ -181,69 +185,64 @@ private fun PickerSheetHeader(slotCount: Int) {
 @Composable
 private fun PickerGroupSection(
     title: String,
-    icon: ImageVector,
-    color: Color,
     slots: List<TimeSlot>,
     onSelect: (TimeSlot) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier              = Modifier.padding(start = 2.dp)
-        ) {
-            Icon(icon, null, tint = color, modifier = Modifier.size(13.dp))
-            Text(title, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = color, letterSpacing = 0.4.sp)
-        }
-        slots.forEach { slot ->
-            PickerSlotCard(slot = slot, accentColor = color, onClick = { onSelect(slot) })
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SectionTitle(text = title) // Componente de tools
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            slots.forEach { slot ->
+                PickerSlotRow(slot = slot, onClick = { onSelect(slot) })
+            }
         }
     }
 }
 
 // ── Tarjeta de slot ───────────────────────────────────────────────────────────
-
 @Composable
-private fun PickerSlotCard(
-    slot: TimeSlot,
-    accentColor: Color,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick  = onClick,
-        shape    = RoundedCornerShape(14.dp),
-        color    = Color(0xFFFAFAFA),
-        border   = BorderStroke(1.dp, Color(0xFFEEEEEE)),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier              = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(4.dp).height(36.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(accentColor.copy(alpha = 0.7f))
-            )
-            Column(modifier = Modifier.weight(1f)) {
+private fun PickerSlotRow(slot: TimeSlot, onClick: () -> Unit) {
+    val dotColor = slot.slotType.dotColor()
+    val icon = if (slot.slotType == SlotType.TASK_BLOCKED) Icons.Default.CheckCircle else Icons.Default.Block
+
+    ClickableItemCard(onClick = onClick) {
+        ColorAccentBar(color = dotColor) // Barra lateral de 3dp
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            // Etiqueta superior (ej: TAREA BLOQUEANTE)
+            InlineTypeLabel(icon, slot.slotType.label(), dotColor)
+
+            Spacer(Modifier.height(2.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     slot.name,
-                    fontSize   = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black,
-                    maxLines   = 1, overflow = TextOverflow.Ellipsis
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
-                Spacer(Modifier.height(3.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    SlotMetaItem(Icons.Default.AccessTime, "${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()}")
-                    SlotMetaItem(Icons.Default.Repeat, slot.recurrenceType.shortLabel())
-                }
+                Spacer(Modifier.width(8.dp))
+                // Meta texto con hora y recurrencia
+                MetaText(
+                    "${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()} · ${slot.recurrenceType.shortLabel()}"
+                )
             }
-            Icon(Icons.Default.ChevronRight, null, tint = Terciario.copy(alpha = 0.5f), modifier = Modifier.size(18.dp))
         }
+
+        Spacer(Modifier.width(6.dp))
+        Icon(
+            Icons.Default.ChevronRight,
+            null,
+            tint = Terciario,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
 

@@ -517,7 +517,7 @@ fun SheetDragHandle() {
             modifier = Modifier
                 .size(width = 36.dp, height = 4.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(Color(0xFFDDDDDD))
+                .background(Primario)
         )
     }
 }
