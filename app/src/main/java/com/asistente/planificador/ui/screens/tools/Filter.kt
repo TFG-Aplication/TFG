@@ -260,19 +260,8 @@ private fun FilterBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
         containerColor   = Color.White,
-        shape            = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        // 1. CONTROL DE LA BARRA SUPERIOR
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 8.dp)
-                    .size(width = 56.dp, height = 4.dp)
-                    .background(
-                        color = Primario,
-                        shape = CircleShape
-                    )
-            )
-        }
+        shape            = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        dragHandle       = { SheetDragHandle() }
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 24.dp, top = 12.dp)) {
 
