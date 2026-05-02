@@ -33,7 +33,8 @@ class CreateTimeSlot @Inject constructor(
             // ── Días seleccionados ───────────────────────────────────────────
             require(
                 timeSlot.daysOfWeek.isNotEmpty() ||
-                        timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY
+                        timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY ||
+                        timeSlot.recurrenceType == RecurrenceType.DATE_RANGE
             ) { "Debes seleccionar al menos un día" }
 
             // ── Fechas de rango ──────────────────────────────────────────────

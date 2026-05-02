@@ -76,24 +76,9 @@ class UpdateTask @Inject constructor(
                 // busca franja
                 val timeSlot = repositoryTimeSlot.getTimeSlotByTaskId(id)
                 if (timeSlot == null) {
-                    val calInit = java.util.Calendar.getInstance().apply { time = initDate }
-                    val calFin  = java.util.Calendar.getInstance().apply { time = finishDate }
-                    val startMinute = calInit.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calInit.get(java.util.Calendar.MINUTE)
-                    val endMinute   = calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
 
-                    val timeSlotNew = TimeSlot(
-                        name = name.trim(),
-                        parentCalendarId = calendarId,
-                        owners = owners,
-                        slotType = SlotType.TASK_BLOCKED,
-                        taskId = id,
-                        recurrenceType = RecurrenceType.SINGLE_DAY,
-                        rangeStart = initDate,
-                        rangeEnd = finishDate,
-                        startMinuteOfDay = startMinute,
-                        endMinuteOfDay = endMinute,
-                        enable = true
-                    )
+                    val timeSlotNew = buildTimeSlotForTask(name, calendarId, owners, id, initDate, finishDate)
+
 
                     val listTimeSlots = repositoryTimeSlot.getAllTimeSlotsByCalendarId(calendarId)
 
@@ -115,24 +100,9 @@ class UpdateTask @Inject constructor(
 
                 }
                 else{
-                    val calInit = java.util.Calendar.getInstance().apply { time = initDate }
-                    val calFin  = java.util.Calendar.getInstance().apply { time = finishDate }
-                    val startMinute = calInit.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calInit.get(java.util.Calendar.MINUTE)
-                    val endMinute   = calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
+                    val timeSlotUpdated = buildTimeSlotForTask(name, calendarId, owners, id, initDate, finishDate)
+                        .copy(id = timeSlot.id)
 
-                    val timeSlotUpdated = timeSlot.copy(
-                            name = name.trim(),
-                            parentCalendarId = calendarId,
-                            owners = owners,
-                            slotType = SlotType.TASK_BLOCKED,
-                            taskId = id,
-                            recurrenceType = RecurrenceType.SINGLE_DAY,
-                            rangeStart = initDate,
-                            rangeEnd = finishDate,
-                            startMinuteOfDay = startMinute,
-                            endMinuteOfDay = endMinute,
-                        enable = true
-                        )
                         repositoryTimeSlot.updateTimeSlot(timeSlotUpdated)
                         repository.updateTask(task)
                         scheduleTaskAlerts(task)

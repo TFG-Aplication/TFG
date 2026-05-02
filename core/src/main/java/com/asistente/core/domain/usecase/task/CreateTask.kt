@@ -78,24 +78,8 @@ class CreateTask @Inject constructor(
 
             // ── Crear franja bloqueada si se solicitó ─────────────────────────
             if (blockTimeSlot) {
-                val calInit = java.util.Calendar.getInstance().apply { time = initDate }
-                val calFin  = java.util.Calendar.getInstance().apply { time = finishDate }
-                val startMinute = calInit.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calInit.get(java.util.Calendar.MINUTE)
-                val endMinute   = calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
-
-
-                val timeSlot = TimeSlot(
-                    name = name.trim(),
-                    parentCalendarId = calendarId,
-                    owners = owners,
-                    slotType = SlotType.TASK_BLOCKED,
-                    taskId = taskId,
-                    recurrenceType = RecurrenceType.SINGLE_DAY,
-                    rangeStart = initDate,
-                    rangeEnd = finishDate,
-                    startMinuteOfDay = startMinute,
-                    endMinuteOfDay = endMinute,
-                    enable = true
+                val timeSlot = buildTimeSlotForTask(
+                    name, calendarId, owners, taskId, initDate, finishDate
                 )
 
                 val listTimeSlots = repositoryTimeSlot.getAllTimeSlotsByCalendarId(calendarId)
@@ -112,8 +96,8 @@ class CreateTask @Inject constructor(
                 else {
                     repository.saveTask(task, isSharedCalendar)
                     scheduleTaskAlerts(task)
-                    createTimeSlot(timeSlot, isSharedCalendar)
-                }
+                    val slotResult = createTimeSlot(timeSlot, isSharedCalendar)
+                    if (slotResult.isFailure) return Result.failure(slotResult.exceptionOrNull()!!)                }
             }
             else {
                 repository.saveTask(task, isSharedCalendar)
