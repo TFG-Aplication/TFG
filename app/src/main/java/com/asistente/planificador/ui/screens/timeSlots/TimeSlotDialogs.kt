@@ -25,6 +25,8 @@ import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.TimeSlot
 import com.asistente.planificador.ui.screens.tools.*
 import com.asistente.planificador.ui.viewmodels.toTimeString
+import java.time.LocalDate
+import java.util.Locale
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WARNING DIALOG
@@ -93,6 +95,8 @@ fun WarningDialog(warnings: List<String>, onDismiss: () -> Unit) {
 @Composable
 fun CellSlotsPickerSheet(
     slots: List<TimeSlot>,
+    date: LocalDate,
+    hour: Int,
     onSelect: (TimeSlot) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -114,7 +118,7 @@ fun CellSlotsPickerSheet(
                 .fillMaxWidth()
                 .navigationBarsPadding()
         ) {
-            PickerSheetHeader(slotCount = slots.size)
+            PickerSheetHeader(slotCount = slots.size, date = date, hour = hour)
 
             SectionDivider() // Usamos el de tools (#EEEEEE, 0.5dp)
 
@@ -148,7 +152,14 @@ fun CellSlotsPickerSheet(
 // ── Cabecera del picker ───────────────────────────────────────────────────────
 
 @Composable
-private fun PickerSheetHeader(slotCount: Int) {
+private fun PickerSheetHeader(slotCount: Int, date: LocalDate, hour: Int) {
+    val dayName = date.dayOfWeek.getDisplayName(
+        java.time.format.TextStyle.FULL,
+        Locale("es", "ES")
+    ).replaceFirstChar { it.uppercase() }
+    val dateStr  = "${date.dayOfMonth}/${date.monthValue}/${date.year}"
+    val timeStr  = "${hour.toString().padStart(2, '0')}:00 – ${(hour + 1).toString().padStart(2, '0')}:00"
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -156,25 +167,25 @@ private fun PickerSheetHeader(slotCount: Int) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Usamos TintedIconBox definido en tools para consistencia
         TintedIconBox(
-            icon = Icons.Default.Layers,
-            tint = IconNotas,
-            boxSize = 40.dp,
-            iconSize = 22.dp,
-            cornerRadius = 10.dp
+            icon         = Icons.Default.Layers,
+            tint         = IconNotas,
+            boxSize      = 44.dp,
+            iconSize     = 22.dp,
+            cornerRadius = 11.dp
         )
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                "Varias franjas",
+                "$dayName, $dateStr · $timeStr",
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = Color.Black
+                fontSize   = 15.sp,
+                color      = Color.Black
             )
+            Spacer(Modifier.height(2.dp))
             Text(
-                "$slotCount franjas en este bloque",
+                "$slotCount franjas se solapan en este horario",
                 fontSize = 13.sp,
-                color = Terciario
+                color    = Terciario
             )
         }
     }

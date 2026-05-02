@@ -47,7 +47,7 @@ fun WeekHeatmap(
     onSlotClick: (TimeSlot) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var pendingCellSlots by remember { mutableStateOf<List<TimeSlot>?>(null) }
+    var pendingCell by remember { mutableStateOf<PendingCell?>(null) }
     val today       = LocalDate.now()
     val weekFields  = WeekFields.of(Locale("es", "ES"))
     val initialPage = 500
@@ -95,11 +95,11 @@ fun WeekHeatmap(
                     val monday = today.with(WeekFields.ISO.dayOfWeek(), 1)
                         .plusWeeks((page - initialPage).toLong())
                     WeekGrid(
-                        slots       = slots,
-                        weekMonday  = monday,
-                        onCellClick = { cellSlots ->
+                        slots      = slots,
+                        weekMonday = monday,
+                        onCellClick = { cellSlots, date, hour ->
                             if (cellSlots.size == 1) onSlotClick(cellSlots.first())
-                            else pendingCellSlots = cellSlots
+                            else pendingCell = PendingCell(cellSlots, date, hour)
                         }
                     )
                 }
@@ -128,11 +128,19 @@ fun WeekHeatmap(
         )
     }
 
-    pendingCellSlots?.let { cellSlots ->
+    pendingCell?.let { cell ->
+        val dayFormatter = DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", Locale("es", "ES"))
+        val dayLabel = cell.date.format(dayFormatter)
+            .replaceFirstChar { it.uppercase() }  // "Miércoles, 29/07/2026"
+        val startTime = "%02d:00".format(cell.hourStart)
+        val endTime   = "%02d:00".format(cell.hourStart + 1)
+
         CellSlotsPickerSheet(
-            slots     = cellSlots,
-            onSelect  = { slot -> pendingCellSlots = null; onSlotClick(slot) },
-            onDismiss = { pendingCellSlots = null }
+            slots     = cell.slots,
+            date      = cell.date,
+            hour      = cell.hourStart,
+            onSelect  = { slot -> pendingCell = null; onSlotClick(slot) },
+            onDismiss = { pendingCell = null }
         )
     }
 }
@@ -242,7 +250,7 @@ private fun HeatmapDatePicker(
 private fun WeekGrid(
     slots: List<TimeSlot>,
     weekMonday: LocalDate,
-    onCellClick: (List<TimeSlot>) -> Unit
+    onCellClick: (slots: List<TimeSlot>, date: LocalDate, hour: Int) -> Unit
 ) {
     val today           = LocalDate.now()
     val hourColumnWidth = 32.dp
@@ -306,7 +314,7 @@ private fun HourRow(
     hourColumnWidth: androidx.compose.ui.unit.Dp,
     slots: List<TimeSlot>,
     weekMonday: LocalDate,
-    onCellClick: (List<TimeSlot>) -> Unit
+    onCellClick: (List<TimeSlot>, LocalDate, Int) -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
@@ -330,7 +338,7 @@ private fun HourRow(
                         .clip(RoundedCornerShape(3.dp))
                         .background(cellColor)
                         .then(
-                            if (cellSlots.isNotEmpty()) Modifier.clickable { onCellClick(cellSlots) }
+                            if (cellSlots.isNotEmpty()) Modifier.clickable { onCellClick(cellSlots, date, hour) }
                             else Modifier
                         )
                 )
@@ -376,3 +384,9 @@ private fun getSlotsForCell(
         }
     }.sortedWith(compareByDescending { it.slotType == SlotType.TASK_BLOCKED })
 }
+
+private data class PendingCell(
+    val slots: List<TimeSlot>,
+    val date: LocalDate,
+    val hourStart: Int  // ej: 10 → "10:00"
+)
