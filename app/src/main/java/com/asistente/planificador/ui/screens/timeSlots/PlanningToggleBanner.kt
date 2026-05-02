@@ -141,8 +141,7 @@ private fun BannerContent(
                     icon      = Icons.Default.AddCircleOutline,
                     active    = hasInactive,
                     activeColor = ColorActivo,
-                    onClick   = onEnableClick,
-                    bold      = false
+                    onClick   = onEnableClick
                 )
             }
         }

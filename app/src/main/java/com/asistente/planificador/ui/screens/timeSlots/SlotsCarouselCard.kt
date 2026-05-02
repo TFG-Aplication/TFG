@@ -213,13 +213,36 @@ private fun TaskBlockedSlotCard(
     var showMenu   by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    val dayOfWeekForTask: Int? = remember(slot) {
-        if (slot.recurrenceType == RecurrenceType.SINGLE_DAY) {
-            slot.rangeStart?.let {
-                val cd = Calendar.getInstance().apply { time = it }.get(Calendar.DAY_OF_WEEK)
-                if (cd == Calendar.SUNDAY) 7 else cd - 1
+    val highlightDays: Set<Int> = remember(slot) {
+        when (slot.recurrenceType) {
+            RecurrenceType.SINGLE_DAY -> {
+                slot.rangeStart?.let {
+                    val cd = Calendar.getInstance().apply { time = it }.get(Calendar.DAY_OF_WEEK)
+                    setOf(if (cd == Calendar.SUNDAY) 7 else cd - 1)
+                } ?: emptySet()
             }
-        } else null
+            RecurrenceType.TASK_RANGE -> {
+                val start = slot.rangeStart ?: return@remember emptySet()
+                val end   = slot.rangeEnd   ?: return@remember emptySet()
+                val result = mutableSetOf<Int>()
+                val cal = Calendar.getInstance().apply { time = start }
+                val endDay = Calendar.getInstance().apply {
+                    time = end
+                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                while (true) {
+                    val dow = cal.get(Calendar.DAY_OF_WEEK)
+                    result.add(if (dow == Calendar.SUNDAY) 7 else dow - 1)
+                    cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0)
+                    cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+                    if (cal.timeInMillis >= endDay) break
+                    cal.add(Calendar.DAY_OF_MONTH, 1)
+                }
+                result
+            }
+            else -> emptySet()
+        }
     }
 
     SlotCardContainer(enable = true, onClick = onCardClick, modifier = modifier) {
@@ -330,7 +353,7 @@ private fun TaskBlockedSlotCard(
                 dotColor     = dotColor,
                 enable     = true,
                 alpha        = 1f,
-                highlightDay = dayOfWeekForTask
+                highlightDays = highlightDays
             )
         }
         if (showDeleteConfirm) {
@@ -443,6 +466,10 @@ private fun SlotRecurrenceRow(slot: TimeSlot, enable: Boolean, alpha: Float) {
         RecurrenceType.EVEN_WEEKS -> Icons.Default.Repeat to "Semanas pares"
         RecurrenceType.ODD_WEEKS  -> Icons.Default.Repeat to "Semanas impares"
         RecurrenceType.WEEKLY     -> Icons.Default.Repeat to "Todas las semanas"
+        RecurrenceType.TASK_RANGE ->
+            Icons.Default.DateRange to
+                    "${slot.rangeStart?.let { fmtShort.format(it) } ?: "?"} – " +
+                    (slot.rangeEnd?.let { fmtShort.format(it) } ?: "?")
     }
 
     val color = (if (enable) Primario else Terciario).copy(alpha = alpha)
@@ -460,16 +487,21 @@ private fun SlotRecurrenceRow(slot: TimeSlot, enable: Boolean, alpha: Float) {
 @Composable
 private fun SlotTimeRow(slot: TimeSlot, alpha: Float) {
     val color = Color(0xFF1A1A1A).copy(alpha = alpha)
+    val fmtTime = SimpleDateFormat("HH:mm", Locale("es", "ES"))
+
+    val timeLabel = if (slot.recurrenceType == RecurrenceType.TASK_RANGE) {
+        val start = slot.rangeStart?.let { fmtTime.format(it) } ?: slot.startMinuteOfDay.toTimeString()
+        val end   = slot.rangeEnd?.let   { fmtTime.format(it) } ?: slot.endMinuteOfDay.toTimeString()
+        "$start – $end"
+    } else {
+        "${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()}"
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.AccessTime, null,
             tint = color, modifier = Modifier.size(13.dp).offset(y = -0.7.dp))
         Spacer(Modifier.width(4.dp))
-        Text(
-            "${slot.startMinuteOfDay.toTimeString()} – ${slot.endMinuteOfDay.toTimeString()}",
-            fontSize   = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color      = color
-        )
+        Text(timeLabel, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = color)
     }
 }
 
@@ -500,18 +532,19 @@ private fun SlotDaysRow(
     dotColor: Color,
     enable: Boolean,
     alpha: Float,
-    highlightDay: Int? = null
+    highlightDays: Set<Int> = emptySet()   // ← antes era highlightDay: Int?
 ) {
     val days = listOf(1 to "L", 2 to "M", 3 to "X", 4 to "J", 5 to "V", 6 to "S", 7 to "D")
+    val hasHighlight = highlightDays.isNotEmpty()
 
     Row(
         modifier              = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         days.forEach { (num, lbl) ->
-            val isHighlighted = highlightDay != null && num == highlightDay
-            val isDimmed      = highlightDay != null && num != highlightDay
-            val dayActive     = if (highlightDay == null) slot.daysOfWeek.contains(num) else isHighlighted
+            val isHighlighted = hasHighlight && num in highlightDays
+            val isDimmed      = hasHighlight && num !in highlightDays
+            val dayActive     = if (!hasHighlight) slot.daysOfWeek.contains(num) else isHighlighted
 
             val bgColor = when {
                 isHighlighted -> dotColor.copy(alpha = 0.5f)

@@ -14,5 +14,6 @@ enum class RecurrenceType {
     EVEN_WEEKS,
     ODD_WEEKS,
     DATE_RANGE,
-    SINGLE_DAY
+    SINGLE_DAY,
+    TASK_RANGE
 }

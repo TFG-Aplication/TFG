@@ -25,25 +25,29 @@ class UpdateTimeSlot @Inject constructor(
             require(timeSlot.name.trim().length >= 3) { "El nombre debe tener al menos 3 caracteres" }
 
             // ── Horas ────────────────────────────────────────────────────────
-            require(timeSlot.startMinuteOfDay < timeSlot.endMinuteOfDay) {
+            require(timeSlot.startMinuteOfDay < timeSlot.endMinuteOfDay||
+                    timeSlot.recurrenceType == RecurrenceType.TASK_RANGE ) {
                 "La hora de inicio debe ser anterior a la de fin"
             }
 
             // ── Días seleccionados ───────────────────────────────────────────
             require(
                 timeSlot.daysOfWeek.isNotEmpty() ||
-                        timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY
+                        timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY||
+                        timeSlot.recurrenceType == RecurrenceType.TASK_RANGE
             ) { "Debes seleccionar al menos un día" }
 
             // ── Fechas de rango ──────────────────────────────────────────────
             if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE ||
-                timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY
+                timeSlot.recurrenceType == RecurrenceType.SINGLE_DAY||
+                timeSlot.recurrenceType == RecurrenceType.TASK_RANGE
             ) {
                 requireNotNull(timeSlot.rangeStart) {
                     "Se requiere fecha de inicio para este tipo de recurrencia"
                 }
             }
-            if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE) {
+            if (timeSlot.recurrenceType == RecurrenceType.DATE_RANGE||
+                timeSlot.recurrenceType == RecurrenceType.TASK_RANGE ) {
                 requireNotNull(timeSlot.rangeEnd) { "Se requiere fecha de fin para rango de fechas" }
                 require(timeSlot.rangeEnd!!.after(timeSlot.rangeStart) || timeSlot.rangeEnd == timeSlot.rangeStart ) {
                     "La fecha de fin debe ser posterior a la de inicio"

@@ -14,4 +14,5 @@ fun RecurrenceType.shortLabel(): String = when (this) {
     RecurrenceType.ODD_WEEKS  -> "Semanas impares"
     RecurrenceType.DATE_RANGE -> "Rango"
     RecurrenceType.SINGLE_DAY -> "Día único"
+    RecurrenceType.TASK_RANGE -> "Rango"
 }

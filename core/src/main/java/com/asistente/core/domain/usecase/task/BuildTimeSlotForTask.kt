@@ -3,6 +3,7 @@ package com.asistente.core.domain.usecase.task
 import com.asistente.core.domain.models.RecurrenceType
 import com.asistente.core.domain.models.SlotType
 import com.asistente.core.domain.models.TimeSlot
+import java.util.Calendar
 import java.util.Date
 
 
@@ -14,36 +15,41 @@ fun buildTimeSlotForTask(
     initDate: Date,
     finishDate: Date
 ): TimeSlot {
-    val calInit = java.util.Calendar.getInstance().apply { time = initDate }
-    val calFin  = java.util.Calendar.getInstance().apply { time = finishDate }
+    val calInit = Calendar.getInstance().apply { time = initDate }
+    val calFin  = Calendar.getInstance().apply { time = finishDate }
 
-    val startMinute = calInit.get(java.util.Calendar.HOUR_OF_DAY) * 60 +
-            calInit.get(java.util.Calendar.MINUTE)
+    val isSameDay = calInit.get(Calendar.YEAR) == calFin.get(Calendar.YEAR) &&
+            calInit.get(Calendar.DAY_OF_YEAR) == calFin.get(Calendar.DAY_OF_YEAR)
 
-    val isSameDay = calInit.get(java.util.Calendar.YEAR)  == calFin.get(java.util.Calendar.YEAR) &&
-            calInit.get(java.util.Calendar.DAY_OF_YEAR) == calFin.get(java.util.Calendar.DAY_OF_YEAR)
-
-    val recurrence = if (isSameDay) RecurrenceType.SINGLE_DAY else RecurrenceType.DATE_RANGE
-
-    val endMinute = if (isSameDay) {
-        calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
+    return if (isSameDay) {
+        TimeSlot(
+            name             = name.trim(),
+            parentCalendarId = calendarId,
+            owners           = owners,
+            slotType         = SlotType.TASK_BLOCKED,
+            taskId           = taskId,
+            recurrenceType   = RecurrenceType.SINGLE_DAY,
+            rangeStart       = initDate,
+            rangeEnd         = finishDate,
+            startMinuteOfDay = calInit.get(Calendar.HOUR_OF_DAY) * 60 + calInit.get(Calendar.MINUTE),
+            endMinuteOfDay   = calFin.get(Calendar.HOUR_OF_DAY) * 60 + calFin.get(Calendar.MINUTE),
+            enable           = true
+        )
     } else {
-        // Franja de inicio → medianoche cada día del rango
-        // (puedes cambiar esto a 1440 si quieres "todo el día")
-        calFin.get(java.util.Calendar.HOUR_OF_DAY) * 60 + calFin.get(java.util.Calendar.MINUTE)
+        // TASK_RANGE: startMinuteOfDay = inicio del primer día, endMinuteOfDay = fin del último día
+        // Los días intermedios se infieren como completos (0 → 1440)
+        TimeSlot(
+            name             = name.trim(),
+            parentCalendarId = calendarId,
+            owners           = owners,
+            slotType         = SlotType.TASK_BLOCKED,
+            taskId           = taskId,
+            recurrenceType   = RecurrenceType.TASK_RANGE,
+            rangeStart       = initDate,   // fecha+hora exacta de inicio
+            rangeEnd         = finishDate, // fecha+hora exacta de fin
+            startMinuteOfDay = calInit.get(Calendar.HOUR_OF_DAY) * 60 + calInit.get(Calendar.MINUTE),
+            endMinuteOfDay   = calFin.get(Calendar.HOUR_OF_DAY) * 60 + calFin.get(Calendar.MINUTE),
+            enable           = true
+        )
     }
-
-    return TimeSlot(
-        name             = name.trim(),
-        parentCalendarId = calendarId,
-        owners           = owners,
-        slotType         = SlotType.TASK_BLOCKED,
-        taskId           = taskId,
-        recurrenceType   = recurrence,
-        rangeStart       = initDate,
-        rangeEnd         = finishDate,
-        startMinuteOfDay = startMinute,
-        endMinuteOfDay   = endMinute,
-        enable           = true
-    )
 }

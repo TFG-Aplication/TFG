@@ -62,6 +62,7 @@ object TimeSlotOverlapChecker {
         return when (slot.recurrenceType) {
             RecurrenceType.SINGLE_DAY -> resolveSingleDay(slot)
             RecurrenceType.DATE_RANGE -> resolveDateRange(slot)
+            RecurrenceType.TASK_RANGE -> resolveTaskRange(slot)
             RecurrenceType.WEEKLY     -> resolveRepeating(slot, weekFilter = null)
             RecurrenceType.EVEN_WEEKS -> resolveRepeating(slot, weekFilter = WeekParity.EVEN)
             RecurrenceType.ODD_WEEKS  -> resolveRepeating(slot, weekFilter = WeekParity.ODD)
@@ -98,6 +99,44 @@ object TimeSlotOverlapChecker {
             cal.add(Calendar.DAY_OF_MONTH, 1)
         }
         return windows
+    }
+
+    // ── TASK_RATE ───────────────────────────────────────────────
+
+    private fun resolveTaskRange(slot: TimeSlot): List<TimeWindow> {
+        val start = slot.rangeStart ?: return emptyList()
+        val end   = slot.rangeEnd   ?: return emptyList()
+
+        val calStart = Calendar.getInstance().apply { time = start }
+        val calEnd   = Calendar.getInstance().apply { time = end }
+
+        val startDayMs = startOfDay(start).time
+        val endDayMs   = startOfDay(end).time
+
+        return if (startDayMs == endDayMs) {
+            // Mismo día — ventana simple
+            listOf(TimeWindow(start.time, end.time))
+        } else {
+            val windows = mutableListOf<TimeWindow>()
+
+            // Primer día: desde la hora de inicio hasta medianoche
+            windows.add(TimeWindow(
+                start.time,
+                startDayMs + ONE_DAY_MS  // medianoche del día siguiente
+            ))
+
+            // Días intermedios completos
+            var currentDayMs = startDayMs + ONE_DAY_MS
+            while (currentDayMs < endDayMs) {
+                windows.add(TimeWindow(currentDayMs, currentDayMs + ONE_DAY_MS))
+                currentDayMs += ONE_DAY_MS
+            }
+
+            // Último día: desde medianoche hasta la hora de fin
+            windows.add(TimeWindow(endDayMs, end.time))
+
+            windows
+        }
     }
 
     // ── WEEKLY / EVEN_WEEKS / ODD_WEEKS ─────────────────────────

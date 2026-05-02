@@ -364,8 +364,29 @@ private fun getSlotsForCell(
 
     return slots.filter { slot ->
         if (!slot.enable) return@filter false
+
+        // TASK_RANGE tiene su propia lógica completa — no usa hourMatches genérico
+        if (slot.recurrenceType == RecurrenceType.TASK_RANGE) {
+            val start = slot.rangeStart?.toInstant()?.atZone(zone)?.toLocalDate() ?: return@filter false
+            val end   = slot.rangeEnd?.toInstant()?.atZone(zone)?.toLocalDate()   ?: return@filter false
+
+            if (date.isBefore(start) || date.isAfter(end)) return@filter false
+
+            val isFirstDay = date == start
+            val isLastDay  = date == end
+
+            return@filter when {
+                isFirstDay && isLastDay -> hourStart < slot.endMinuteOfDay && hourEnd > slot.startMinuteOfDay
+                isFirstDay              -> hourEnd > slot.startMinuteOfDay   // desde startMinute hasta medianoche
+                isLastDay               -> hourStart < slot.endMinuteOfDay   // desde medianoche hasta endMinute
+                else                    -> true                              // día intermedio: toda la celda
+            }
+        }
+
+        // Para el resto de tipos, el filtro de hora genérico aplica normalmente
         val hourMatches = hourStart < slot.endMinuteOfDay && hourEnd > slot.startMinuteOfDay
         if (!hourMatches) return@filter false
+
         when (slot.recurrenceType) {
             RecurrenceType.WEEKLY     -> slot.daysOfWeek.contains(dayNum)
             RecurrenceType.EVEN_WEEKS -> slot.daysOfWeek.contains(dayNum) &&
@@ -381,6 +402,7 @@ private fun getSlotsForCell(
                 val target = slot.rangeStart?.toInstant()?.atZone(zone)?.toLocalDate()
                 date == target
             }
+            RecurrenceType.TASK_RANGE -> false // ya manejado arriba, nunca llega aquí
         }
     }.sortedWith(compareByDescending { it.slotType == SlotType.TASK_BLOCKED })
 }
