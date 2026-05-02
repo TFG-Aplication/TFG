@@ -47,22 +47,17 @@ object TimeSlotOverlapChecker {
         a.startMs < b.endMs && b.startMs < a.endMs   // solapamiento estricto
 
     // ─────────────────────────────────────────────────────────────
+    // Conversión DAY_OF_WEEK del Calendar (1=Dom…7=Sáb)
+    // al sistema de la app                (1=Lun…7=Dom)
+    // ─────────────────────────────────────────────────────────────
+
+    private fun calDowToIso(calDow: Int): Int =
+        if (calDow == Calendar.SUNDAY) 7 else calDow - 1
+
+    // ─────────────────────────────────────────────────────────────
     // Resolución de ventanas según RecurrenceType
     // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Devuelve todas las ventanas absolutas que genera [slot] dentro del
-     * periodo de tiempo que ocupa (para WEEKLY / EVEN_WEEKS / ODD_WEEKS
-     * se usa el rango de la franja candidata como horizonte de búsqueda;
-     * para DATE_RANGE y SINGLE_DAY el propio rango del slot).
-     *
-     * Para simplificar la llamada, el candidato también pasa por aquí:
-     * en ese caso su "rango" ya está definido por rangeStart/rangeEnd o
-     * por un horizonte que debemos conocer.
-     *
-     * NOTA: para WEEKLY/EVEN/ODD sin fecha de fin se genera un horizonte
-     * de ±1 año respecto a hoy para no iterar infinitamente.
-     */
     private fun resolveWindows(slot: TimeSlot): List<TimeWindow> {
         return when (slot.recurrenceType) {
             RecurrenceType.SINGLE_DAY -> resolveSingleDay(slot)
@@ -84,8 +79,8 @@ object TimeSlotOverlapChecker {
 
     /**
      * Itera día a día dentro del rango e incluye los días cuyo
-     * dayOfWeek esté en slot.daysOfWeek (si la lista está vacía
-     * se incluyen todos los días).
+     * dayOfWeek (1=Lun…7=Dom) esté en slot.daysOfWeek (si la lista
+     * está vacía se incluyen todos los días).
      */
     private fun resolveDateRange(slot: TimeSlot): List<TimeWindow> {
         val start = slot.rangeStart ?: return emptyList()
@@ -96,7 +91,7 @@ object TimeSlotOverlapChecker {
         val endDay = startOfDay(end).time
 
         while (cal.timeInMillis <= endDay) {
-            val dow = cal.get(Calendar.DAY_OF_WEEK) // 1=Dom … 7=Sáb
+            val dow = calDowToIso(cal.get(Calendar.DAY_OF_WEEK))
             if (slot.daysOfWeek.isEmpty() || dow in slot.daysOfWeek) {
                 windows.add(buildWindow(cal.time, slot.startMinuteOfDay, slot.endMinuteOfDay))
             }
@@ -111,13 +106,9 @@ object TimeSlotOverlapChecker {
 
     /**
      * Para recurrencias semanales (con o sin filtro de paridad) se usa
-     * un horizonte de 1 año desde hoy si el slot no tiene rangeStart/End.
-     * En la práctica, el llamador debería pasar un horizonte acotado
-     * al periodo de la franja candidata.
+     * un horizonte de ±365 días desde hoy si el slot no tiene rangeStart/End.
      */
     private fun resolveRepeating(slot: TimeSlot, weekFilter: WeekParity?): List<TimeWindow> {
-        // Horizonte: si el slot tiene fechas propias las usamos;
-        // si no, ±365 días desde hoy (suficiente para detectar solapamientos inmediatos)
         val horizonStart = slot.rangeStart ?: run {
             Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -365) }.time
         }
@@ -130,7 +121,7 @@ object TimeSlotOverlapChecker {
         val endMs = startOfDay(horizonEnd).time
 
         while (cal.timeInMillis <= endMs) {
-            val dow = cal.get(Calendar.DAY_OF_WEEK)
+            val dow = calDowToIso(cal.get(Calendar.DAY_OF_WEEK))
             if (slot.daysOfWeek.isEmpty() || dow in slot.daysOfWeek) {
                 if (weekFilter == null || matchesParity(cal, weekFilter)) {
                     windows.add(buildWindow(cal.time, slot.startMinuteOfDay, slot.endMinuteOfDay))
@@ -163,7 +154,6 @@ object TimeSlotOverlapChecker {
 
     /**
      * Paridad de semana ISO: semana par → EVEN, impar → ODD.
-     * Usa WEEK_OF_YEAR del Calendar (basado en locale; ajusta a ISO si necesitas).
      */
     private fun matchesParity(cal: Calendar, filter: WeekParity): Boolean {
         val weekNumber = cal.get(Calendar.WEEK_OF_YEAR)
