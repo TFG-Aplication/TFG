@@ -282,6 +282,8 @@ fun TaskView(
         if (showDeleteConfirm) {
             DeleteConfirmDialog(
                 title     = "¿Eliminar tarea?",
+                message = "Esta acción no se puede deshacer",
+                confirmLabel = "Eliminar",
                 onConfirm = { viewModel.deleteTask(onSuccess = onDelete) },
                 onDismiss = { showDeleteConfirm = false }
             )

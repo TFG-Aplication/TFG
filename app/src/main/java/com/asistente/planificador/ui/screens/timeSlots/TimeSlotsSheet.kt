@@ -150,6 +150,14 @@ fun TimeSlotDetailSheet(
                         SlotType.BLOCKED -> "¿Eliminar franja?"
                         SlotType.TASK_BLOCKED -> "¿Eliminar bloqueo de tarea?"
                     },
+                    message = when (state.slot.slotType) {
+                    SlotType.BLOCKED -> "Esta acción no se puede deshacer"
+                    SlotType.TASK_BLOCKED ->  "Esta acción desactivará el bloqueo pero no eliminará la tarea asociada"
+                    },
+                    confirmLabel = when (state.slot.slotType) {
+                        SlotType.BLOCKED -> "Eliminar"
+                        SlotType.TASK_BLOCKED ->  "Eliminar bloqueo"
+                    },
                     onConfirm = { onDelete(state.slot); onDismiss() },
                     onDismiss = { showDeleteConfirm = false }
                 )
@@ -428,7 +436,8 @@ private fun OverlappingSlotsSection(
 
     AppBanner(
         text = "En zonas de solapamiento las franjas de tarea tienen prioridad visual. " +
-                "Las franjas manuales siguen activas pero pueden no verse en el calendario.",
+                "Las franjas manuales siguen activas pero pueden no verse en el calendario." +
+        "Aquí se muestran todas las franjas que en algún momento se solapan con esta.",
         style = BannerStyle.WARNING
     )
 

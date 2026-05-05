@@ -184,7 +184,9 @@ private fun BlockedSlotCard(
             SlotDaysRow(slot = slot, dotColor = dotColor, enable = enable, alpha = alpha)
             if (showDeleteConfirm) {
                 DeleteConfirmDialog(
-                    title = "¿Eliminar tarea?",
+                    title = "¿Eliminar franja?",
+                    message = "Esta acción no se puede deshacer",
+                    confirmLabel = "Eliminar",
                     onConfirm = { onDelete() },
                     onDismiss = { showDeleteConfirm = false }
                 )
@@ -358,9 +360,12 @@ private fun TaskBlockedSlotCard(
         }
         if (showDeleteConfirm) {
             DeleteConfirmDialog(
-                title = "¿Eliminar tarea?",
+                title = "¿Eliminar bloqueo por tarea?",
+                message = "Esta acción desactivará el bloqueo pero no eliminará la tarea asociada",
+                confirmLabel = "Eliminar bloqueo",
                 onConfirm = { onDelete() },
                 onDismiss = { showDeleteConfirm = false }
+
             )
         }
     }

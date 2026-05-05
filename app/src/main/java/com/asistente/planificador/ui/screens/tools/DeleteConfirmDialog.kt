@@ -1,6 +1,8 @@
 package com.asistente.planificador.ui.screens.tools
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,17 +24,17 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DeleteConfirmDialog(
-    title       : String,
-    message     : String = "Esta acción no se puede deshacer.",
-    confirmLabel: String = "Eliminar",
-    onConfirm   : () -> Unit,
-    onDismiss   : () -> Unit
+    title        : String,
+    message      : String = "Esta acción no se puede deshacer.",
+    confirmLabel : String = "Eliminar",
+    onConfirm    : () -> Unit,
+    onDismiss    : () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest   = onDismiss,
-        containerColor     = Color.White,
-        shape              = RoundedCornerShape(16.dp),
-        icon               = {
+        onDismissRequest = onDismiss,
+        containerColor   = Color.White,
+        shape            = RoundedCornerShape(16.dp),
+        icon = {
             Box(
                 modifier         = Modifier
                     .size(44.dp)
@@ -49,21 +51,32 @@ fun DeleteConfirmDialog(
             }
         },
         title = {
-            Text(
-                text      = title,
-                fontSize  = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color      = Color.Black,
-                textAlign  = TextAlign.Center
-            )
+            // ← Column para forzar centrado horizontal
+            Column(
+                modifier            = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text       = title,
+                    fontSize   = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = Color.Black,
+                    textAlign  = TextAlign.Center
+                )
+            }
         },
         text = {
-            Text(
-                text      = message,
-                fontSize  = 14.sp,
-                color     = Terciario,
-                textAlign = TextAlign.Center
-            )
+            Column(
+                modifier            = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text      = message,
+                    fontSize  = 14.sp,
+                    color     = Terciario,
+                    textAlign = TextAlign.Center
+                )
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {

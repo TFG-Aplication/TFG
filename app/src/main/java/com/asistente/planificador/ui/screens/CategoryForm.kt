@@ -235,6 +235,8 @@ fun CategoryForm(
         if (showDeleteConfirm) {
             DeleteConfirmDialog(
                 title     = "¿Eliminar categoría?",
+                message = "Esta acción no se puede deshacer",
+                confirmLabel = "Eliminar",
                 onConfirm = { viewModel.deleteCategory(onSuccess = onBack) },
                 onDismiss = { showDeleteConfirm = false }
             )

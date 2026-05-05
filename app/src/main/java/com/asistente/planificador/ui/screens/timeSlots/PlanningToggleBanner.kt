@@ -55,13 +55,13 @@ fun PlanningToggleBanner(
                     if (hasActive) {
                         confirmMessage = "Se desactivarán todas las franjas manuales activas. El asistente dejará de tenerlas en cuenta al planificar."
                         confirmAction  = onDisableAll
-                    } else toastMessage = "Todas las franjas ya están inactivas"
+                    } else toastMessage = "No hay franjas manuales para desactivar"
                 },
                 onEnableClick = {
                     if (hasInactive) {
                         confirmMessage = "Se activarán todas las franjas manuales inactivas. El asistente volverá a tenerlas en cuenta al planificar."
                         confirmAction  = onEnableAll
-                    } else toastMessage = "Todas las franjas ya están activas"
+                    } else toastMessage = "No hay franjas manuales para activar"
                 }
             )
 
