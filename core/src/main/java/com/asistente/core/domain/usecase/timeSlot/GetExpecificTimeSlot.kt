@@ -11,4 +11,6 @@ class GetSpecificTimeSlot @Inject constructor(
         require(timeSlotId.isNotBlank()) { "Time Slot ID cannot be empty" }
         return repository.getTimeSlotById(timeSlotId)
     }
+
+
 }

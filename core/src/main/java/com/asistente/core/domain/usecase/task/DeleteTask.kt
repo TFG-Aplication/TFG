@@ -9,10 +9,13 @@ class DeleteTask @Inject constructor(
     private val repository: TaskRepositoryInterface,
     private val repositoryTimeSlot: TimeSlotRepositoryInterface,
 ) {
-    suspend operator fun invoke(taskId: String, isShared: Boolean) {
-        repository.deleteTask(taskId, isShared)
+    // Devuelve el nombre de la franja eliminada, o null si no había
+    suspend operator fun invoke(taskId: String, isShared: Boolean): String? {
         val timeSlot = repositoryTimeSlot.getTimeSlotByTaskId(taskId)
-        if (timeSlot != null) {
+        repository.deleteTask(taskId, isShared)
+        return if (timeSlot != null) {
             repositoryTimeSlot.deleteTimeSlotByTaskId(taskId, isShared)
-        }    }
+            timeSlot.name
+        } else null
+    }
 }

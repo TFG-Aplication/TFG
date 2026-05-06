@@ -23,6 +23,7 @@ import com.asistente.planificador.ui.screens.tools.*
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
 import formatDate
 import formatTime
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +35,8 @@ fun TaskView(
     onDelete            : () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var associatedSlotName by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     // Refresh al volver a esta pantalla
     var refreshTrigger by remember { mutableStateOf(0) }
@@ -132,7 +135,12 @@ fun TaskView(
         bottomBar = {
             DestructiveFooterButton(
                 label   = "Eliminar tarea",
-                onClick = { showDeleteConfirm = true }
+                onClick = {
+                    scope.launch {
+                        associatedSlotName = viewModel.getAssociatedSlotName()
+                        showDeleteConfirm  = true
+                    }
+                }
             )
         }
     ) { pad ->
@@ -281,11 +289,14 @@ fun TaskView(
 
         if (showDeleteConfirm) {
             DeleteConfirmDialog(
-                title     = "¿Eliminar tarea?",
-                message = "Esta acción no se puede deshacer",
+                title        = "¿Eliminar tarea?",
+                message      = if (associatedSlotName != null)
+                    "También se eliminará la franja \"$associatedSlotName\" asociada a esta tarea.\n\nEsta acción no se puede deshacer."
+                else
+                    "Esta acción no se puede deshacer.",
                 confirmLabel = "Eliminar",
-                onConfirm = { viewModel.deleteTask(onSuccess = onDelete) },
-                onDismiss = { showDeleteConfirm = false }
+                onConfirm    = { viewModel.deleteTask { onDelete() } },
+                onDismiss    = { showDeleteConfirm = false }
             )
         }
     }

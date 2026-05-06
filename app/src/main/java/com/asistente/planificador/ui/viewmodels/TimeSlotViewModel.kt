@@ -292,8 +292,25 @@ class TimeSlotViewModel @Inject constructor(
     fun toggleTimeSlotActive(timeSlotId: String) {
         viewModelScope.launch {
             runCatching {
-                val slot = timeSlotRepository.getTimeSlotById(timeSlotId) ?: return@launch
-                timeSlotRepository.updateTimeSlot(slot.copy(enable = !slot.enable))
+                val slot    = timeSlotRepository.getTimeSlotById(timeSlotId) ?: return@launch
+                val newSlot = slot.copy(enable = !slot.enable)
+                timeSlotRepository.updateTimeSlot(newSlot)
+
+                if (newSlot.enable) {
+                    val others = timeSlotList.value.filter { it.id != slot.id && it.enable }
+                    val overlaps = others.filter { other ->
+                        TimeSlotOverlapChecker.findOverlaps(newSlot, listOf(other)).isNotEmpty()
+                    }
+                    if (overlaps.isNotEmpty()) {
+                        val names = overlaps.joinToString(", ") { "\"${it.name}\"" }
+                        _events.emit(
+                            TimeSlotEvent.SaveWithWarnings(
+                                listOf("Esta franja se solapa con: $names")
+                            )
+                        )
+                        return@runCatching
+                    }
+                }
             }.onFailure { e ->
                 _events.emit(TimeSlotEvent.Error("Error al actualizar: ${e.message}"))
             }

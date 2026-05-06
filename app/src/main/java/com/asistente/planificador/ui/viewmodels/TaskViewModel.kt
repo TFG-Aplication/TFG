@@ -15,6 +15,7 @@ import com.asistente.core.domain.usecase.task.CreateTask
 import com.asistente.core.domain.usecase.task.DeleteTask
 import com.asistente.core.domain.usecase.task.GetSpecificTask
 import com.asistente.core.domain.usecase.task.UpdateTask
+import com.asistente.core.domain.usecase.timeslot.GetTimeSlotByTaskId
 import com.asistente.planificador.ui.screens.tools.colorCuarto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,7 +62,8 @@ class TaskViewModel @Inject constructor(
     private val getCategoryUseCase: GetListCategory,
     private val deleteTaskUseCase: DeleteTask,
     private val getExpecificTaskUseCase: GetSpecificTask,
-    private val getExpecificCategory: GetSpecificCategory
+    private val getExpecificCategory: GetSpecificCategory,
+    private val getTimeSlotByTaskId: GetTimeSlotByTaskId,  // ← nuevo
 ) : ViewModel() {
 
     private val taskId: String? = savedStateHandle["taskId"]
@@ -132,6 +134,9 @@ class TaskViewModel @Inject constructor(
         _uiState.update { it.copy(alerts = offsets) }
     }
 
+    suspend fun getAssociatedSlotName(): String? =
+        runCatching { getTimeSlotByTaskId(uiState.value.id) }.getOrNull()
+
     // ACTUALIZACIÓN DE FECHA (Día/Mes/Año)
     fun onDateChanged(millis: Long, isStart: Boolean) {
         val calendarHelper = Calendar.getInstance()
@@ -151,16 +156,16 @@ class TaskViewModel @Inject constructor(
         updateAndValidateDates(calendarHelper.time, isStart)
     }
 
-    fun deleteTask(onSuccess: () -> Unit) {
+    fun deleteTask(onSuccess: (deletedSlotName: String?) -> Unit) {
         viewModelScope.launch {
             try {
-                deleteTaskUseCase(
-                    taskId = uiState.value.id,
+                val deletedSlotName = deleteTaskUseCase(
+                    taskId   = uiState.value.id,
                     isShared = uiState.value.calendar?.isShared ?: false
                 )
-                onSuccess()
+                onSuccess(deletedSlotName)
             } catch (e: Exception) {
-                // manejar error si quieres
+                _uiState.update { it.copy(error = "Error al eliminar: ${e.message}") }
             }
         }
     }

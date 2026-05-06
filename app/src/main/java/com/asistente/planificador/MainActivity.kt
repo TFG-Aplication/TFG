@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -50,21 +52,24 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // ── Calendario principal ──────────────────────────────────
                     composable("main_calendar") {
-                        val viewModel: CalendarViewModel = hiltViewModel()
+                        val viewModel: CalendarViewModel          = hiltViewModel()
                         val categoriesViewModel: ShowCategoriesViewModel = hiltViewModel()
+                        val selectedCalendar by viewModel.selectedCalendar.collectAsState()  // ← nuevo
+
                         MainCalendar(
-                            viewModel = viewModel,
-                            categoriesViewModel = categoriesViewModel,
-                            onNavigateToTask = { navController.navigate("task_form") },
-                            onNavigateToCategory = { navController.navigate("category_form") },
-                            onNavigateToDetail = { taskId ->
-                                navController.navigate("task_detail/$taskId")
+                            viewModel            = viewModel,
+                            categoriesViewModel  = categoriesViewModel,
+                            onNavigateToTask     = { navController.navigate("task_form") },
+                            onNavigateToCategory = {
+                                val route = selectedCalendar?.id
+                                    ?.let { "category_form?defaultCalendarId=$it" }
+                                    ?: "category_form"
+                                navController.navigate(route)                                 // ← pasa el id
                             },
-                            onNavigateToEditCategory = { categoryId ->
-                                navController.navigate("edit_category/$categoryId")
-                            },
-                            onNavigateToActivityForm = { navController.navigate("activity_form") },
-                            onNavigateToTimeSlots = { calendarId, calendarName ->
+                            onNavigateToDetail        = { taskId -> navController.navigate("task_detail/$taskId") },
+                            onNavigateToEditCategory  = { categoryId -> navController.navigate("edit_category/$categoryId") },
+                            onNavigateToActivityForm  = { navController.navigate("activity_form") },
+                            onNavigateToTimeSlots     = { calendarId, calendarName ->
                                 navController.navigate("timeslot_list/$calendarId/$calendarName")
                             }
                         )
@@ -121,20 +126,28 @@ class MainActivity : ComponentActivity() {
                         ActivityForm(onBack = { navController.popBackStack() })
                     }
 
-                    // ── Nueva categoría ───────────────────────────────────────
-                    composable("category_form") {
-                        CategoryForm(categoryId = null, onBack = { navController.popBackStack() })
+                    // ── Nueva categoría ───────────────────────────────────────────
+                    composable(
+                        route = "category_form?defaultCalendarId={defaultCalendarId}",
+                        arguments = listOf(
+                            navArgument("defaultCalendarId") {
+                                type         = NavType.StringType
+                                nullable     = true
+                                defaultValue = null
+                            }
+                        )
+                    ) {
+                        CategoryForm(onBack = { navController.popBackStack() })
                     }
 
-                    // ── Editar categoría ──────────────────────────────────────
+// ── Editar categoría ──────────────────────────────────────────
                     composable(
                         route = "edit_category/{categoryId}",
-                        arguments = listOf(navArgument("categoryId") { type = NavType.StringType })
-                    ) { entry ->
-                        val categoryId = entry.arguments?.getString("categoryId")
-                        CategoryForm(
-                            categoryId = categoryId,
-                            onBack = { navController.popBackStack() })
+                        arguments = listOf(
+                            navArgument("categoryId") { type = NavType.StringType }
+                        )
+                    ) {
+                        CategoryForm(onBack = { navController.popBackStack() })
                     }
 
                     // ── Lista de franjas ──────────────────────────────────────────────────

@@ -24,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asistente.planificador.ui.screens.tools.*
 import com.asistente.planificador.ui.viewmodels.TaskViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -35,6 +36,8 @@ fun TaskForm(
     onBack   : () -> Unit,
     onDelete : () -> Unit = onBack
 ) {
+    var associatedSlotName by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
     val uiState   by viewModel.uiState.collectAsState()
     val calendars by viewModel.calendarsList.collectAsStateWithLifecycle()
     val category  by viewModel.categoryList.collectAsStateWithLifecycle()
@@ -84,7 +87,12 @@ fun TaskForm(
 
                     Spacer(Modifier.weight(1f))
                     if (isEditMode) {
-                        IconButton(onClick = { showDeleteConfirm = true }) {
+                        IconButton(onClick = {
+                            scope.launch {
+                                associatedSlotName = viewModel.getAssociatedSlotName()
+                                showDeleteConfirm  = true
+                            }
+                        }) {
                             Icon(Icons.Rounded.Delete, null, tint = ColorDestructive.copy(alpha = 0.7f), modifier = Modifier.size(22.dp))
                         }
                         EditActionButton(
@@ -360,11 +368,14 @@ fun TaskForm(
         }
         if (showDeleteConfirm) {
             DeleteConfirmDialog(
-                title     = "¿Eliminar tarea?",
-                message = "Esta acción no se puede deshacer",
+                title        = "¿Eliminar tarea?",
+                message      = if (associatedSlotName != null)
+                    "También se eliminará la franja \"$associatedSlotName\" asociada a esta tarea.\n\nEsta acción no se puede deshacer."
+                else
+                    "Esta acción no se puede deshacer.",
                 confirmLabel = "Eliminar",
-                onConfirm = { viewModel.deleteTask(onSuccess = onDelete) },
-                onDismiss = { showDeleteConfirm = false }
+                onConfirm    = { viewModel.deleteTask { onDelete() } },
+                onDismiss    = { showDeleteConfirm = false }
             )
         }
     }
