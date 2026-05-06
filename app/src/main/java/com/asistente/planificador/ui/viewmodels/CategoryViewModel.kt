@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.asistente.core.domain.models.Calendar as CalendarModel
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import java.util.UUID
@@ -34,79 +35,75 @@ data class CategoryFormState  (
 
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
-    private val savedStateHandle: SavedStateHandle,
-    private val createCategory: CreateCategory,
-    private val getCalendarsUseCase: GetListCalendars,
+    private val savedStateHandle        : SavedStateHandle,
+    private val createCategory          : CreateCategory,
+    private val getCalendarsUseCase     : GetListCalendars,
     private val getExpecificCategoryUseCase: GetSpecificCategory,
-    private val deleteCategoryUseCase: DeleteCategory,
-    private val updateCategoryUseCase: UpdateCategory
-    ): ViewModel() {
+    private val deleteCategoryUseCase   : DeleteCategory,
+    private val updateCategoryUseCase   : UpdateCategory
+) : ViewModel() {
 
-    private val categoryId: String? = savedStateHandle["categoryId"]
+    // Ambos vienen automáticamente del SavedStateHandle según la ruta
+    private val categoryId        : String? = savedStateHandle["categoryId"]
+    private val defaultCalendarId : String? = savedStateHandle["defaultCalendarId"]
 
     private val _uiState = MutableStateFlow(CategoryFormState())
     val uiState: StateFlow<CategoryFormState> = _uiState.asStateFlow()
     private val userId = "local_user"
 
+    val calendarsList: StateFlow<List<CalendarModel>> =
+        (getCalendarsUseCase(userId) ?: flowOf(emptyList()))
+            .stateIn(
+                scope          = viewModelScope,
+                started        = SharingStarted.WhileSubscribed(5000),
+                initialValue   = emptyList()
+            )
 
-    val calendarsList: StateFlow<List<CalendarModel>> = (getCalendarsUseCase(userId) ?: flowOf(emptyList()))
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-        
+    init {
+        viewModelScope.launch {
+            // Espera a que la lista tenga datos antes de resolver calendarios
+            val list = calendarsList.first { it.isNotEmpty() }
+            if (categoryId != null) {
+                loadCategory(list)
+            } else {
+                val default = list.find { it.id == defaultCalendarId } ?: list.first()
+                _uiState.update { it.copy(calendar = default) }
+            }
+        }
+    }
+
+    private suspend fun loadCategory(list: List<CalendarModel>) {
+        val category = getExpecificCategoryUseCase(categoryId!!) ?: return
+        val calendar = list.find { it.id == category.parentCalendarId }
+        _uiState.update {
+            it.copy(
+                id         = category.id,
+                name       = category.name,
+                color      = category.color,
+                calendar   = calendar,
+                isEditMode = true
+            )
+        }
+    }
+
     fun onNameChanged(newName: String) {
         _uiState.update { it.copy(name = newName) }
     }
-    
+
     fun onColorChanged(newColor: String) {
         _uiState.update {
-            val selectedColor = if (it.color == newColor) null else newColor
-            it.copy(color = selectedColor)
+            it.copy(color = if (it.color == newColor) null else newColor)
         }
     }
-    
+
     fun onCalendarChanged(newCalendar: CalendarModel) {
         _uiState.update { it.copy(calendar = newCalendar) }
     }
 
-    init {
-        loadCategory()
-        viewModelScope.launch {
-            calendarsList.collect { list ->
-                if (list.isNotEmpty() && _uiState.value.calendar == null) {
-                    onCalendarChanged(list.first())
-                }
-            }
-        }
-    }
-
-    private fun loadCategory() {
-        categoryId?.let { id ->
-            viewModelScope.launch {
-                val category = getExpecificCategoryUseCase(id)
-                val calendar = calendarsList.value.find { it.id == category?.parentCalendarId }
-                category?.let { category ->
-                    _uiState.update { it.copy(
-                        id = category.id,
-                        name = category.name,
-                        color = category.color,
-                        calendar = calendar,
-                        isEditMode = true
-
-                    )}
-                }
-            }
-        }
-    }
-
     fun deleteCategory(onSuccess: () -> Unit) {
-        val categoryId = _uiState.value.id
-        val isShared = _uiState.value.calendar?.isShared ?: false
         viewModelScope.launch {
             try {
-                deleteCategoryUseCase(categoryId, isShared)
+                deleteCategoryUseCase(_uiState.value.id, _uiState.value.calendar?.isShared ?: false)
                 onSuccess()
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "No se pudo eliminar: ${e.message}") }
@@ -115,22 +112,12 @@ class CategoryViewModel @Inject constructor(
     }
 
     fun updateCategory(onSuccess: () -> Unit) {
-        val currentState = _uiState.value
-        if (currentState.name.isBlank()) {
-            _uiState.update { it.copy(error = "El nombre es obligatorio") }
-            return
-        }
-
+        val s = _uiState.value
+        if (s.name.isBlank()) { _uiState.update { it.copy(error = "El nombre es obligatorio") }; return }
         viewModelScope.launch {
             try {
-                val calendar = currentState.calendar ?: throw IllegalStateException("El calendario no puede ser nulo al actualizar")
-                val categoryToUpdate = com.asistente.core.domain.models.Category(
-                    id = currentState.id,
-                    name = currentState.name,
-                    color = currentState.color ?: "#F3E5E2",
-                    parentCalendarId = calendar.id
-                )
-                updateCategoryUseCase(categoryToUpdate.id, categoryToUpdate.name, categoryToUpdate.color)
+                val cal = s.calendar ?: throw IllegalStateException("Calendario nulo al actualizar")
+                updateCategoryUseCase(s.id, s.name, s.color ?: "#F3E5E2")
                 onSuccess()
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "No se pudo actualizar: ${e.message}") }
@@ -139,21 +126,16 @@ class CategoryViewModel @Inject constructor(
     }
 
     fun saveCategory(onSuccess: () -> Unit) {
-        val actual = _uiState.value
-        if (actual.name.isBlank()) {
-            _uiState.update { it.copy(error = "El nombre es obligatorio") }
-            return
-        }
-
+        val s = _uiState.value
+        if (s.name.isBlank()) { _uiState.update { it.copy(error = "El nombre es obligatorio") }; return }
         viewModelScope.launch {
             try {
-                val actualCalendar = actual.calendar ?: throw Exception("Error al vincular calendario")
-                val finalColor = _uiState.value.color ?: "#F3E5E2"
+                val cal = s.calendar ?: throw Exception("Error al vincular calendario")
                 createCategory(
-                    name = actual.name,
-                    color = finalColor,
-                    calendarId = actualCalendar.id,
-                    isSharedCalendar = actualCalendar.isShared
+                    name             = s.name,
+                    color            = s.color ?: "#F3E5E2",
+                    calendarId       = cal.id,
+                    isSharedCalendar = cal.isShared
                 )
                 onSuccess()
             } catch (e: Exception) {
